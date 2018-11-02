@@ -36,10 +36,34 @@ func Problem(w http.ResponseWriter, err error) {
 // Returned is the calling file and line number: server.go:33
 func InternalError(w http.ResponseWriter, err error) string {
 	w.WriteHeader(http.StatusInternalServerError)
-	_, file, line, ok := runtime.Caller(1)
-	if !ok {
-		return ""
+
+	pcs := make([]uintptr, 5) // some limit
+	_ = runtime.Callers(1, pcs)
+
+	file, line := "", 0
+
+	// Sometimes InternalError will be wrapped by helper methods inside an application.
+	// We should linear search our callers until we find one outside github.com/moov-io
+	// because that likely represents the stdlib.
+	//
+	// Note: This might not work for code already outside github.com/moov-io, please report
+	// feedback if this works or not.
+	i, frames := 0, runtime.CallersFrames(pcs)
+	for {
+		f, more := frames.Next()
+		if !more {
+			break
+		}
+
+		// f.Function can either be an absolute path (/Users/...) or a package
+		// (i.e. github.com/moov-io/...) so check for either.
+		if strings.Contains(f.Function, "github.com/moov-io") || strings.HasPrefix(f.Function, "main.") {
+			_, file, line, _ = runtime.Caller(i) // next caller
+		}
+		i++
 	}
+
+	// Get the filename, file was a full path
 	_, file = filepath.Split(file)
 	return fmt.Sprintf("%s:%d", file, line)
 }
