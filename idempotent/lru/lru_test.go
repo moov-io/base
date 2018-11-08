@@ -23,3 +23,14 @@ func TestLRU(t *testing.T) {
 		t.Errorf("expected not seen")
 	}
 }
+
+func TestLRU__nil(t *testing.T) {
+	var cache *Mem
+	if cache.SeenBefore("test") {
+		t.Error("nil - shouldn't mark as seen")
+	}
+	// "see" the same key again
+	if cache.SeenBefore("test") {
+		t.Error("nil - shouldn't mark as seen")
+	}
+}

@@ -5,7 +5,12 @@
 package idempotent
 
 import (
+	"errors"
 	"net/http"
+)
+
+var (
+	ErrSeenBefore = errors.New("X-Idempotency-Key seen before")
 )
 
 // Recorder offers a method to determine if a given key has been
@@ -17,8 +22,13 @@ type Recorder interface {
 
 // FromRequest extracts the idempotency key from HTTP headers and records its presence in
 // the provided Recorder.
+//
+// A nil Recorder will always return idempotency keys as unseen.
 func FromRequest(req *http.Request, rec Recorder) (key string, seen bool) {
 	key = req.Header.Get("X-Idempotency-Key")
+	if rec == nil {
+		return key, false
+	}
 	if key == "" {
 		return "", false
 	}
