@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/gorilla/mux"
 )
@@ -97,5 +98,16 @@ func TestHTTP_InternalError(t *testing.T) {
 
 	if !strings.HasPrefix(where, "server_test.go") { // This will always be this file's name
 		t.Errorf("got %s", where)
+	}
+}
+
+func TestHTTP__truncate(t *testing.T) {
+	s1 := "1234567890123456789012345678901234567890" // 40 characters
+	s2 := truncate(s1)
+	if s1 == s2 {
+		t.Errorf("strings shouldn't match")
+	}
+	if n := utf8.RuneCountInString(s2); n != maxHeaderLength {
+		t.Errorf("s2 length is %d", n)
 	}
 }
