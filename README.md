@@ -2,7 +2,7 @@ moov-io/base
 ===
 [![GoDoc](https://godoc.org/github.com/moov-io/base?status.svg)](https://godoc.org/github.com/moov-io/base)
 [![Build Status](https://travis-ci.com/moov-io/base.svg?branch=master)](https://travis-ci.com/moov-io/base)
-[![Coverage Status](https://coveralls.io/repos/github/moov-io/base/badge.svg?branch=master)](https://coveralls.io/github/moov-io/base?branch=master)
+[![Coverage Status](https://codecov.io/gh/moov-io/base/branch/master/graph/badge.svg)](https://codecov.io/gh/moov-io/base)
 [![Go Report Card](https://goreportcard.com/badge/github.com/moov-io/base)](https://goreportcard.com/report/github.com/moov-io/base)
 [![Apbasee 2 licensed](https://img.shields.io/badge/license-Apbasee2-blue.svg)](https://raw.githubusercontent.com/moov-io/base/master/LICENSE)
 
