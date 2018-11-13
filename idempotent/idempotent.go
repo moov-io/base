@@ -7,6 +7,12 @@ package idempotent
 import (
 	"errors"
 	"net/http"
+	"unicode/utf8"
+)
+
+const (
+	// maxIdempotencyKeyLength is the longest X-Idempotency-Key string legnth allowed.
+	maxIdempotencyKeyLength = 36
 )
 
 var (
@@ -25,7 +31,7 @@ type Recorder interface {
 //
 // A nil Recorder will always return idempotency keys as unseen.
 func FromRequest(req *http.Request, rec Recorder) (key string, seen bool) {
-	key = req.Header.Get("X-Idempotency-Key")
+	key = truncate(req.Header.Get("X-Idempotency-Key"))
 	if rec == nil {
 		return key, false
 	}
@@ -38,4 +44,11 @@ func FromRequest(req *http.Request, rec Recorder) (key string, seen bool) {
 // SeenBefore sets a HTTP response code as an error for previously seen idempotency keys.
 func SeenBefore(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusPreconditionFailed)
+}
+
+func truncate(s string) string {
+	if utf8.RuneCountInString(s) > maxIdempotencyKeyLength {
+		return s[:maxIdempotencyKeyLength]
+	}
+	return s
 }

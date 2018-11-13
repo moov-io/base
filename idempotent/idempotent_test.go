@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestIdempotent(t *testing.T) {
@@ -60,5 +61,16 @@ func TestIdempotent__SeenBefore(t *testing.T) {
 
 	if w.Code != http.StatusPreconditionFailed {
 		t.Errorf("got %d", w.Code)
+	}
+}
+
+func TestIdempotent__truncate(t *testing.T) {
+	s1 := "1234567890123456789012345678901234567890" // 40 characters
+	s2 := truncate(s1)
+	if s1 == s2 {
+		t.Errorf("strings shouldn't match")
+	}
+	if n := utf8.RuneCountInString(s2); n != maxIdempotencyKeyLength {
+		t.Errorf("s2 length is %d", n)
 	}
 }

@@ -11,8 +11,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+)
+
+const (
+	maxHeaderLength = 36
 )
 
 // Problem writes err to w while also setting the HTTP status code, content-type and marshaling
@@ -112,4 +117,11 @@ func GetRequestId(r *http.Request) string {
 // GetUserId returns the Moov userId from HTTP headers
 func GetUserId(r *http.Request) string {
 	return r.Header.Get("X-User-Id")
+}
+
+func truncate(s string) string {
+	if utf8.RuneCountInString(s) > maxHeaderLength {
+		return s[:maxHeaderLength]
+	}
+	return s
 }
