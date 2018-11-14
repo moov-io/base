@@ -2,8 +2,6 @@
 // Use of this source code is governed by an Apache License
 // license that can be found in the LICENSE file.
 
-// Package http implements a base Moov HTTP server. This is intended to be used
-// by all services as a baseline for secure, production ready services.
 package http
 
 import (
