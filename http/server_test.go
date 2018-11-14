@@ -85,6 +85,15 @@ func TestHTTP__Problem(t *testing.T) {
 	if response.Error != "problem X" {
 		t.Errorf("got %q", response.Error)
 	}
+
+	// nil error, respond http.StatusOK
+	w = httptest.NewRecorder()
+	Problem(w, nil)
+	w.Flush()
+
+	if w.Code != http.StatusOK {
+		t.Errorf("got %d", w.Code)
+	}
 }
 
 func TestHTTP_InternalError(t *testing.T) {
@@ -101,6 +110,24 @@ func TestHTTP_InternalError(t *testing.T) {
 	}
 }
 
+func TestHTTP__GetRequestId(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping", nil)
+	r.Header.Set("x-request-id", "requestId")
+
+	if requestId := GetRequestId(r); requestId != "requestId" {
+		t.Errorf("got %s", requestId)
+	}
+}
+
+func TestHTTP__GetUserId(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping", nil)
+	r.Header.Set("x-user-id", "userId")
+
+	if userId := GetUserId(r); userId != "userId" {
+		t.Errorf("got %s", userId)
+	}
+}
+
 func TestHTTP__truncate(t *testing.T) {
 	s1 := "1234567890123456789012345678901234567890" // 40 characters
 	s2 := truncate(s1)
@@ -109,5 +136,10 @@ func TestHTTP__truncate(t *testing.T) {
 	}
 	if n := utf8.RuneCountInString(s2); n != maxHeaderLength {
 		t.Errorf("s2 length is %d", n)
+	}
+
+	s1, s2 = "12345", truncate("12345")
+	if s1 != s2 {
+		t.Errorf("strings should match: s1=%s s2=%s", s1, s2)
 	}
 }
