@@ -18,6 +18,9 @@ before_install:
 - go get golang.org/x/tools/cmd/cover
 # Install gcc, from https://travis-ci.community/t/go-cant-find-gcc-with-go1-11-1-on-windows/293/5
 - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install -y mingw; export PATH=/c/tools/mingw64/bin:"$PATH"; fi
+# Install python3
+- if [[ "$TRAVIS_OS_NAME" == "darwin" ]]; then brew install python3; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then apt-get install -y python3; fi
 before_script:
 - GOFILES=$(find . -type f -name '*.go' | grep -v vendor)
 script:
