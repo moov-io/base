@@ -61,7 +61,7 @@ func TestTime__python(t *testing.T) {
 		}
 	}
 	path := "/usr/local/opt/python/bin/python3" // homebrew path
-	if fd, err := os.Stat(path); os.IsNotExist(err) && fd.Size() > 1 {
+	if _, err := os.Stat(path); err == nil {
 		bin = path
 	}
 
