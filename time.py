@@ -1,8 +1,6 @@
 import datetime
 import sys
 
-# Example time: 2018-06-29 08:15:27.243860
-
 if len(sys.argv) <= 1:
     print("No time provided");
     sys.exit(1)
