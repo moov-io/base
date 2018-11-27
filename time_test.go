@@ -42,6 +42,15 @@ func TestTime__JSON(t *testing.T) {
 	if !t1.Equal(t2) {
 		t.Errorf("unequal: t1=%q t2=%q", t1, t2)
 	}
+
+	in := []byte(`"2018-11-27T00:54:53Z"`)
+	var t3 Time
+	if err := json.Unmarshal(in, &t3); err != nil {
+		t.Fatal(err)
+	}
+	if t3.IsZero() {
+		t.Error("t3 shouldn't be zero time")
+	}
 }
 
 var quote = []byte(`"`)
