@@ -36,7 +36,6 @@ func TestHTTP__AddCORSHandler(t *testing.T) {
 		"Access-Control-Allow-Methods",
 		"Access-Control-Allow-Headers",
 		"Access-Control-Allow-Credentials",
-		"Content-Type",
 	}
 	for i := range headers {
 		v := w.Header().Get(headers[i])
