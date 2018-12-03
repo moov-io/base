@@ -83,15 +83,14 @@ func AddCORSHandler(r *mux.Router) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		SetAccessControlAllowHeaders(w, r)
+		SetAccessControlAllowHeaders(w, r.Header.Get("Origin"))
 		w.WriteHeader(http.StatusOK)
 	})
 }
 
 // SetAccessControlAllowHeaders writes Access-Control-Allow-* headers to a response to allow
 // for further CORS-allowed requests.
-func SetAccessControlAllowHeaders(w http.ResponseWriter, r *http.Request) {
-	origin := r.Header.Get("Origin")
+func SetAccessControlAllowHeaders(w http.ResponseWriter, origin string) {
 	// Access-Control-Allow-Origin can't be '*' with requests that send credentials.
 	// Instead, we need to explicitly set the domain (from request's Origin header)
 	//

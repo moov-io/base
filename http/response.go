@@ -40,7 +40,7 @@ func (w *ResponseWriter) WriteHeader(code int) {
 	w.headersWritten = true
 
 	// Headers
-	SetAccessControlAllowHeaders(w, w.request)
+	SetAccessControlAllowHeaders(w, w.request.Header.Get("Origin"))
 	defer w.ResponseWriter.WriteHeader(code)
 
 	// Record route timing
