@@ -27,6 +27,15 @@ func Now() Time {
 	}
 }
 
+// NewTime wraps a time.Time value in Moov's base.Time struct.
+// If you need the underlying time.Time value call .Time:
+//
+// now := Now()
+// fmt.Println(start.Sub(now.Time))
+func NewTime(t time.Time) Time {
+	return Time{t}
+}
+
 func (t Time) MarshalJSON() ([]byte, error) {
 	var bs []byte
 	bs = append(bs, '"')
