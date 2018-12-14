@@ -7,6 +7,7 @@ package base
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -24,6 +25,19 @@ func TestTime(t *testing.T) {
 	if tt := time.Now().Add(1 * time.Second); t1.Sub(tt) == 0 {
 		t.Error("expected difference in timing")
 	}
+}
+
+func TestTime__NewTime(t *testing.T) {
+	f := func(_ Time) {
+		return
+	}
+	f(NewTime(time.Now())) // make sure we can lift time.Time values
+
+	start := time.Now().Add(-1 * time.Second)
+
+	// Example from NewTime godoc
+	now := Now()
+	fmt.Println(start.Sub(now.Time))
 }
 
 func TestTime__JSON(t *testing.T) {
