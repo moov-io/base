@@ -51,6 +51,8 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Equal compares two Time values. Time values are considered equal if they both truncate
+// to the same year/month/day and hour/minute/second.
 func (t Time) Equal(other Time) bool {
 	t1 := t.Time.Truncate(1 * time.Second)
 	t2 := other.Time.Truncate(1 * time.Second)
