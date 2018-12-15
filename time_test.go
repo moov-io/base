@@ -67,6 +67,18 @@ func TestTime__JSON(t *testing.T) {
 	}
 }
 
+func TestTime__jsonRFC3339(t *testing.T) {
+	// Read RFC 3339 time
+	in := []byte(fmt.Sprintf(`"%s"`, time.Now().Format(time.RFC3339)))
+	var t1 Time
+	if err := json.Unmarshal(in, &t1); err != nil {
+		t.Fatal(err)
+	}
+	if t1.IsZero() {
+		t.Error("t4 shouldn't be zero time")
+	}
+}
+
 func TestTime__javascript(t *testing.T) {
 	// Generated with (new Date).toISOString() in Chrome and Firefox
 	in := []byte(`{"time": "2018-12-14T20:36:58.789Z"}`)
