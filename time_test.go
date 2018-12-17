@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -64,6 +65,15 @@ func TestTime__JSON(t *testing.T) {
 	}
 	if t3.IsZero() {
 		t.Error("t3 shouldn't be zero time")
+	}
+
+	// empty should unmarshal to nothing
+	in = []byte(`""`)
+	var t4 Time
+	if err := json.Unmarshal(in, &t4); err == nil {
+		t.Error("expected error")
+	} else if !strings.Contains(err.Error(), "empty date time") {
+		t.Errorf("got unexpected error: %v", err)
 	}
 }
 
