@@ -143,12 +143,12 @@ func (t Time) IsBankingDay() bool {
 }
 
 // AddBankingDay takes an integer for the number of valid banking days to add and returns a Time
-func (t Time) AddBankingDay(d int) time.Time {
+func (t Time) AddBankingDay(d int) Time {
 	t.Time = t.Time.AddDate(0, 0, d)
 	if !t.IsBankingDay() {
 		return t.AddBankingDay(1)
 	}
-	return t.Time
+	return t
 }
 
 // IsWeekend reports whether the given date falls on a weekend.

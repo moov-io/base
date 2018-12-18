@@ -242,12 +242,12 @@ func TestTime_AddBankingDay(t *testing.T) {
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
-		if !actual.Equal(test.Future) {
+		if !actual.Equal(NewTime(test.Future)) {
 			t.Errorf("Adding %d days: expected %s, got %s", test.Days, test.Future.Weekday().String(), actual)
 		}
 
 		actual = NewTime(test.Date).AddBankingDay(test.Days)
-		if !actual.Equal(test.Future) {
+		if !actual.Equal(NewTime(test.Future)) {
 			t.Errorf("Adding %d days: expected %s, got %s", test.Days, test.Future.Weekday().String(), actual)
 		}
 	}
