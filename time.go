@@ -52,16 +52,21 @@ func Now() Time {
 	cal.AddUsHolidays(calendar)
 	calendar.Observed = cal.ObservedMonday
 
-	loc := DefaultLocation
-	setup.Do(func() {
-		loc, _ = time.LoadLocation("America/New_York")
-		DefaultLocation = loc
-	})
+	loc := getNYCLocation()
 
 	return Time{
 		cal:  calendar,
 		Time: time.Now().In(loc).Truncate(1 * time.Second),
 	}
+}
+
+func getNYCLocation() *time.Location {
+	loc := DefaultLocation
+	setup.Do(func() {
+		loc, _ = time.LoadLocation("America/New_York")
+		DefaultLocation = loc
+	})
+	return loc
 }
 
 // NewTime wraps a time.Time value in Moov's base.Time struct.
@@ -99,7 +104,9 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 		tt, _ = time.Parse(time.RFC3339, string(data))
 		*t = NewTime(tt)
 	}
-	t.Time = tt.Truncate(1 * time.Second) // drop millis
+
+	loc := getNYCLocation()
+	t.Time = tt.In(loc).Truncate(1 * time.Second) // convert to our location and drop millis
 
 	// Return an error if nothing was parsed.
 	if t.Time.IsZero() {

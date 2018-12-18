@@ -109,7 +109,7 @@ func TestTime__javascript(t *testing.T) {
 	if err := json.Unmarshal(in, &wrap); err != nil {
 		t.Fatal(err)
 	}
-	if v := wrap.When.String(); v != "2018-12-14 20:36:58 +0000 UTC" {
+	if v := wrap.When.String(); v != "2018-12-14 15:36:58 -0500 EST" {
 		t.Errorf("got %q", v)
 	}
 }
