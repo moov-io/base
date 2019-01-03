@@ -38,9 +38,7 @@ func TestTime(t *testing.T) {
 }
 
 func TestTime__NewTime(t *testing.T) {
-	f := func(_ Time) {
-		return
-	}
+	f := func(_ Time) {}
 	f(NewTime(time.Now())) // make sure we can lift time.Time values
 
 	start := time.Now().Add(-1 * time.Second)
