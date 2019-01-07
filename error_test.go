@@ -3,11 +3,24 @@ package base
 import (
 	"bytes"
 	"errors"
+	"strings"
 	"testing"
 )
 
-func TestErrorAdd(t *testing.T) {
+func TestParseError_Error(t *testing.T) {
+	errorList := ErrorList{}
+	errorList.Add(errors.New("testing"))
 
+	pse := ParseError{
+		Err: errorList,
+	}
+
+	if !strings.Contains(pse.Error(), "testing") {
+		t.Errorf("got %s", errorList.Error())
+	}
+}
+
+func TestErrorList_Add(t *testing.T) {
 	errorList := ErrorList{}
 	errorList.Add(errors.New("testing"))
 
@@ -28,7 +41,7 @@ func TestErrorAdd(t *testing.T) {
 	}
 }
 
-func TestErrorErr(t *testing.T) {
+func TestErrorList_Err(t *testing.T) {
 	errorList := ErrorList{}
 	errorList.Add(errors.New("testing"))
 
@@ -40,18 +53,14 @@ func TestErrorErr(t *testing.T) {
 
 }
 
-func TestErrorPrint(t *testing.T) {
-	var buf bytes.Buffer
-
+func TestErrorList_Print(t *testing.T) {
 	errorList := ErrorList{}
 	errorList.Add(errors.New("testing"))
 	errorList.Add(errors.New("continued testing"))
 
-	// nil
+	var buf bytes.Buffer
 	errorList.Print(&buf)
-	if v := buf.String(); v == "<nil>" {
-		t.Errorf("got %q", v)
-	}
+
 	if v := errorList.Error(); v == "<nil>" {
 		t.Errorf("got %q", v)
 	}
@@ -59,7 +68,7 @@ func TestErrorPrint(t *testing.T) {
 
 }
 
-func TestErrorEmpty(t *testing.T) {
+func TestErrorList_Empty(t *testing.T) {
 	errorList := ErrorList{}
 
 	e1 := errorList.Err()
@@ -67,12 +76,28 @@ func TestErrorEmpty(t *testing.T) {
 	if e1 != nil {
 		t.Errorf("got %q", e1)
 	}
-
 	if errorList.Error() != "<nil>" {
 		t.Errorf("got %s", errorList.Error())
 	}
 
 	var buf bytes.Buffer
-
 	errorList.Print(&buf)
+	buf.Reset()
+}
+
+func TestErrorList_MarshalJSON(t *testing.T) {
+	errorList := ErrorList{}
+	errorList.Add(errors.New("testing"))
+	errorList.Add(errors.New("continued testing"))
+	errorList.Add(errors.New("testing again"))
+	errorList.Add(errors.New("continued testing again"))
+
+	b, err := errorList.MarshalJSON()
+
+	if len(b) == 0 {
+		t.Errorf("got %s", errorList.Error())
+	}
+	if err != nil {
+		t.Errorf("got %s", errorList.Error())
+	}
 }
