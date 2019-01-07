@@ -20,7 +20,7 @@ func (e ParseError) Error() string {
 // ErrorList represents an array of errors which is also an error itself.
 type ErrorList []error
 
-// Add appends err onto the ErrorList. Errors are kept in order.
+// Add appends err onto the ErrorList. Errors are kept in append order.
 func (e *ErrorList) Add(err error) {
 	*e = append(*e, err)
 }
