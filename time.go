@@ -5,7 +5,6 @@
 package base
 
 import (
-	"errors"
 	"sync"
 	"time"
 
@@ -79,6 +78,16 @@ func getNYCLocation() *time.Location {
 func NewTime(t time.Time) Time {
 	tt := Now() // sets DefaultLocation via sync.Once
 	tt.Time = t.In(DefaultLocation)
+
+	if tt.Time.Before(time.Time{}) {
+		// The conversion can fall negative due to reading 0000
+		// and calling .In with a timezone that shifts backwards.
+		//
+		// If that happens we need to reset to Time.IsZero() and then
+		// set our America/New_York timezone.
+		tt.Time = (time.Time{}).In(DefaultLocation)
+	}
+
 	return tt
 }
 
@@ -107,11 +116,6 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 
 	loc := getNYCLocation()
 	t.Time = tt.In(loc).Truncate(1 * time.Second) // convert to our location and drop millis
-
-	// Return an error if nothing was parsed.
-	if t.Time.IsZero() {
-		return errors.New("empty date time")
-	}
 
 	return nil
 }

@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 	"testing"
 	"time"
 )
@@ -48,6 +47,30 @@ func TestTime__NewTime(t *testing.T) {
 	fmt.Println(start.Sub(now.Time))
 }
 
+func TestTime__Negative(t *testing.T) {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// ts is 000000 (yymmdd) and 0000 (hhmm) from an ACH file,
+	// then we convert to NYC timezone
+	ts := time.Date(0, time.January, 0, 0, 0, 0, 0, time.UTC).In(loc)
+
+	if !ts.Before(time.Time{}) {
+		// ts should be negative now (i.e. -0001-12-30 19:03:58 -0456 LMT), which is bogus
+		t.Errorf("%s isn't negative..", ts.String())
+	}
+
+	tt := NewTime(ts) // wrap, which should fix our problem
+	if !tt.IsZero() {
+		t.Errorf("expected tt to be zero time: %v", tt.String())
+	}
+	if tt.Before(time.Time{}) {
+		t.Errorf("tt shouldn't be before zero time: %v", tt.String())
+	}
+}
+
 func TestTime__JSON(t *testing.T) {
 	// marshal and then unmarshal
 	t1 := Now()
@@ -77,10 +100,8 @@ func TestTime__JSON(t *testing.T) {
 	// empty should unmarshal to nothing
 	in = []byte(`""`)
 	var t4 Time
-	if err := json.Unmarshal(in, &t4); err == nil {
-		t.Error("expected error")
-	} else if !strings.Contains(err.Error(), "empty date time") {
-		t.Errorf("got unexpected error: %v", err)
+	if err := json.Unmarshal(in, &t4); err != nil {
+		t.Errorf("empty value for base.Time is fine, but got: %v", err)
 	}
 }
 
