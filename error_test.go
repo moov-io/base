@@ -16,11 +16,39 @@ func TestParseError_Error(t *testing.T) {
 	errorList.Add(errors.New("testing"))
 
 	pse := ParseError{
-		Err: errorList,
+		Err:    errorList,
+		Line:   5,
+		Record: "ABC",
 	}
 
 	if !strings.Contains(pse.Error(), "testing") {
 		t.Errorf("got %s", errorList.Error())
+	}
+
+	if pse.Record != "ABC" {
+		t.Errorf("got %s", pse.Record)
+	}
+
+	if pse.Line != 5 {
+		t.Errorf("got %v", pse.Line)
+	}
+
+}
+
+func TestParseErrorRecordNull_Error(t *testing.T) {
+	errorList := ErrorList{}
+	errorList.Add(errors.New("testing"))
+
+	pse := ParseError{
+		Err:    errorList,
+		Line:   5,
+		Record: "",
+	}
+
+	e1 := pse.Error()
+
+	if e1 != "line:5 base.ErrorList testing" {
+		t.Errorf("got %s", e1)
 	}
 }
 
