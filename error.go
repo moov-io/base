@@ -14,7 +14,9 @@ import (
 // ParseError is returned for parsing reader errors.
 // The first line is 1.
 type ParseError struct {
-	Err error // The actual error
+	Line   int    // Line number where the error occurred
+	Record string // Name of the record type being parsed
+	Err    error  // The actual error
 }
 
 func (e ParseError) Error() string {
