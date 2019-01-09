@@ -20,7 +20,10 @@ type ParseError struct {
 }
 
 func (e ParseError) Error() string {
-	return fmt.Sprintf("%T %s", e.Err, e.Err)
+	if e.Record == "" {
+		return fmt.Sprintf("line:%d %T %s", e.Line, e.Err, e.Err)
+	}
+	return fmt.Sprintf("line:%d record:%s %T %s", e.Line, e.Record, e.Err, e.Err)
 }
 
 // ErrorList represents an array of errors which is also an error itself.
