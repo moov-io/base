@@ -62,11 +62,8 @@ func TestTime__Negative(t *testing.T) {
 		t.Errorf("%s isn't negative..", ts.String())
 	}
 
-	tt := NewTime(ts) // wrap, which should fix our problem
-	if !tt.IsZero() {
-		t.Errorf("expected tt to be zero time: %v", tt.String())
-	}
-	if tt.Before(time.Time{}) {
+	// wrap, which should fix our problem
+	if tt := NewTime(ts); tt.Before(time.Time{}) {
 		t.Errorf("tt shouldn't be before zero time: %v", tt.String())
 	}
 }

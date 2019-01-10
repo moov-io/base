@@ -79,13 +79,13 @@ func NewTime(t time.Time) Time {
 	tt := Now() // sets DefaultLocation via sync.Once
 	tt.Time = t.In(DefaultLocation)
 
-	if tt.Time.Before(time.Time{}) {
+	if tt.Time.Year() <= 1 {
 		// The conversion can fall negative due to reading 0000
 		// and calling .In with a timezone that shifts backwards.
 		//
 		// If that happens we need to reset to Time.IsZero() and then
 		// set our America/New_York timezone.
-		tt.Time = (time.Time{}).In(DefaultLocation)
+		tt.Time = time.Date(1, time.January, 1, 0, 0, 0, 0, DefaultLocation)
 	}
 
 	return tt
