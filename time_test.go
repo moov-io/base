@@ -47,30 +47,6 @@ func TestTime__NewTime(t *testing.T) {
 	fmt.Println(start.Sub(now.Time))
 }
 
-func TestTime__Negative(t *testing.T) {
-	loc, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// ts is 000000 (yymmdd) and 0000 (hhmm) from an ACH file,
-	// then we convert to NYC timezone
-	ts := time.Date(0, time.January, 0, 0, 0, 0, 0, time.UTC).In(loc)
-
-	if !ts.Before(time.Time{}) {
-		// ts should be negative now (i.e. -0001-12-30 19:03:58 -0456 LMT), which is bogus
-		t.Errorf("%s isn't negative..", ts.String())
-	}
-
-	tt := NewTime(ts) // wrap, which should fix our problem
-	if !tt.IsZero() {
-		t.Errorf("expected tt to be zero time: %v", tt.String())
-	}
-	if tt.Before(time.Time{}) {
-		t.Errorf("tt shouldn't be before zero time: %v", tt.String())
-	}
-}
-
 func TestTime__JSON(t *testing.T) {
 	// marshal and then unmarshal
 	t1 := Now()
@@ -128,7 +104,7 @@ func TestTime__javascript(t *testing.T) {
 	if err := json.Unmarshal(in, &wrap); err != nil {
 		t.Fatal(err)
 	}
-	if v := wrap.When.String(); v != "2018-12-14 15:36:58 -0500 EST" {
+	if v := wrap.When.String(); v != "2018-12-14 20:36:58 +0000 UTC" {
 		t.Errorf("got %q", v)
 	}
 }
