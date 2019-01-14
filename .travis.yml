@@ -1,5 +1,7 @@
 language: go
 sudo: required
+services:
+- docker
 os:
 - linux
 - osx
