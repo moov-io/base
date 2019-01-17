@@ -16,6 +16,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func truncate(s string) string {
+	if utf8.RuneCountInString(s) > maxHeaderLength {
+		return s[:maxHeaderLength]
+	}
+	return s
+}
+
 func TestHTTP__AddCORSHandler(t *testing.T) {
 	router := mux.NewRouter()
 	w := httptest.NewRecorder()
