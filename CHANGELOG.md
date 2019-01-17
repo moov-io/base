@@ -1,3 +1,9 @@
+## v0.5.1 (Released 2019-01-17)
+
+BUG FIXES
+
+- http: fix panic in ResponseWriter.WriteHeader
+
 ## v0.5.0 (Released 2019-01-17)
 
 BUG FIXES
