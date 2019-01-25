@@ -1,3 +1,10 @@
+## v0.6.0 (Released 2019-01-25)
+
+ADDITIONS
+
+- admin: [`Server.AddHandler`](https://godoc.org/github.com/moov-io/base/admin#Server.AddHandler) for extendable commands
+- http/bind: Add [Fed](https://github.com/moov-io/fed) service
+
 ## v0.5.1 (Released 2019-01-17)
 
 BUG FIXES
