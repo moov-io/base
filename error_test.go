@@ -133,3 +133,57 @@ func TestErrorList_MarshalJSON(t *testing.T) {
 		t.Errorf("got %s", errorList.Error())
 	}
 }
+
+// testMatch validates the Match error function
+func TestMatch(t *testing.T) {
+	testError := errors.New("Test error")
+
+	if !Match(nil, nil) {
+		t.Error("Match should be reflexive on nil")
+	}
+
+	if !Match(testError, testError) {
+		t.Error("Match should be reflexive")
+	}
+
+	p := ParseError{Err: testError}
+	if !Match(p, testError) {
+		t.Error("Match should match wrapped errors implementing the UnwrappableError interface")
+	}
+
+	differentError := errors.New("Different error")
+	if Match(testError, differentError) {
+		t.Error("Match should return false for different simple errors")
+	}
+
+	q := ParseError{Err: differentError}
+	if !Match(p, q) {
+		t.Error("Match should match two different ParseErrors to each other since they have the same type")
+	}
+
+	errorList := ErrorList{}
+	if Match(errorList, p) {
+		t.Error("Match should return false for errors with different types")
+	}
+}
+
+// testHas validates the Has error function
+func TestHas(t *testing.T) {
+	err := errors.New("Non list error")
+
+	if Has(err, err) {
+		t.Error("Has should return false when given a non-list error as the first arg")
+	}
+
+	if Has(nil, err) {
+		t.Error("Has should not return true if there are no errors")
+	}
+
+	if Has(ErrorList([]error{}), err) {
+		t.Error("Has should not return true if there are no errors")
+	}
+
+	if !Has(ErrorList([]error{err}), err) {
+		t.Error("Has should return true if the error list has the test error")
+	}
+}
