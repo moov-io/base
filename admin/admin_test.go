@@ -10,8 +10,28 @@ import (
 	"testing"
 )
 
+func TestAdmin__pprof(t *testing.T) {
+	svc := NewServer(":13983") // hopefully nothing locally has this
+	go svc.Listen()
+	defer svc.Shutdown()
+
+	// Check for Prometheus metrics endpoint
+	resp, _ := http.DefaultClient.Get("http://localhost:13983/metrics")
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("bogus HTTP status code: %s", resp.Status)
+	}
+	resp.Body.Close()
+
+	// Check always on pprof endpoint
+	resp, _ = http.DefaultClient.Get("http://localhost:13983/debug/pprof/cmdline")
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("bogus HTTP status code: %s", resp.Status)
+	}
+	resp.Body.Close()
+}
+
 func TestAdmin__AddHandler(t *testing.T) {
-	svc := NewServer(":13984") // hopefully nothing locally has this
+	svc := NewServer(":13984")
 	go svc.Listen()
 	defer svc.Shutdown()
 
