@@ -54,6 +54,9 @@ type Server struct {
 
 // BindAddr returns the server's bind address. This is in Go's format so :8080 is valid.
 func (s *Server) BindAddr() string {
+	if s == nil || s.svc == nil {
+		return ""
+	}
 	return s.svc.Addr
 }
 
