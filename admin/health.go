@@ -25,6 +25,9 @@ type healthCheck struct {
 
 // Error executes the health check and will block until the result returns
 func (hc *healthCheck) Error() error {
+	if hc == nil || hc.check == nil {
+		return nil
+	}
 	return hc.check()
 }
 
