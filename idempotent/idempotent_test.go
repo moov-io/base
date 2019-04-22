@@ -15,6 +15,10 @@ func TestIdempotent(t *testing.T) {
 	req := httptest.NewRequest("GET", "/ping", nil)
 	req.Header.Set("X-Idempotency-Key", "test")
 
+	if v := Header(req); v != "test" {
+		t.Fatalf("got %q", v)
+	}
+
 	key, seen := FromRequest(req, nil)
 	if key != "test" {
 		t.Errorf("got %q", key)
