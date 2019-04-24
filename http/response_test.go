@@ -9,7 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/moov-io/base"
 	"github.com/moov-io/base/idempotent/lru"
+
+	"github.com/go-kit/kit/log"
+	"github.com/gorilla/mux"
 )
 
 func TestResponse__Wrap(t *testing.T) {
@@ -67,5 +71,44 @@ func TestResponse__EnsureHeadersFail(t *testing.T) {
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("got HTTP code: %d", w.Code)
+	}
+}
+
+func TestResposne__Idempotency(t *testing.T) {
+	logger := log.NewNopLogger()
+	idempot := lru.New()
+
+	router := mux.NewRouter()
+	router.Methods("GET").Path("/test").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w, err := EnsureHeaders(logger, nil, idempot, w, r)
+		if err != nil {
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("PONG"))
+	})
+
+	key := base.ID()
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("x-idempotency-key", key)
+	req.Header.Set("x-user-id", base.ID())
+
+	// mark the key as seen
+	if seen := idempot.SeenBefore(key); seen {
+		t.Errorf("shouldn't have been seen before")
+	}
+
+	// make our request
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	w.Flush()
+
+	if w.Code != http.StatusPreconditionFailed {
+		t.Errorf("got %d", w.Code)
+	}
+
+	// Key should be seen now
+	if seen := idempot.SeenBefore(key); !seen {
+		t.Errorf("should have seen %q", key)
 	}
 }
