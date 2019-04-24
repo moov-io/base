@@ -69,7 +69,7 @@ func TestIdempotent__SeenBefore(t *testing.T) {
 }
 
 func TestIdempotent__truncate(t *testing.T) {
-	s1 := "1234567890123456789012345678901234567890" // 40 characters
+	s1 := "12345678901234567890123456789012345678901234567890123" // 53 characters
 	s2 := truncate(s1)
 	if s1 == s2 {
 		t.Errorf("strings shouldn't match")

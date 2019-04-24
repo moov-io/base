@@ -12,7 +12,7 @@ import (
 
 const (
 	// maxIdempotencyKeyLength is the longest X-Idempotency-Key string legnth allowed.
-	maxIdempotencyKeyLength = 36
+	maxIdempotencyKeyLength = 50
 )
 
 var (
