@@ -7,6 +7,7 @@ package http
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/moov-io/base"
@@ -21,6 +22,7 @@ func TestResponse__Wrap(t *testing.T) {
 	req.Header.Set("Origin", "https://moov.io/demo")
 
 	w := httptest.NewRecorder()
+
 	ww := Wrap(nil, nil, w, req)
 	ww.WriteHeader(http.StatusTeapot)
 	w.Flush()
@@ -36,12 +38,14 @@ func TestResponse__Wrap(t *testing.T) {
 func TestResposne_EnsureHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "https://api.moov.io/v1/ach/ping", nil)
 	req.Header.Set("x-user-id", "junk")
+	req.Header.Set("x-request-id", base.ID())
 	req.Header.Set("Origin", "https://moov.io/demo")
 
 	rec := lru.New()
 	w := httptest.NewRecorder()
 
-	ww, err := EnsureHeaders(nil, nil, rec, w, req)
+	logger := log.NewLogfmtLogger(os.Stderr)
+	ww, err := EnsureHeaders(logger, nil, rec, w, req)
 	if err != nil {
 		t.Error(err)
 	}
