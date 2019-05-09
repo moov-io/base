@@ -20,13 +20,14 @@ import (
 // valid port above 1024.
 var serviceBinds = map[string]string{
 	// Never change existing records, just add new records.
-	"ach":     ":8080",
-	"auth":    ":8081",
-	"paygate": ":8082",
-	"x9":      ":8083",
-	"ofac":    ":8084",
-	"gl":      ":8085",
-	"fed":     ":8086",
+	"ach":       ":8080",
+	"auth":      ":8081",
+	"paygate":   ":8082",
+	"x9":        ":8083",
+	"ofac":      ":8084",
+	"gl":        ":8085",
+	"fed":       ":8086",
+	"customers": ":8087",
 }
 
 // HTTP returns the local bind address for a Moov service.
