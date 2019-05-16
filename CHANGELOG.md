@@ -3,6 +3,8 @@
 ADDITIONS
 
 - idempotent: add [`Header(*http.Request) string`](https://godoc.org/github.com/moov-io/base/idempotent#Header) and `HeaderKey`
+- http/bind: add customers port
+- http/bind: rename gl to accounts
 
 BUG FIXES
 
