@@ -29,6 +29,7 @@ var serviceBinds = map[string]string{
 	"accounts":  ":8085",
 	"fed":       ":8086",
 	"customers": ":8087",
+	"wire":      ":8088",
 }
 
 // HTTP returns the local bind address for a Moov service.
