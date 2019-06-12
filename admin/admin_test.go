@@ -60,3 +60,27 @@ func TestAdmin__AddHandler(t *testing.T) {
 		t.Errorf("response was %q", v)
 	}
 }
+
+func TestAdmin__BindAddr(t *testing.T) {
+	svc := NewServer(":0")
+
+	svc.AddHandler("/test/ping", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	go svc.Listen()
+	defer svc.Shutdown()
+
+	if v := svc.BindAddr(); v == ":0" {
+		t.Errorf("BindAddr: %v", v)
+	}
+
+	resp, err := http.DefaultClient.Get("http://localhost" + svc.BindAddr() + "/test/ping")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("bogus HTTP status code: %d", resp.StatusCode)
+	}
+}
