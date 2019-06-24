@@ -126,7 +126,7 @@ func TestTime__ruby(t *testing.T) {
 		}
 	}
 
-	tt, err := time.Parse(iso8601Format, "2018-11-18T09:04:23-08:00")
+	tt, err := time.Parse(ISO8601Format, "2018-11-18T09:04:23-08:00")
 	if err != nil {
 		t.Fatal(err)
 	}
