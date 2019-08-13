@@ -18,9 +18,9 @@ matrix:
           - "/Users/travis/Library/Caches/go-build" # GOCACHE
     - os: windows
       go: 1.12.x
-      # cache:
-      #   directories:
-      #     - "/Users/travis/Library/Caches/go-build" # GOCACHE
+      cache:
+        directories:
+          - "C:\\Users\\travis\\AppData\\Local\\go-build"
 
 dist: xenial # Ubuntu 16.04
 
