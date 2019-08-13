@@ -49,7 +49,10 @@ func TestHealth__LiveHTTP(t *testing.T) {
 	defer svc.Shutdown()
 
 	// no checks, should be healthy
-	resp, _ := http.DefaultClient.Get("http://localhost:13993/live")
+	resp, err := http.DefaultClient.Get("http://localhost:13993/live")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
@@ -59,7 +62,10 @@ func TestHealth__LiveHTTP(t *testing.T) {
 	svc.AddLivenessCheck("live-good", func() error {
 		return nil
 	})
-	resp, _ = http.DefaultClient.Get("http://localhost:13993/live")
+	resp, err = http.DefaultClient.Get("http://localhost:13993/live")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
@@ -69,7 +75,10 @@ func TestHealth__LiveHTTP(t *testing.T) {
 	svc.AddLivenessCheck("live-bad", func() error {
 		return errors.New("unhealthy")
 	})
-	resp, _ = http.DefaultClient.Get("http://localhost:13993/live")
+	resp, err = http.DefaultClient.Get("http://localhost:13993/live")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
@@ -97,7 +106,10 @@ func TestHealth__ReadyHTTP(t *testing.T) {
 	defer svc.Shutdown()
 
 	// no checks, should be healthy
-	resp, _ := http.DefaultClient.Get("http://localhost:13994/ready")
+	resp, err := http.DefaultClient.Get("http://localhost:13994/ready")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
@@ -107,7 +119,10 @@ func TestHealth__ReadyHTTP(t *testing.T) {
 	svc.AddReadinessCheck("ready-good", func() error {
 		return nil
 	})
-	resp, _ = http.DefaultClient.Get("http://localhost:13994/ready")
+	resp, err = http.DefaultClient.Get("http://localhost:13994/ready")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
@@ -117,7 +132,10 @@ func TestHealth__ReadyHTTP(t *testing.T) {
 	svc.AddReadinessCheck("ready-bad", func() error {
 		return errors.New("unhealthy")
 	})
-	resp, _ = http.DefaultClient.Get("http://localhost:13994/ready")
+	resp, err = http.DefaultClient.Get("http://localhost:13994/ready")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("bogus HTTP status: %s", resp.Status)
 	}
