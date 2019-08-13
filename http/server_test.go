@@ -116,21 +116,21 @@ func TestHTTP_InternalError(t *testing.T) {
 	}
 }
 
-func TestHTTP__GetRequestId(t *testing.T) {
+func TestHTTP__GetRequestID(t *testing.T) {
 	r := httptest.NewRequest("GET", "/ping", nil)
-	r.Header.Set("x-request-id", "requestId")
+	r.Header.Set("x-request-id", "requestID")
 
-	if requestId := GetRequestId(r); requestId != "requestId" {
-		t.Errorf("got %s", requestId)
+	if requestID := GetRequestID(r); requestID != "requestID" {
+		t.Errorf("got %s", requestID)
 	}
 }
 
-func TestHTTP__GetUserId(t *testing.T) {
+func TestHTTP__GetUserID(t *testing.T) {
 	r := httptest.NewRequest("GET", "/ping", nil)
-	r.Header.Set("x-user-id", "userId")
+	r.Header.Set("x-user-id", "userID")
 
-	if userId := GetUserId(r); userId != "userId" {
-		t.Errorf("got %s", userId)
+	if userID := GetUserID(r); userID != "userID" {
+		t.Errorf("got %s", userID)
 	}
 }
 

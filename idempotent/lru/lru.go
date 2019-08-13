@@ -2,7 +2,7 @@
 // Use of this source code is governed by an Apache License
 // license that can be found in the LICENSE file.
 
-// lru is a simple inmemory Recorder implementation. This implementation
+// Package lru is a simple inmemory Recorder implementation. This implementation
 // is intended for simple usecases (local dev) and not production workloads.
 package lru
 
@@ -18,6 +18,7 @@ var (
 	defaultValue = struct{}{}
 )
 
+// New returns an in-memory LRU instance
 func New() *Mem {
 	cache, _ := hashlru.New(defaultLRUSize)
 	return &Mem{
@@ -25,10 +26,12 @@ func New() *Mem {
 	}
 }
 
+// Mem represents an in-memory LRU
 type Mem struct {
 	cache *hashlru.Cache
 }
 
+// SeenBefore sets a HTTP response code as an error for previously seen idempotency keys.
 func (m *Mem) SeenBefore(key string) bool {
 	if m == nil {
 		return false
