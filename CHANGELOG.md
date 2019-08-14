@@ -1,4 +1,4 @@
-## v0.10.0 (Unreleased)
+## v0.10.0 (Released 2019-08-13)
 
 BREAKING CHANGES
 
