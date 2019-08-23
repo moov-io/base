@@ -1,3 +1,9 @@
+## v0.11.0 (Unreleased)
+
+ADDITIONS
+
+- admin: add a handler to print the version on 'GET /version'
+
 ## v0.10.0 (Released 2019-08-13)
 
 BREAKING CHANGES
