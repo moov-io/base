@@ -92,6 +92,14 @@ func (s *Server) AddHandler(path string, hf http.HandlerFunc) {
 	s.router.HandleFunc(path, hf)
 }
 
+// AddVersionHandler will append 'GET /version' route returning the provided version
+func (s *Server) AddVersionHandler(version string) {
+	s.AddHandler("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(version))
+	})
+}
+
 // profileEnabled returns if a given pprof handler should be
 // enabled according to pprofHandlers and the PPROF_* environment
 // variables.

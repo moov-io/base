@@ -61,6 +61,29 @@ func TestAdmin__AddHandler(t *testing.T) {
 	}
 }
 
+func TestAdmin__AddVersionHandler(t *testing.T) {
+	svc := NewServer(":0")
+	go svc.Listen()
+	defer svc.Shutdown()
+
+	svc.AddVersionHandler("v0.1.0")
+
+	req, _ := http.NewRequest("GET", "http://localhost"+svc.BindAddr()+"/version", nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("bogus HTTP status: %d", resp.StatusCode)
+	}
+	bs, _ := ioutil.ReadAll(resp.Body)
+	if v := string(bs); v != "v0.1.0" {
+		t.Errorf("got %s", v)
+	}
+}
+
 func TestAdmin__BindAddr(t *testing.T) {
 	svc := NewServer(":0")
 
