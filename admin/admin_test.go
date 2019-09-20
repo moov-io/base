@@ -16,14 +16,20 @@ func TestAdmin__pprof(t *testing.T) {
 	defer svc.Shutdown()
 
 	// Check for Prometheus metrics endpoint
-	resp, _ := http.DefaultClient.Get("http://localhost:13983/metrics")
+	resp, err := http.DefaultClient.Get("http://localhost:13983/metrics")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status code: %s", resp.Status)
 	}
 	resp.Body.Close()
 
 	// Check always on pprof endpoint
-	resp, _ = http.DefaultClient.Get("http://localhost:13983/debug/pprof/cmdline")
+	resp, err = http.DefaultClient.Get("http://localhost:13983/debug/pprof/cmdline")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status code: %s", resp.Status)
 	}
@@ -45,7 +51,10 @@ func TestAdmin__AddHandler(t *testing.T) {
 	}
 	svc.AddHandler("/special-path", special)
 
-	req, _ := http.NewRequest("GET", "http://localhost:13984/special-path", nil)
+	req, err := http.NewRequest("GET", "http://localhost:13984/special-path", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -61,6 +70,21 @@ func TestAdmin__AddHandler(t *testing.T) {
 	}
 }
 
+func TestAdmin__fullAddress(t *testing.T) {
+	svc := NewServer("127.0.0.1:13985")
+	go svc.Listen()
+	defer svc.Shutdown()
+
+	resp, err := http.DefaultClient.Get("http://localhost:13985/metrics")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("bogus HTTP status code: %s", resp.Status)
+	}
+	resp.Body.Close()
+}
+
 func TestAdmin__AddVersionHandler(t *testing.T) {
 	svc := NewServer(":0")
 	go svc.Listen()
@@ -68,7 +92,10 @@ func TestAdmin__AddVersionHandler(t *testing.T) {
 
 	svc.AddVersionHandler("v0.1.0")
 
-	req, _ := http.NewRequest("GET", "http://localhost"+svc.BindAddr()+"/version", nil)
+	req, err := http.NewRequest("GET", "http://"+svc.BindAddr()+"/version", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -81,6 +108,18 @@ func TestAdmin__AddVersionHandler(t *testing.T) {
 	bs, _ := ioutil.ReadAll(resp.Body)
 	if v := string(bs); v != "v0.1.0" {
 		t.Errorf("got %s", v)
+	}
+}
+
+func TestAdmin__Listen(t *testing.T) {
+	svc := &Server{}
+	if err := svc.Listen(); err != nil {
+		t.Error("expected no error")
+	}
+
+	svc = nil
+	if err := svc.Listen(); err != nil {
+		t.Error("expected no error")
 	}
 }
 
@@ -98,7 +137,7 @@ func TestAdmin__BindAddr(t *testing.T) {
 		t.Errorf("BindAddr: %v", v)
 	}
 
-	resp, err := http.DefaultClient.Get("http://localhost" + svc.BindAddr() + "/test/ping")
+	resp, err := http.DefaultClient.Get("http://" + svc.BindAddr() + "/test/ping")
 	if err != nil {
 		t.Fatal(err)
 	}
