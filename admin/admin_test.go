@@ -111,6 +111,18 @@ func TestAdmin__AddVersionHandler(t *testing.T) {
 	}
 }
 
+func TestAdmin__Listen(t *testing.T) {
+	svc := &Server{}
+	if err := svc.Listen(); err != nil {
+		t.Error("expected no error")
+	}
+
+	svc = nil
+	if err := svc.Listen(); err != nil {
+		t.Error("expected no error")
+	}
+}
+
 func TestAdmin__BindAddr(t *testing.T) {
 	svc := NewServer(":0")
 
