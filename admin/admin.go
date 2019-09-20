@@ -27,27 +27,27 @@ import (
 // Callers can use ':0' to bind onto a random port and call BindAddr() for the address.
 func NewServer(addr string) *Server {
 	timeout, _ := time.ParseDuration("45s")
-	router := handler()
 
-	if strings.HasSuffix(addr, ":0") {
-		l, _ := net.Listen("tcp", "127.0.0.1:0")
-		if l != nil {
-			l.Close()
-			parts := strings.Split(l.Addr().String(), ":")
-			addr = ":" + addr[:len(addr)-2] + parts[len(parts)-1]
-		}
+	var listener net.Listener
+	if addr == ":0" {
+		listener, _ = net.Listen("tcp", "127.0.0.1:0")
+	} else {
+		listener, _ = net.Listen("tcp", addr)
 	}
 
+	router := handler()
 	svc := &Server{
-		router: router,
+		router:   router,
+		listener: listener,
 		svc: &http.Server{
-			Addr:         addr,
+			Addr:         listener.Addr().String(),
 			Handler:      router,
 			ReadTimeout:  timeout,
 			WriteTimeout: timeout,
 			IdleTimeout:  timeout,
 		},
 	}
+
 	svc.AddHandler("/live", svc.livenessHandler())
 	svc.AddHandler("/ready", svc.readinessHandler())
 	return svc
@@ -56,8 +56,9 @@ func NewServer(addr string) *Server {
 // Server represents a holder around a net/http Server which
 // is used for admin endpoints. (i.e. metrics, healthcheck)
 type Server struct {
-	router *mux.Router
-	svc    *http.Server
+	router   *mux.Router
+	svc      *http.Server
+	listener net.Listener
 
 	liveChecks  []*healthCheck
 	readyChecks []*healthCheck
@@ -68,15 +69,15 @@ func (s *Server) BindAddr() string {
 	if s == nil || s.svc == nil {
 		return ""
 	}
-	return s.svc.Addr
+	return s.listener.Addr().String()
 }
 
 // Listen brings up the admin HTTP server. This call blocks until the server is Shutdown or panics.
 func (s *Server) Listen() error {
-	if s == nil || s.svc == nil {
+	if s == nil || s.svc == nil || s.listener == nil {
 		return nil
 	}
-	return s.svc.ListenAndServe()
+	return s.svc.Serve(s.listener)
 }
 
 // Shutdown unbinds the HTTP server.
