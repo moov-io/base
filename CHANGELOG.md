@@ -1,4 +1,4 @@
-## v0.11.0 (Unreleased)
+## v0.11.0 (Released 2020-01-16)
 
 ADDITIONS
 
