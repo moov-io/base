@@ -25,9 +25,6 @@ Twitter [@moov_io](https://twitter.com/moov_io)	| You can follow Moov.IO's Twitt
 ## Supported and Tested Platforms
 
 - 64-bit Linux (Ubuntu, Debian), macOS, and Windows
-- Rasberry Pi
-
-Note: 32-bit platforms have known issues and is not supported.
 
 ## Contributing
 
