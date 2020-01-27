@@ -8,10 +8,6 @@ moov-io/base
 
 Package `github.com/moov-io/base` implements core libraries used in multiple Moov projects. Refer to each projects documentation for more details.
 
-## Project Status
-
-Note: This project is under active development and is not production ready, but we would appreciate feedback and contributions!
-
 ## Getting Started
 
 You can either clone down the code (`git clone git@github.com:moov-io/base.git`) or grab the modules into your cache (`go get -u github.com/moov-io/base`).
