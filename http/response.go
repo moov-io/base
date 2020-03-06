@@ -36,7 +36,7 @@ type ResponseWriter struct {
 // WriteHeader sends an HTTP response header with the provided status code, records response duration,
 // and optionally records the HTTP metadata in a go-kit log.Logger
 func (w *ResponseWriter) WriteHeader(code int) {
-	if w.headersWritten {
+	if w == nil || w.headersWritten {
 		return
 	}
 	w.headersWritten = true
@@ -47,7 +47,7 @@ func (w *ResponseWriter) WriteHeader(code int) {
 
 	// Record route timing
 	diff := time.Since(w.start)
-	if w != nil && w.metric != nil {
+	if w.metric != nil {
 		w.metric.Observe(diff.Seconds())
 	}
 
