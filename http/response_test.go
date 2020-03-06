@@ -14,7 +14,16 @@ import (
 	"github.com/moov-io/base/idempotent/lru"
 
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gorilla/mux"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	routeHistogram = prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+		Name: "http_response_duration_seconds",
+		Help: "Histogram representing the http response durations",
+	}, nil)
 )
 
 func TestResponse__Wrap(t *testing.T) {
@@ -23,7 +32,7 @@ func TestResponse__Wrap(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	ww := Wrap(nil, nil, w, req)
+	ww := Wrap(nil, routeHistogram, w, req)
 	ww.WriteHeader(http.StatusTeapot)
 	w.Flush()
 
