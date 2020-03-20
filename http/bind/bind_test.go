@@ -18,6 +18,12 @@ func TestBind(t *testing.T) {
 	if admin != ":9091" {
 		t.Errorf("got %s", admin)
 	}
+	if port := HTTP("console"); port != ":8100" {
+		t.Errorf("got %s", port)
+	}
+	if port := Admin("console"); port != ":9110" {
+		t.Errorf("got %s", port)
+	}
 
 	// invalid
 	if v := HTTP("other"); v != "" {
