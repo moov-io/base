@@ -263,3 +263,26 @@ func TestTime__Conversions(t *testing.T) {
 		t.Errorf("%v but expected to fall on Christmas", t)
 	}
 }
+
+func TestTime__SundayHoliday(t *testing.T) {
+	// "if any holiday falls on a Sunday, the next following Monday is a standard
+	// Federal Reserve Bank holiday. ... process the file on the first business
+	// day after the original posting date."
+	//
+	// 2021-07-04 (July 4th) is on a Sunday
+	eastern, _ := time.LoadLocation("America/New_York")
+	ts := NewTime(time.Date(2021, time.July, 4, 10, 30, 0, 0, eastern)) // 10:30am
+
+	if ts.IsBankingDay() || !ts.IsWeekend() {
+		t.Errorf("%s it not a banking day", ts)
+	}
+
+	// move ahead 1 banking day
+	ts = ts.AddBankingDay(1)
+	if ts.Year() != 2021 || ts.Month() != time.July || ts.Day() != 6 {
+		t.Errorf("unexpected banking day: %s", ts)
+	}
+	if wd := ts.Weekday(); wd != time.Tuesday {
+		t.Errorf("expected Tuesday, got %s", wd)
+	}
+}
