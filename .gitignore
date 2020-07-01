@@ -34,6 +34,11 @@ _testmain.go
 *.test
 *.prof
 
+/bin/
+misspell*
+staticcheck*
+lint-project.sh
+
 .vscode/launch.json
 
 # code coverage
