@@ -44,5 +44,6 @@ lint-project.sh
 # code coverage
 coverage.html
 cover.out
+coverage.txt
 
 *.pyc
