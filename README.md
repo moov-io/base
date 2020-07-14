@@ -12,6 +12,12 @@ Package `github.com/moov-io/base` implements core libraries used in multiple Moo
 
 You can either clone down the code (`git clone git@github.com:moov-io/base.git`) or grab the modules into your cache (`go get -u github.com/moov-io/base`).
 
+## Configuration
+
+| Environmental Variable                | Description                            | Default                          |
+|---------------------------------------|----------------------------------------|----------------------------------|
+| `KUBERNETES_SERVICE_ACCOUNT_FILEPATH` | Filepath to Kubernetes service account | `/var/run/secrets/kubernetes.io` |
+
 ## Getting Help
 
  channel | info
