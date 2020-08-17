@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/moov-io/base/strx"
 )
 
 const (
@@ -109,5 +110,5 @@ func GetRequestID(r *http.Request) string {
 
 // GetUserID returns the Moov userId from HTTP headers
 func GetUserID(r *http.Request) string {
-	return r.Header.Get("X-User-Id")
+	return strx.Or(r.Header.Get("X-User"), r.Header.Get("X-User-Id"))
 }
