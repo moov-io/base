@@ -132,6 +132,13 @@ func TestHTTP__GetUserID(t *testing.T) {
 	if userID := GetUserID(r); userID != "userID" {
 		t.Errorf("got %s", userID)
 	}
+
+	r = httptest.NewRequest("GET", "/ping", nil)
+	r.Header.Set("x-user", "other")
+
+	if userID := GetUserID(r); userID != "other" {
+		t.Errorf("got %s", userID)
+	}
 }
 
 func TestHTTP__truncate(t *testing.T) {
