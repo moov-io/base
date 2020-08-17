@@ -9,14 +9,17 @@ import (
 )
 
 func TestOr(t *testing.T) {
+	if v := Or(); v != "" {
+		t.Errorf("got %q", v)
+	}
 	if v := Or("", "backup"); v != "backup" {
-		t.Errorf("v=%s", v)
+		t.Errorf("got %q", v)
 	}
 	if v := Or("primary", ""); v != "primary" {
-		t.Errorf("v=%s", v)
+		t.Errorf("got %q", v)
 	}
 	if v := Or("primary", "backup"); v != "primary" {
-		t.Errorf("v=%s", v)
+		t.Errorf("got %q", v)
 	}
 }
 
