@@ -116,8 +116,14 @@ func GetUserID(r *http.Request) string {
 
 // ReadSkipAndCount returns the skip and count pagination values from the query
 func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool) {
-	skip, _ = strconv.Atoi(r.URL.Query().Get("skip"))
-	count, _ = strconv.Atoi(r.URL.Query().Get("count"))
+	skip, err := strconv.Atoi(r.URL.Query().Get("skip"))
+	if err != nil {
+		skip = 0
+	}
+	count, err = strconv.Atoi(r.URL.Query().Get("count"))
+	if err != nil {
+		count = 0
+	}
 	exists = skip > 0 || count > 0
 	return skip, count, exists
 }
