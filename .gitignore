@@ -47,3 +47,5 @@ cover.out
 coverage.txt
 
 *.pyc
+
+.idea/*

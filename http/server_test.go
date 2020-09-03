@@ -156,3 +156,45 @@ func TestHTTP__truncate(t *testing.T) {
 		t.Errorf("strings should match: s1=%s s2=%s", s1, s2)
 	}
 }
+
+func TestGetSkipAndCount(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?skip=10&count=20", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 10 {
+		t.Errorf("skip should be 10. got : %d", skip)
+	}
+	if count != 20 {
+		t.Errorf("count should be 20. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetSkipAndCountWhenNotProvided(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 0 {
+		t.Errorf("skip should be 0. got : %d", skip)
+	}
+	if count != 0 {
+		t.Errorf("count should be 0. got : %d", count)
+	}
+	if exists != false {
+		t.Errorf("exists should be false. got : %t", exists)
+	}
+}
+
+func TestGetSkipAndCountWhenOnlyOneProvided(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?count=10", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 0 {
+		t.Errorf("skip should be 0. got : %d", skip)
+	}
+	if count != 10 {
+		t.Errorf("count should be 10. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}

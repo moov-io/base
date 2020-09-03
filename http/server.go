@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -111,4 +112,12 @@ func GetRequestID(r *http.Request) string {
 // GetUserID returns the Moov userId from HTTP headers
 func GetUserID(r *http.Request) string {
 	return strx.Or(r.Header.Get("X-User"), r.Header.Get("X-User-Id"))
+}
+
+// ReadSkipAndCount returns the skip and count pagination values from the query
+func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool) {
+	skip, _ = strconv.Atoi(r.URL.Query().Get("skip"))
+	count, _ = strconv.Atoi(r.URL.Query().Get("count"))
+	exists = skip > 0 || count > 0
+	return skip, count, exists
 }
