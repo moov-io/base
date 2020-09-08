@@ -146,9 +146,6 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors 
 			// TODO - Add this to a config somewhere?
 			count = 20
 		}
-		if skip > 1 {
-			skip = int(int64(skip))
-		}
 	}
 	return skip, count, exists, errors
 }
