@@ -123,21 +123,21 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors 
 	skipVal := r.URL.Query().Get("skip")
 	var err error
 	skip, err = strconv.Atoi(skipVal)
+	if err != nil && len(skipVal) > 0 {
+		errors = append(errors, err)
+		skip = 0
+	}
 	skip = int(math.Min(float64(skip), 10000))
 	skip = int(math.Max(0, float64(skip)))
-	if err != nil && skip == 0 && skipVal != "" {
-		errors = append(errors, err)
-		skip = -1
-	}
 
 	countVal := r.URL.Query().Get("count")
-	count, _ = strconv.Atoi(countVal)
+	count, err = strconv.Atoi(countVal)
+	if err != nil && len(countVal) > 0 {
+		errors = append(errors, err)
+		count = 0
+	}
 	count = int(math.Min(float64(count), 200))
 	count = int(math.Max(0, float64(count)))
-	if err != nil && count == 0 && countVal != "" {
-		errors = append(errors, err)
-		count = -1
-	}
 
 	exists = skipVal != "" || countVal != ""
 	return skip, count, exists, errors

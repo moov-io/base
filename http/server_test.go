@@ -265,8 +265,8 @@ func TestGetSkipAndCountErrorParsingCount(t *testing.T) {
 	if skip != 0 {
 		t.Errorf("skip should be 0. got : %d", skip)
 	}
-	if count != -1 {
-		t.Errorf("count should be -1. got : %d", count)
+	if count != 0 {
+		t.Errorf("count should be 0. got : %d", count)
 	}
 	if exists != true {
 		t.Errorf("exists should be true. got : %t", exists)
@@ -279,8 +279,8 @@ func TestGetSkipAndCountErrorParsingCount(t *testing.T) {
 func TestGetSkipAndCountErrorParsingSkip(t *testing.T) {
 	r := httptest.NewRequest("GET", "/ping?skip=123abc123", nil)
 	skip, count, exists, errors := GetSkipAndCount(r)
-	if skip != -1 {
-		t.Errorf("skip should be -1. got : %d", skip)
+	if skip != 0 {
+		t.Errorf("skip should be 0. got : %d", skip)
 	}
 	if count != 0 {
 		t.Errorf("count should be 0. got : %d", count)
