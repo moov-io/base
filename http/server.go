@@ -119,34 +119,31 @@ func GetUserID(r *http.Request) string {
 // skip is the number of records to pass over before starting a search
 // count is the number of records to retrieve in the search
 // exists indicates if skip or count was passed into the request URL
-func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors []error) {
+func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, err error) {
 	skipVal := r.URL.Query().Get("skip")
-	var err error
+	countVal := r.URL.Query().Get("count")
+	exists = len(skipVal) > 0 || len(countVal) > 0
 	skip, err = strconv.Atoi(skipVal)
 	if err != nil && len(skipVal) > 0 {
-		errors = append(errors, err)
 		skip = 0
+		return skip, count, exists, err
 	}
 	// Cap skip at 10000
 	skip = int(math.Min(float64(skip), 10000))
 	skip = int(math.Max(0, float64(skip)))
 
-	countVal := r.URL.Query().Get("count")
 	count, err = strconv.Atoi(countVal)
 	if err != nil && len(countVal) > 0 {
-		errors = append(errors, err)
 		count = 0
+		return skip, count, exists, err
 	}
 	// Cap count at 200
 	count = int(math.Min(float64(count), 200))
 	count = int(math.Max(0, float64(count)))
-	exists = skipVal != "" || countVal != ""
 
-	// If no errors, set defaults
-	if len(errors) == 0 {
-		if count == 0 {
-			count = 20
-		}
+	if count == 0 {
+		count = 20
 	}
-	return skip, count, exists, errors
+
+	return skip, count, exists, nil
 }
