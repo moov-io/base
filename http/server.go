@@ -138,7 +138,17 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors 
 	}
 	count = int(math.Min(float64(count), 200))
 	count = int(math.Max(0, float64(count)))
-
 	exists = skipVal != "" || countVal != ""
+
+	// If no errors, set defaults
+	if len(errors) == 0 {
+		if count == 0 {
+			// TODO - Add this to a config somewhere?
+			count = 20
+		}
+		if skip > 1 {
+			skip = int(int64(skip))
+		}
+	}
 	return skip, count, exists, errors
 }
