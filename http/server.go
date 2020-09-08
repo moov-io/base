@@ -127,6 +127,8 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors 
 		errors = append(errors, err)
 		skip = 0
 	}
+	// TODO - Add this to a config somewhere?
+	// Cap skip at 10000
 	skip = int(math.Min(float64(skip), 10000))
 	skip = int(math.Max(0, float64(skip)))
 
@@ -136,6 +138,8 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, errors 
 		errors = append(errors, err)
 		count = 0
 	}
+	// TODO - Add this to a config somewhere?
+	// Cap count at 200
 	count = int(math.Min(float64(count), 200))
 	count = int(math.Max(0, float64(count)))
 	exists = skipVal != "" || countVal != ""
