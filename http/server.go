@@ -7,6 +7,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -114,16 +115,27 @@ func GetUserID(r *http.Request) string {
 	return strx.Or(r.Header.Get("X-User"), r.Header.Get("X-User-Id"))
 }
 
-// ReadSkipAndCount returns the skip and count pagination values from the query
+// GetSkipAndCount returns the skip and count pagination values from the query parameters
+// skip is the number of records to pass over before starting a search
+// count is the number of records to retrieve in the search
+// exists indicates if skip or count was passed into the request URL
 func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool) {
-	skip, err := strconv.Atoi(r.URL.Query().Get("skip"))
-	if err != nil {
-		skip = 0
+	skipVal := r.URL.Query().Get("skip")
+	skip, _ = strconv.Atoi(skipVal)
+	skip = int(math.Min(float64(skip), 10000))
+	skip = int(math.Max(0, float64(skip)))
+	if skip == 0 && skipVal != "" {
+		skip = -1
 	}
-	count, err = strconv.Atoi(r.URL.Query().Get("count"))
-	if err != nil {
-		count = 0
+
+	countVal := r.URL.Query().Get("count")
+	count, _ = strconv.Atoi(countVal)
+	count = int(math.Min(float64(count), 200))
+	count = int(math.Max(0, float64(count)))
+	if count == 0 && countVal != "" {
+		count = -1
 	}
-	exists = skip > 0 || count > 0
+
+	exists = skipVal != "" || countVal != ""
 	return skip, count, exists
 }

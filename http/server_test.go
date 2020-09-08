@@ -167,7 +167,7 @@ func TestGetSkipAndCount(t *testing.T) {
 		t.Errorf("count should be 20. got : %d", count)
 	}
 	if exists != true {
-		t.Errorf("exists should be true. got : %t", exists)
+		t.Errorf("exists should be false. got : %t", exists)
 	}
 }
 
@@ -185,7 +185,7 @@ func TestGetSkipAndCountWhenNotProvided(t *testing.T) {
 	}
 }
 
-func TestGetSkipAndCountWhenOnlyOneProvided(t *testing.T) {
+func TestGetSkipAndCountWhenOnlyCountProvided(t *testing.T) {
 	r := httptest.NewRequest("GET", "/ping?count=10", nil)
 	skip, count, exists := GetSkipAndCount(r)
 	if skip != 0 {
@@ -193,6 +193,76 @@ func TestGetSkipAndCountWhenOnlyOneProvided(t *testing.T) {
 	}
 	if count != 10 {
 		t.Errorf("count should be 10. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetSkipAndCountWhenOnlySkipProvided(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?skip=10", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 10 {
+		t.Errorf("skip should be 10. got : %d", skip)
+	}
+	if count != 0 {
+		t.Errorf("count should be 0. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetCountMaxWhenCountProvidedLargerThanMax(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?count=201", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 0 {
+		t.Errorf("skip should be 0. got : %d", skip)
+	}
+	if count != 200 {
+		t.Errorf("count should be 200. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetSkipMaxWhenSkipProvidedLargerThanMax(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?skip=10050", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 10000 {
+		t.Errorf("skip should be 10000. got : %d", skip)
+	}
+	if count != 0 {
+		t.Errorf("count should be 0. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetSkipAndCountErrorParsingCount(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?count=123abc123", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != 0 {
+		t.Errorf("skip should be 0. got : %d", skip)
+	}
+	if count != -1 {
+		t.Errorf("count should be -1. got : %d", count)
+	}
+	if exists != true {
+		t.Errorf("exists should be true. got : %t", exists)
+	}
+}
+
+func TestGetSkipAndCountErrorParsingSkip(t *testing.T) {
+	r := httptest.NewRequest("GET", "/ping?skip=123abc123", nil)
+	skip, count, exists := GetSkipAndCount(r)
+	if skip != -1 {
+		t.Errorf("skip should be -1. got : %d", skip)
+	}
+	if count != 0 {
+		t.Errorf("count should be 0. got : %d", count)
 	}
 	if exists != true {
 		t.Errorf("exists should be true. got : %t", exists)
