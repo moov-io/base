@@ -7,9 +7,11 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -111,4 +113,37 @@ func GetRequestID(r *http.Request) string {
 // GetUserID returns the Moov userId from HTTP headers
 func GetUserID(r *http.Request) string {
 	return strx.Or(r.Header.Get("X-User"), r.Header.Get("X-User-Id"))
+}
+
+// GetSkipAndCount returns the skip and count pagination values from the query parameters
+// skip is the number of records to pass over before starting a search
+// count is the number of records to retrieve in the search
+// exists indicates if skip or count was passed into the request URL
+func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, err error) {
+	skipVal := r.URL.Query().Get("skip")
+	countVal := r.URL.Query().Get("count")
+	exists = len(skipVal) > 0 || len(countVal) > 0
+	skip, err = strconv.Atoi(skipVal)
+	if err != nil && len(skipVal) > 0 {
+		skip = 0
+		return skip, count, exists, err
+	}
+	// Cap skip at 10000
+	skip = int(math.Min(float64(skip), 10000))
+	skip = int(math.Max(0, float64(skip)))
+
+	count, err = strconv.Atoi(countVal)
+	if err != nil && len(countVal) > 0 {
+		count = 0
+		return skip, count, exists, err
+	}
+	// Cap count at 200
+	count = int(math.Min(float64(count), 200))
+	count = int(math.Max(0, float64(count)))
+
+	if count == 0 {
+		count = 20
+	}
+
+	return skip, count, exists, nil
 }
