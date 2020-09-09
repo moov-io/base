@@ -1,3 +1,9 @@
+## v0.11.1 (Released 2019-09-09)
+
+ADDITIONS
+
+- http: Add GetSkipAndCount(r *http.Request) to get 'skip' and 'count' vars from request
+
 ## v0.11.0 (Released 2020-01-16)
 
 ADDITIONS
