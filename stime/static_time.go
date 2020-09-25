@@ -20,7 +20,6 @@ func NewStaticTimeService() StaticTimeService {
 	}
 }
 
-// DeleteInvite - Delete an invite that was sent and invalidate the token.
 func (s *staticTimeService) Now() time.Time {
 	return s.time
 }
