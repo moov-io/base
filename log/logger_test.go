@@ -77,6 +77,12 @@ func Test_CustomKeyValue(t *testing.T) {
 	log.WithKeyValue("custom", "value").Log("test")
 
 	a.Contains(buffer.String(), "custom=value")
+
+	log.WithKeyValue("one", "1", "two", "2", "three").Log("test")
+
+	a.Contains(buffer.String(), "one=1")
+	a.Contains(buffer.String(), "two=2")
+	a.Contains(buffer.String(), "three=(MISSING)")
 }
 
 func Test_CustomMap(t *testing.T) {
