@@ -102,14 +102,8 @@ func (l *logger) WithKeyValue(keyvals ...string) Logger {
 	}
 
 	// split into key/value pars
-	for i, key := range keyvals {
-		// skip for values as they have odd index
-		if i%2 != 0 {
-			continue
-		}
-
-		value := keyvals[i+1]
-		input[key] = value
+	for i := 0; i < len(keyvals); i += 2 {
+		input[keyvals[i]] = keyvals[i+1]
 	}
 
 	return l.WithMap(input)
