@@ -112,7 +112,6 @@ type TestMySQLDB struct {
 
 func (r *TestMySQLDB) Close() error {
 	r.shutdown()
-	defer r.container.Close()
 
 	// Verify all connections are closed before closing DB
 	if conns := r.DB.Stats().OpenConnections; conns != 0 {
@@ -134,25 +133,71 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		t.Skip("Docker not enabled")
 	}
 
-	pool, err := dockertest.NewPool("")
+	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	logger := log.NewNopLogger()
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	db, err := New(ctx, logger, *config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Don't allow idle connections so we can verify all are closed at the end of testing
+	db.SetMaxIdleConns(0)
+
+	return &TestMySQLDB{DB: db, container: container, shutdown: cancelFunc}
+}
+
+func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
+	if config.DatabaseName == "" {
+		config.DatabaseName = "test"
+	}
+
+	if config.MySql == nil {
+		config.MySql = &MySqlConfig{}
+	}
+
+	if config.MySql.User == "" {
+		config.MySql.User = "moov"
+	}
+
+	if config.MySql.Password == "" {
+		config.MySql.Password = "secret"
+	}
+
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return nil, nil, err
+	}
+
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mysql",
 		Tag:        "8",
 		Env: []string{
-			"MYSQL_USER=moov",
-			"MYSQL_PASSWORD=secret",
+			fmt.Sprintf("MYSQL_USER=%s", config.MySql.User),
+			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySql.Password),
 			"MYSQL_ROOT_PASSWORD=secret",
-			"MYSQL_DATABASE=paygate",
+			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
 		},
 	})
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
+
+	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
+	dbURL := fmt.Sprintf("%s:%s@%s/%s",
+		config.MySql.User,
+		config.MySql.Password,
+		address,
+		config.DatabaseName,
+	)
+
 	err = pool.Retry(func() error {
-		db, err := sql.Open("mysql", fmt.Sprintf("moov:secret@tcp(localhost:%s)/paygate", resource.GetPort("3306/tcp")))
+		db, err := sql.Open("mysql", dbURL)
 		if err != nil {
 			return err
 		}
@@ -161,23 +206,17 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	})
 	if err != nil {
 		resource.Close()
-		t.Fatal(err)
+		return nil, nil, err
 	}
 
-	logger := log.NewNopLogger()
-	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	db, err := mysqlConnection(logger, "moov", "secret", address, "paygate").Connect(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Don't allow idle connections so we can verify all are closed at the end of testing
-	db.SetMaxIdleConns(0)
-
-	return &TestMySQLDB{DB: db, container: resource, shutdown: cancelFunc}
+	return &DatabaseConfig{
+		DatabaseName: config.DatabaseName,
+		MySql: &MySqlConfig{
+			Address:  address,
+			User:     config.MySql.User,
+			Password: config.MySql.Password,
+		},
+	}, resource, nil
 }
 
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code
