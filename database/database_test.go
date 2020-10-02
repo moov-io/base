@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/moov-io/base/docker"
@@ -21,19 +20,15 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 		t.SkipNow()
 	}
 
-	config := DatabaseConfig{
-		DatabaseName: "identity",
-		MySql: &MySqlConfig{
-			Address:  "tcp(localhost:4306)",
-			User:     "identity",
-			Password: "identity",
-		},
-	}
-
-	_, close, err := NewAndMigrate(config, nil, nil)
+	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
 	if err != nil {
-		fmt.Printf("%s", err.Error())
-		t.FailNow()
+		t.Fatal(err)
+	}
+	defer container.Close()
+
+	_, close, err := NewAndMigrate(*config, nil, nil)
+	if err != nil {
+		t.Fatal(err)
 	}
 	close()
 }
