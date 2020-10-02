@@ -13,7 +13,7 @@ import (
 type Logger interface {
 	With(ctxs ...Context) Logger
 	WithMap(mapCtx map[string]string) Logger
-	WithKeyValue(key, value string) Logger
+	WithKeyValue(keyvals ...string) Logger
 
 	Info() Logger
 	Error() Logger
@@ -94,10 +94,19 @@ func (l *logger) WithMap(mapCtx map[string]string) Logger {
 	}
 }
 
-func (l *logger) WithKeyValue(key, value string) Logger {
-	return l.WithMap(map[string]string{
-		key: value,
-	})
+func (l *logger) WithKeyValue(keyvals ...string) Logger {
+	input := map[string]string{}
+
+	if len(keyvals)%2 != 0 {
+		keyvals = append(keyvals, log.ErrMissingValue.Error())
+	}
+
+	// split into key/value pars
+	for i := 0; i < len(keyvals); i += 2 {
+		input[keyvals[i]] = keyvals[i+1]
+	}
+
+	return l.WithMap(input)
 }
 
 func (l *logger) Info() Logger {
