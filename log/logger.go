@@ -37,6 +37,10 @@ func NewNopLogger() Logger {
 	return NewLogger(log.NewNopLogger())
 }
 
+func NewJSONLogger() Logger {
+	return NewLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stderr)))
+}
+
 func NewBufferLogger() (*strings.Builder, Logger) {
 	buffer := strings.Builder{}
 	writer := log.NewLogfmtLogger(log.NewSyncWriter(&buffer))

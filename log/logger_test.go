@@ -11,6 +11,7 @@ import (
 func Test_LogImplementations(t *testing.T) {
 	NewDefaultLogger()
 	NewNopLogger()
+	NewJSONLogger()
 }
 
 func Test_Log(t *testing.T) {
