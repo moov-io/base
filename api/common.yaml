@@ -1,0 +1,18 @@
+openapi: 3.0.2
+info:
+  x-fragment: true
+  title: An include file to define common schemas.
+  version: 1.0.0
+
+paths: {}
+
+components:
+  schemas:
+    Error:
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: An error message describing the problem intended for humans.
+          example: Validation error(s) present.
