@@ -23,6 +23,15 @@ func Test_Log(t *testing.T) {
 	a.Contains(buffer.String(), "level=info")
 }
 
+func Test_Logf(t *testing.T) {
+	a, buffer, log := Setup(t)
+
+	log.Logf("my message: %s", "hello")
+
+	a.Contains(buffer.String(), "my message: hello")
+	a.Contains(buffer.String(), "level=info")
+}
+
 func Test_WithContext(t *testing.T) {
 	a, buffer, log := Setup(t)
 

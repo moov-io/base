@@ -20,6 +20,7 @@ type Logger interface {
 	Fatal() Logger
 
 	Log(msg string)
+	Logf(format string, a ...interface{})
 	LogError(msg string, err error) error
 	LogErrorF(format string, a ...interface{}) error
 }
@@ -149,6 +150,11 @@ func (l *logger) Log(msg string) {
 	}
 
 	l.writer.Log(keyvals...)
+}
+
+func (l *logger) Logf(format string, a ...interface{}) {
+	message := fmt.Sprintf(format, a...)
+	l.Log(message)
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.
