@@ -208,10 +208,9 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 			"MYSQL_ROOT_PASSWORD=secret",
 			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
 		},
+	}, func(dockerConfig *dc.HostConfig) {
+		dockerConfig.AutoRemove = true
 	},
-		func(dockerConfig *dc.HostConfig) {
-			dockerConfig.AutoRemove = true
-		},
 	)
 	if err != nil {
 		return nil, nil, err
