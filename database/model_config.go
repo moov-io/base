@@ -1,10 +1,9 @@
 package database
 
 type DatabaseConfig struct {
-	MySql         *MySqlConfig
-	SqlLite       *SqlLiteConfig
-	DatabaseName  string
-	migrationsDir string
+	MySql        *MySqlConfig
+	SqlLite      *SqlLiteConfig
+	DatabaseName string
 }
 
 type MySqlConfig struct {

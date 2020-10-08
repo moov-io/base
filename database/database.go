@@ -38,10 +38,8 @@ func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context
 		db.Close()
 	}
 
-	if config.migrationsDir != "" {
-		if err = RunMigrations(logger, db, config); err != nil {
-			return nil, shutdown, err
-		}
+	if err = RunMigrations(logger, db, config); err != nil {
+		return nil, shutdown, err
 	}
 
 	return db, shutdown, nil

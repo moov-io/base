@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -16,12 +15,9 @@ import (
 )
 
 func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
-	if _, err := os.Stat(config.migrationsDir); os.IsNotExist(err) {
-		return fmt.Errorf("migrations directory=\"%s\" does not exist", config.migrationsDir)
-	}
+	logger.Info().Log("Running Migrations")
 
-	logger.Info().Logf("Running Migrations")
-	_ = pkger.Include(config.migrationsDir)
+	_ = pkger.Include("/migrations/")
 
 	driver, err := GetDriver(db, config)
 	if err != nil {
@@ -29,7 +25,7 @@ func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("pkger://%s", config.migrationsDir),
+		"pkger:///migrations/",
 		config.DatabaseName,
 		driver,
 	)
