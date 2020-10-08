@@ -84,16 +84,6 @@ func sqliteConnection(logger log.Logger, path string) *sqlite {
 	}
 }
 
-func getSqlitePath() string {
-	path := os.Getenv("SQLITE_DB_PATH")
-	if path == "" || strings.Contains(path, "..") {
-		// set default if empty or trying to escape
-		// don't filepath.ABS to avoid full-fs reads
-		path = "paygate.db"
-	}
-	return path
-}
-
 // TestSQLiteDB is a wrapper around sql.DB for SQLite connections designed for tests to provide
 // a clean database for each testcase.  Callers should cleanup with Close() when finished.
 type TestSQLiteDB struct {
