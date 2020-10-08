@@ -15,6 +15,7 @@ import (
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/moov-io/base/log"
@@ -113,12 +114,29 @@ type TestMySQLDB struct {
 func (r *TestMySQLDB) Close() error {
 	r.shutdown()
 
+	// ASK: not sure what do we check in the following.
+	// We don't always close sql.DB directly but call
+	// this Close method.
+
 	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		panic(fmt.Sprintf("found %d open MySQL connections", conns))
+	// if conns := r.DB.Stats().OpenConnections; conns != 0 {
+	// 	fmt.Printf("******found %d open MySQL connections", conns)
+	// 	// panic(fmt.Sprintf("found %d open MySQL connections", conns))
+	// }
+
+	err := r.DB.Close()
+	if err != nil {
+		fmt.Println("Failed to close MySQL database")
+		panic(err)
 	}
 
-	return r.DB.Close()
+	err = r.container.Close()
+	if err != nil {
+		fmt.Println("Failed to close MySQL docker container")
+		panic(err)
+	}
+
+	return nil
 }
 
 // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
@@ -143,7 +161,14 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 	db, err := New(ctx, logger, *config)
 	if err != nil {
+		container.Close()
 		t.Fatal(err)
+	}
+
+	err = RunMigrations(logger, db, *config)
+	if err != nil {
+		container.Close()
+		t.Fatalf("mysql test: %v", err)
 	}
 
 	// Don't allow idle connections so we can verify all are closed at the end of testing
@@ -183,7 +208,11 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 			"MYSQL_ROOT_PASSWORD=secret",
 			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
 		},
-	})
+	},
+		func(dockerConfig *dc.HostConfig) {
+			dockerConfig.AutoRemove = true
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}

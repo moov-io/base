@@ -129,7 +129,15 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, err := sqliteConnection(log.NewNopLogger(), filepath.Join(dir, "paygate.db")).Connect(ctx)
+	// logger = log.NewNopLogger()
+	logger := log.NewDefaultLogger()
+
+	db, err := sqliteConnection(logger, filepath.Join(dir, "paygate.db")).Connect(ctx)
+	if err != nil {
+		t.Fatalf("sqlite test: %v", err)
+	}
+
+	err = RunMigrations(logger, db, DatabaseConfig{SqlLite: &SqlLiteConfig{}})
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
@@ -138,6 +146,7 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 	db.SetMaxIdleConns(0)
 
 	return &TestSQLiteDB{DB: db, dir: dir, shutdown: cancelFunc}
+
 }
 
 // SqliteUniqueViolation returns true when the provided error matches the SQLite error
