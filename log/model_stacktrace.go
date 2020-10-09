@@ -19,7 +19,7 @@ func (s st) Context() map[string]string {
 	c := 0
 	_, file, line, ok := runtime.Caller(i)
 	for ; ok; i++ {
-		if c > 0 || !strings.HasSuffix(file, "logger.go") {
+		if c > 0 || (!strings.HasSuffix(file, "model_stacktrace.go") && !strings.HasSuffix(file, "logger_impl.go")) {
 			key := fmt.Sprintf("caller_%d", c)
 			value := fmt.Sprintf("%s:%d", file, line)
 			kv[key] = value

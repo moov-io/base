@@ -135,7 +135,7 @@ func Test_Caller(t *testing.T) {
 
 	log.Info().With(StackTrace).Log("message")
 
-	a.Contains(buffer.String(), "caller_0=")
+	a.Contains(buffer.String(), "caller_0=/home/jj/Documents/moov/base/log/logger_test.go")
 }
 
 func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, Logger) {
