@@ -14,6 +14,3 @@ type Logger interface {
 	Log(format string, a ...interface{})
 	LogError(format string, a ...interface{}) error
 }
-
-// type LogWriter interface {
-// }
