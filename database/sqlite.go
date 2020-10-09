@@ -112,7 +112,7 @@ func (r *TestSQLiteDB) Close() error {
 //
 // Callers should call close on the returned *TestSQLiteDB.
 func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
-	dir, err := ioutil.TempDir("", "paygate-sqlite")
+	dir, err := ioutil.TempDir("", "sqlite-test")
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
@@ -122,7 +122,7 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 	// logger = log.NewNopLogger()
 	logger := log.NewDefaultLogger()
 
-	db, err := sqliteConnection(logger, filepath.Join(dir, "paygate.db")).Connect(ctx)
+	db, err := sqliteConnection(logger, filepath.Join(dir, "tests.db")).Connect(ctx)
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
