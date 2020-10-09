@@ -2,6 +2,7 @@ package log
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -134,8 +135,7 @@ func Test_Caller(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	log.Info().With(StackTrace).Log("message")
-
-	a.Contains(buffer.String(), "caller_0=/home/jj/Documents/moov/base/log/logger_test.go")
+	a.Regexp(regexp.MustCompile("caller_0=(.*?)(\\/log\\/logger_test\\.go)"), buffer.String())
 }
 
 func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, Logger) {
