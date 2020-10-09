@@ -116,7 +116,7 @@ func (l *logger) Log(format string, a ...interface{}) {
 		i += 2
 	}
 
-	l.writer.Log(keyvals...)
+	_ = l.writer.Log(keyvals...)
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.
