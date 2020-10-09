@@ -135,7 +135,7 @@ func Test_Caller(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	log.Info().With(StackTrace).Log("message")
-	a.Regexp(regexp.MustCompile("caller_0=(.*?)(\\/log\\/logger_test\\.go)"), buffer.String())
+	a.Regexp(regexp.MustCompile(`caller_0=(.*?)(\/log\/logger_test\.go)`), buffer.String())
 }
 
 func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, Logger) {
