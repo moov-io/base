@@ -58,10 +58,11 @@ func Test_Error(t *testing.T) {
 func Test_ErrorF(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Error().LogErrorF("message %w", errors.New("error"))
+	err := errors.New("error")
+	log.Error().WithError(err).LogError("message %w", err)
 
 	a.Contains(buffer.String(), "msg=\"message error\"")
-	a.Contains(buffer.String(), "error=\"message error\"")
+	a.Contains(buffer.String(), "error=error")
 }
 
 func Test_Fatal(t *testing.T) {
@@ -75,7 +76,7 @@ func Test_Fatal(t *testing.T) {
 func Test_CustomKeyValue(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.WithKeyValue("custom", "value").Log("test")
+	log.Set("custom", "value").Log("test")
 
 	a.Contains(buffer.String(), "custom=value")
 }
@@ -83,7 +84,7 @@ func Test_CustomKeyValue(t *testing.T) {
 func Test_CustomMap(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.WithMap(map[string]string{
+	log.With(Fields{
 		"custom1": "value1",
 		"custom2": "value2",
 	}).Log("test")
@@ -97,8 +98,8 @@ func Test_MultipleContexts(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	log.
-		WithKeyValue("custom1", "value1").
-		WithKeyValue("custom2", "value2").
+		Set("custom1", "value1").
+		Set("custom2", "value2").
 		Log("test")
 
 	output := buffer.String()
@@ -109,7 +110,7 @@ func Test_MultipleContexts(t *testing.T) {
 func Test_LogErrorNil(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	err := log.LogError("someerror", nil)
+	err := log.WithError(nil).LogError("someerror")
 	a.Equal("someerror", err.Error())
 
 	output := buffer.String()
@@ -120,7 +121,8 @@ func Test_LogErrorNil(t *testing.T) {
 func Test_LogError(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	err := log.LogError("someerror", errors.New("othererror"))
+	newErr := errors.New("othererror")
+	err := log.WithError(newErr).LogError("someerror")
 	a.Equal("othererror", err.Error())
 
 	output := buffer.String()
@@ -131,10 +133,9 @@ func Test_LogError(t *testing.T) {
 func Test_Caller(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Info().Log("message")
+	log.Info().With(StackTrace).Log("message")
 
 	a.Contains(buffer.String(), "caller_0=")
-
 }
 
 func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, Logger) {

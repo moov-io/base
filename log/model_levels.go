@@ -6,6 +6,8 @@ type Level string
 // Info is sets level=info in the log output
 const Info = Level("info")
 
+const Warn = Level("warn")
+
 // Error sets level=error in the log output
 const Error = Level("error")
 
