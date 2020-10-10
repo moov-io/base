@@ -119,8 +119,7 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	// logger = log.NewNopLogger()
-	logger := log.NewDefaultLogger()
+	logger := log.NewNopLogger()
 
 	db, err := sqliteConnection(logger, filepath.Join(dir, "tests.db")).Connect(ctx)
 	if err != nil {
