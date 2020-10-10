@@ -126,14 +126,12 @@ func (r *TestMySQLDB) Close() error {
 
 	err := r.DB.Close()
 	if err != nil {
-		fmt.Println("Failed to close MySQL database")
-		panic(err)
+		return err
 	}
 
 	err = r.container.Close()
 	if err != nil {
-		fmt.Println("Failed to close MySQL docker container")
-		panic(err)
+		return err
 	}
 
 	return nil
