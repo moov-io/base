@@ -1,3 +1,6 @@
+// Copyright 2020 The Moov Authors
+// Use of this source code is governed by an Apache License
+// license that can be found in the LICENSE file.
 package database
 
 import (
@@ -7,14 +10,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"testing"
 	"time"
-
-	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
-	"github.com/ory/dockertest/v3"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/moov-io/base/log"
@@ -100,124 +99,124 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	}
 }
 
-// TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
-// a clean database for each testcase.  Callers should cleanup with Close() when finished.
-type TestMySQLDB struct {
-	DB *sql.DB
-
-	container *dockertest.Resource
-
-	shutdown func() // context shutdown func
-}
-
-func (r *TestMySQLDB) Close() error {
-	r.shutdown()
-
-	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		panic(fmt.Sprintf("found %d open MySQL connections", conns))
-	}
-
-	return r.DB.Close()
-}
-
-// CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
-// as a clean mysql database. All migrations are ran on the db before.
+// // TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
+// // a clean database for each testcase.  Callers should cleanup with Close() when finished.
+// type TestMySQLDB struct {
+// 	DB *sql.DB
 //
-// Callers should call close on the returned *TestMySQLDB.
-func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
-	if testing.Short() {
-		t.Skip("-short flag enabled")
-	}
-	if !docker.Enabled() {
-		t.Skip("Docker not enabled")
-	}
-
-	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	logger := log.NewNopLogger()
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	db, err := New(ctx, logger, *config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Don't allow idle connections so we can verify all are closed at the end of testing
-	db.SetMaxIdleConns(0)
-
-	return &TestMySQLDB{DB: db, container: container, shutdown: cancelFunc}
-}
-
-func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
-	if config.DatabaseName == "" {
-		config.DatabaseName = "test"
-	}
-
-	if config.MySql == nil {
-		config.MySql = &MySqlConfig{}
-	}
-
-	if config.MySql.User == "" {
-		config.MySql.User = "moov"
-	}
-
-	if config.MySql.Password == "" {
-		config.MySql.Password = "secret"
-	}
-
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "mysql",
-		Tag:        "8",
-		Env: []string{
-			fmt.Sprintf("MYSQL_USER=%s", config.MySql.User),
-			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySql.Password),
-			"MYSQL_ROOT_PASSWORD=secret",
-			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
-		},
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
-	dbURL := fmt.Sprintf("%s:%s@%s/%s",
-		config.MySql.User,
-		config.MySql.Password,
-		address,
-		config.DatabaseName,
-	)
-
-	err = pool.Retry(func() error {
-		db, err := sql.Open("mysql", dbURL)
-		if err != nil {
-			return err
-		}
-		defer db.Close()
-		return db.Ping()
-	})
-	if err != nil {
-		resource.Close()
-		return nil, nil, err
-	}
-
-	return &DatabaseConfig{
-		DatabaseName: config.DatabaseName,
-		MySql: &MySqlConfig{
-			Address:  address,
-			User:     config.MySql.User,
-			Password: config.MySql.Password,
-		},
-	}, resource, nil
-}
+// 	container *dockertest.Resource
+//
+// 	shutdown func() // context shutdown func
+// }
+//
+// func (r *TestMySQLDB) Close() error {
+// 	r.shutdown()
+//
+// 	// Verify all connections are closed before closing DB
+// 	if conns := r.DB.Stats().OpenConnections; conns != 0 {
+// 		panic(fmt.Sprintf("found %d open MySQL connections", conns))
+// 	}
+//
+// 	return r.DB.Close()
+// }
+//
+// // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
+// // as a clean mysql database. All migrations are ran on the db before.
+// //
+// // Callers should call close on the returned *TestMySQLDB.
+// func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
+// 	if testing.Short() {
+// 		t.Skip("-short flag enabled")
+// 	}
+// 	if !docker.Enabled() {
+// 		t.Skip("Docker not enabled")
+// 	}
+//
+// 	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	logger := log.NewNopLogger()
+// 	ctx, cancelFunc := context.WithCancel(context.Background())
+//
+// 	db, err := New(ctx, logger, *config)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	// Don't allow idle connections so we can verify all are closed at the end of testing
+// 	db.SetMaxIdleConns(0)
+//
+// 	return &TestMySQLDB{DB: db, container: container, shutdown: cancelFunc}
+// }
+//
+// func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
+// 	if config.DatabaseName == "" {
+// 		config.DatabaseName = "test"
+// 	}
+//
+// 	if config.MySql == nil {
+// 		config.MySql = &MySqlConfig{}
+// 	}
+//
+// 	if config.MySql.User == "" {
+// 		config.MySql.User = "moov"
+// 	}
+//
+// 	if config.MySql.Password == "" {
+// 		config.MySql.Password = "secret"
+// 	}
+//
+// 	pool, err := dockertest.NewPool("")
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+//
+// 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+// 		Repository: "mysql",
+// 		Tag:        "8",
+// 		Env: []string{
+// 			fmt.Sprintf("MYSQL_USER=%s", config.MySql.User),
+// 			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySql.Password),
+// 			"MYSQL_ROOT_PASSWORD=secret",
+// 			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
+// 		},
+// 	})
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+//
+// 	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
+// 	dbURL := fmt.Sprintf("%s:%s@%s/%s",
+// 		config.MySql.User,
+// 		config.MySql.Password,
+// 		address,
+// 		config.DatabaseName,
+// 	)
+//
+// 	err = pool.Retry(func() error {
+// 		db, err := sql.Open("mysql", dbURL)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		defer db.Close()
+// 		return db.Ping()
+// 	})
+// 	if err != nil {
+// 		resource.Close()
+// 		return nil, nil, err
+// 	}
+//
+// 	return &DatabaseConfig{
+// 		DatabaseName: config.DatabaseName,
+// 		MySql: &MySqlConfig{
+// 			Address:  address,
+// 			User:     config.MySql.User,
+// 			Password: config.MySql.Password,
+// 		},
+// 	}, resource, nil
+// }
 
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code
 // for duplicate entries (violating a unique table constraint).
