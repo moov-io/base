@@ -44,7 +44,7 @@ func (s *sqlite) Connect(ctx context.Context) (*sql.DB, error) {
 
 	sqliteVersionLogOnce.Do(func() {
 		if v, _, _ := sqlite3.Version(); v != "" {
-			s.logger.Info().Log(fmt.Sprintf("sqlite version %s", v))
+			s.logger.Info().Logf(fmt.Sprintf("sqlite version %s", v))
 		}
 	})
 

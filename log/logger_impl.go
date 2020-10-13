@@ -29,9 +29,8 @@ func NewBufferLogger() (*strings.Builder, Logger) {
 
 func NewLogger(writer log.Logger) Logger {
 	l := &logger{
-		writer:  writer,
-		ctx:     map[string]string{},
-		lastErr: nil,
+		writer: writer,
+		ctx:    map[string]string{},
 	}
 
 	// Default logs to be info until changed
@@ -39,9 +38,8 @@ func NewLogger(writer log.Logger) Logger {
 }
 
 type logger struct {
-	writer  log.Logger
-	ctx     map[string]string
-	lastErr error
+	writer log.Logger
+	ctx    map[string]string
 }
 
 func (l *logger) Set(key, value string) Logger {
@@ -67,23 +65,8 @@ func (l *logger) With(ctxs ...Context) Logger {
 	}
 
 	return &logger{
-		writer:  l.writer,
-		ctx:     combined,
-		lastErr: l.lastErr,
-	}
-}
-
-func (l *logger) WithError(err error) Logger {
-	ctx := &logger{
-		writer:  l.writer,
-		ctx:     l.ctx,
-		lastErr: err,
-	}
-
-	if err != nil {
-		return ctx.Set("error", err.Error())
-	} else {
-		return ctx.Set("error", "")
+		writer: l.writer,
+		ctx:    combined,
 	}
 }
 
@@ -103,11 +86,11 @@ func (l *logger) Fatal() Logger {
 	return l.With(Fatal)
 }
 
-func (l *logger) Log(format string, a ...interface{}) {
+func (l *logger) Logf(format string, args ...interface{}) {
 	keyvals := make([]interface{}, (len(l.ctx)*2)+2)
 
 	keyvals[0] = "msg"
-	keyvals[1] = fmt.Sprintf(format, a...)
+	keyvals[1] = fmt.Sprintf(format, args...)
 
 	i := 2
 	for k, v := range l.ctx {
@@ -120,13 +103,8 @@ func (l *logger) Log(format string, a ...interface{}) {
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.
-func (l *logger) LogError(format string, a ...interface{}) error {
-	newErr := fmt.Errorf(format, a...)
-
-	if l.lastErr == nil {
-		return l.WithError(newErr).LogError(format, a...)
-	} else {
-		l.Log(newErr.Error())
-		return l.lastErr
-	}
+func (l *logger) LogErrorf(format string, args ...interface{}) error {
+	newErr := fmt.Errorf(format, args...)
+	l.Set("errored", "true").Logf(newErr.Error())
+	return newErr
 }
