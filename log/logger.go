@@ -9,6 +9,13 @@ type Logger interface {
 	Error() Logger
 	Fatal() Logger
 
-	Logf(format string, a ...interface{})
-	LogErrorf(format string, a ...interface{}) error
+	Log(message string)
+	Logf(format string, args ...interface{})
+
+	LogError(error error) error
+	LogErrorf(format string, args ...interface{}) error
+}
+
+type Context interface {
+	Context() map[string]string
 }

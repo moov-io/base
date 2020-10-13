@@ -18,7 +18,7 @@ func Test_LogImplementations(t *testing.T) {
 func Test_Log(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Logf("my message")
+	log.Log("my message")
 
 	a.Contains(buffer.String(), "my message")
 	a.Contains(buffer.String(), "level=info")
@@ -123,7 +123,7 @@ func Test_LogError(t *testing.T) {
 func Test_Caller(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Info().With(StackTrace).Logf("message")
+	log.Info().With(stacktrace).Logf("message")
 	a.Regexp(regexp.MustCompile(`caller_0=(.*?)(\/log\/logger_test\.go)`), buffer.String())
 }
 
