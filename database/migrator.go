@@ -20,7 +20,7 @@ func RunMigrations(log log.Logger, db *sql.DB, config DatabaseConfig) error {
 		return fmt.Errorf("migrations directory=\"%s\" does not exist", config.migrationsDir)
 	}
 
-	log.Info().Log("Running Migrations")
+	log.Info().Logf("Running Migrations")
 	_ = pkger.Include(config.migrationsDir)
 
 	driver, err := GetDriver(db, config)
@@ -34,19 +34,19 @@ func RunMigrations(log log.Logger, db *sql.DB, config DatabaseConfig) error {
 		driver,
 	)
 	if err != nil {
-		return log.Fatal().LogErrorF("Error running migration - %w", err)
+		return log.Fatal().LogErrorf("Error running migration - %w", err)
 	}
 
 	err = m.Up()
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		log.Info().Log("Database already at version")
+		log.Info().Logf("Database already at version")
 	default:
-		return log.Fatal().LogErrorF("Error running migrations - %w", err)
+		return log.Fatal().LogErrorf("Error running migrations - %w", err)
 	}
 
-	log.Info().Log("Migrations complete")
+	log.Info().Logf("Migrations complete")
 
 	return nil
 }
