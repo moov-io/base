@@ -1,3 +1,12 @@
+## v0.12.0 (Released 2020-10-14)
+
+ADDITIONS
+- log: package for generating structured logs
+- config: package for loading the app configuration
+- stime: package for fetching system time and mocking time in tests
+- api: schema for base error model
+
+
 ## v0.11.1 (Released 2019-09-09)
 
 ADDITIONS
