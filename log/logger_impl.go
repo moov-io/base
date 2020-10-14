@@ -86,6 +86,10 @@ func (l *logger) Fatal() Logger {
 	return l.With(Fatal)
 }
 
+func (l *logger) Log(msg string) {
+	l.Logf(msg)
+}
+
 func (l *logger) Logf(format string, args ...interface{}) {
 	keyvals := make([]interface{}, (len(l.ctx)*2)+2)
 
@@ -100,6 +104,10 @@ func (l *logger) Logf(format string, args ...interface{}) {
 	}
 
 	_ = l.writer.Log(keyvals...)
+}
+
+func (l *logger) LogError(err error) error {
+	return l.LogErrorf(err.Error())
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.

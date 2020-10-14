@@ -8,8 +8,7 @@ import (
 
 type st string
 
-// Fatal sets level=fatal in the log output
-const StackTrace = st("stacktrace")
+const stacktrace = st("stacktrace")
 
 // Context returns the map that states that key value of `level={{l}}`
 func (s st) Context() map[string]string {
