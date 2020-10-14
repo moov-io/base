@@ -2,9 +2,8 @@
 
 ADDITIONS
 - log: package for generating structured logs
-- stime: package for fetching system time and mocking time in tests
 - config: package for loading the app configuration
-- database: package for creating database connections and configuration
+- stime: package for fetching system time and mocking time in tests
 - api: schema for base error model
 
 ## v0.11.1 (Released 2019-09-09)
