@@ -89,14 +89,10 @@ func (l *logger) Fatal() Logger {
 }
 
 func (l *logger) Log(msg string) {
-	l.Logf(msg)
-}
-
-func (l *logger) Logf(format string, args ...interface{}) {
 	keyvals := make([]interface{}, (len(l.ctx)*2)+2)
 
 	keyvals[0] = "msg"
-	keyvals[1] = fmt.Sprintf(format, args...)
+	keyvals[1] = msg
 
 	i := 2
 	for k, v := range l.ctx {
@@ -108,13 +104,18 @@ func (l *logger) Logf(format string, args ...interface{}) {
 	_ = l.writer.Log(keyvals...)
 }
 
+func (l *logger) Logf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	l.Log(msg)
+}
+
 func (l *logger) LogError(err error) {
-	_ = l.LogErrorf(err.Error())
+	l.Set("errored", "true").Log(err.Error())
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.
 func (l *logger) LogErrorf(format string, args ...interface{}) error {
-	newErr := fmt.Errorf(format, args...)
-	l.Set("errored", "true").Logf(newErr.Error())
-	return newErr
+	err := fmt.Errorf(format, args...)
+	l.LogError(err)
+	return err
 }
