@@ -2,6 +2,7 @@ package log
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -112,12 +113,16 @@ func Test_LogError(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	newErr := errors.New("othererror")
-	err := log.LogErrorf("%w", newErr)
-	a.Equal("othererror", err.Error())
+	err := log.LogErrorf("wrap: %w", newErr).Err()
+	a.Equal("wrap: othererror", err.Error())
 
 	output := buffer.String()
 	a.Contains(output, "errored=true")
-	a.Contains(output, "msg=othererror")
+	a.Contains(output, "msg=\"wrap: othererror\"")
+
+	wrappedErr := fmt.Errorf("wrapped: %w", newErr)
+	gotErr := log.LogError(wrappedErr).Err()
+	a.True(errors.Is(gotErr, newErr))
 }
 
 func Test_Caller(t *testing.T) {

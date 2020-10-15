@@ -15,12 +15,12 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func RunMigrations(log log.Logger, db *sql.DB, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 	if _, err := os.Stat(config.migrationsDir); os.IsNotExist(err) {
 		return fmt.Errorf("migrations directory=\"%s\" does not exist", config.migrationsDir)
 	}
 
-	log.Info().Logf("Running Migrations")
+	logger.Info().Logf("Running Migrations")
 	_ = pkger.Include(config.migrationsDir)
 
 	driver, err := GetDriver(db, config)
@@ -34,19 +34,19 @@ func RunMigrations(log log.Logger, db *sql.DB, config DatabaseConfig) error {
 		driver,
 	)
 	if err != nil {
-		return log.Fatal().LogErrorf("Error running migration - %w", err)
+		return logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
 	}
 
 	err = m.Up()
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		log.Info().Logf("Database already at version")
+		logger.Info().Logf("Database already at version")
 	default:
-		return log.Fatal().LogErrorf("Error running migrations - %w", err)
+		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
 	}
 
-	log.Info().Logf("Migrations complete")
+	logger.Info().Logf("Migrations complete")
 
 	return nil
 }

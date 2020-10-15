@@ -12,8 +12,8 @@ type Logger interface {
 	Log(message string)
 	Logf(format string, args ...interface{})
 
-	LogError(error error) error
-	LogErrorf(format string, args ...interface{}) error
+	LogError(error error) LoggedError
+	LogErrorf(format string, args ...interface{}) LoggedError
 }
 
 type Context interface {
