@@ -8,11 +8,11 @@ import (
 )
 
 func Test_NewAndMigration_SQLite3(t *testing.T) {
-	_, close, err := NewAndMigrate(InMemorySqliteConfig, nil, nil)
+	db, err := NewAndMigrate(InMemorySqliteConfig, nil, nil)
 	if err != nil {
 		t.FailNow()
 	}
-	close()
+	db.Close()
 }
 
 func Test_NewAndMigration_MySql(t *testing.T) {
@@ -26,11 +26,11 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	}
 	defer container.Close()
 
-	_, close, err := NewAndMigrate(*config, nil, nil)
+	db, err := NewAndMigrate(*config, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	close()
+	db.Close()
 }
 
 func TestUniqueViolation(t *testing.T) {

@@ -153,7 +153,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, shutdown, err := NewAndMigrate(*config, logger, ctx)
+	db, err := NewAndMigrate(*config, logger, ctx)
 	if err != nil {
 		container.Close()
 		t.Fatal(err)
@@ -162,7 +162,12 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	// Don't allow idle connections so we can verify all are closed at the end of testing
 	db.SetMaxIdleConns(0)
 
-	return &TestMySQLDB{DB: db, container: container, shutdown: func() { cancelFunc(); shutdown() }}
+	shutdownFunc := func() {
+		cancelFunc()
+		db.Close()
+	}
+
+	return &TestMySQLDB{DB: db, container: container, shutdown: shutdownFunc}
 }
 
 func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {

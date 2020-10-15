@@ -21,7 +21,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 }
 
 // TODO remove shutdown method to make it consistent with New(...) *sql.DB, error
-func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context) (*sql.DB, func(), error) {
+func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context) (*sql.DB, error) {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
@@ -32,20 +32,16 @@ func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context
 
 	// run migrations first
 	if err := RunMigrations(logger, config); err != nil {
-		return nil, func() {}, err
+		return nil, err
 	}
 
 	// create DB connection for our service
 	db, err := New(ctx, logger, config)
 	if err != nil {
-		return nil, func() {}, err
+		return nil, err
 	}
 
-	shutdown := func() {
-		db.Close()
-	}
-
-	return db, shutdown, nil
+	return db, nil
 }
 
 // UniqueViolation returns true when the provided error matches a database error
