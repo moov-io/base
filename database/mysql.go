@@ -112,26 +112,21 @@ type TestMySQLDB struct {
 }
 
 func (r *TestMySQLDB) Close() error {
+	// Verify all connections are closed before closing DB
+	conns := r.DB.Stats().OpenConnections
+
 	r.shutdown()
 
-	// ASK: not sure what do we check in the following.
-	// We don't always close sql.DB directly but call
-	// this Close method.
-
-	// Verify all connections are closed before closing DB
-	// if conns := r.DB.Stats().OpenConnections; conns != 0 {
-	// 	fmt.Printf("******found %d open MySQL connections", conns)
-	// 	// panic(fmt.Sprintf("found %d open MySQL connections", conns))
-	// }
-
-	err := r.DB.Close()
-	if err != nil {
+	if err := r.container.Close(); err != nil {
 		return err
 	}
 
-	err = r.container.Close()
-	if err != nil {
+	if err := r.DB.Close(); err != nil {
 		return err
+	}
+
+	if conns != 0 {
+		panic(fmt.Sprintf("found %d open MySQL connections", conns))
 	}
 
 	return nil
@@ -155,24 +150,19 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	}
 
 	logger := log.NewNopLogger()
+
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, err := New(ctx, logger, *config)
+	db, shutdown, err := NewAndMigrate(*config, logger, ctx)
 	if err != nil {
 		container.Close()
 		t.Fatal(err)
 	}
 
-	err = RunMigrations(logger, db, *config)
-	if err != nil {
-		container.Close()
-		t.Fatalf("mysql test: %v", err)
-	}
-
 	// Don't allow idle connections so we can verify all are closed at the end of testing
 	db.SetMaxIdleConns(0)
 
-	return &TestMySQLDB{DB: db, container: container, shutdown: cancelFunc}
+	return &TestMySQLDB{DB: db, container: container, shutdown: func() { cancelFunc(); shutdown() }}
 }
 
 func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {

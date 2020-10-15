@@ -20,6 +20,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 	return nil, fmt.Errorf("database config not defined")
 }
 
+// TODO remove shutdown method to make it consistent with New(...) *sql.DB, error
 func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context) (*sql.DB, func(), error) {
 	if logger == nil {
 		logger = log.NewNopLogger()
@@ -29,6 +30,12 @@ func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context
 		ctx = context.Background()
 	}
 
+	// run migrations first
+	if err := RunMigrations(logger, config); err != nil {
+		return nil, func() {}, err
+	}
+
+	// create DB connection for our service
 	db, err := New(ctx, logger, config)
 	if err != nil {
 		return nil, func() {}, err
@@ -36,10 +43,6 @@ func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context
 
 	shutdown := func() {
 		db.Close()
-	}
-
-	if err = RunMigrations(logger, db, config); err != nil {
-		return nil, shutdown, err
 	}
 
 	return db, shutdown, nil

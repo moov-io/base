@@ -126,7 +126,7 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 		t.Fatalf("sqlite test: %v", err)
 	}
 
-	err = RunMigrations(logger, db, DatabaseConfig{SQLite: &SQLiteConfig{}})
+	err = RunMigrations(logger, DatabaseConfig{SQLite: &SQLiteConfig{}})
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}

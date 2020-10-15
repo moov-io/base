@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -14,7 +15,13 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+	db, err := New(context.Background(), logger, config)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
 	logger.Info().Log("Running Migrations")
 
 	_ = pkger.Include("/migrations/")
@@ -37,12 +44,12 @@ func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		logger.Info().Logf("Database already at version")
+		logger.Info().Log("Database already at version")
 	default:
 		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
 	}
 
-	logger.Info().Logf("Migrations complete")
+	logger.Info().Log("Migrations complete")
 
 	return nil
 }
