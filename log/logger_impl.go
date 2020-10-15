@@ -37,6 +37,8 @@ func NewLogger(writer log.Logger) Logger {
 	return l.Info()
 }
 
+var _ Logger = (*logger)(nil)
+
 type logger struct {
 	writer log.Logger
 	ctx    map[string]string
@@ -106,8 +108,8 @@ func (l *logger) Logf(format string, args ...interface{}) {
 	_ = l.writer.Log(keyvals...)
 }
 
-func (l *logger) LogError(err error) error {
-	return l.LogErrorf(err.Error())
+func (l *logger) LogError(err error) {
+	_ = l.LogErrorf(err.Error())
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.

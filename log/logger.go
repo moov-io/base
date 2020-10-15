@@ -12,7 +12,7 @@ type Logger interface {
 	Log(message string)
 	Logf(format string, args ...interface{})
 
-	LogError(error error) error
+	LogError(error error)
 	LogErrorf(format string, args ...interface{}) error
 }
 
