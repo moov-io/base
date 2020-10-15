@@ -50,7 +50,7 @@ func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {
 	if config.MySql != nil {
 		return MySqlDriver(db)
-	} else if config.SqlLite != nil {
+	} else if config.SQLite != nil {
 		return Sqlite3Driver(db)
 	}
 

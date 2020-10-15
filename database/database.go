@@ -13,8 +13,8 @@ import (
 func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
 	if config.MySql != nil {
 		return mysqlConnection(logger, config.MySql.User, config.MySql.Password, config.MySql.Address, config.DatabaseName).Connect(ctx)
-	} else if config.SqlLite != nil {
-		return sqliteConnection(logger, config.SqlLite.Path).Connect(ctx)
+	} else if config.SQLite != nil {
+		return sqliteConnection(logger, config.SQLite.Path).Connect(ctx)
 	}
 
 	return nil, fmt.Errorf("database config not defined")

@@ -7,7 +7,7 @@ import (
 	"github.com/moov-io/base/docker"
 )
 
-func Test_NewAndMigration_SqlLite3(t *testing.T) {
+func Test_NewAndMigration_SQLite3(t *testing.T) {
 	_, close, err := NewAndMigrate(InMemorySqliteConfig, nil, nil)
 	if err != nil {
 		t.FailNow()

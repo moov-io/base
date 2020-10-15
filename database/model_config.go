@@ -2,7 +2,7 @@ package database
 
 type DatabaseConfig struct {
 	MySql        *MySqlConfig
-	SqlLite      *SqlLiteConfig
+	SQLite      *SQLiteConfig
 	DatabaseName string
 }
 
@@ -12,13 +12,13 @@ type MySqlConfig struct {
 	Password string
 }
 
-type SqlLiteConfig struct {
+type SQLiteConfig struct {
 	Path string
 }
 
 var InMemorySqliteConfig = DatabaseConfig{
 	DatabaseName: "sqlite",
-	SqlLite: &SqlLiteConfig{
+	SQLite: &SQLiteConfig{
 		Path: ":memory:",
 	},
 }
