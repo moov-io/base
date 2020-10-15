@@ -21,7 +21,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 }
 
 // TODO remove shutdown method to make it consistent with New(...) *sql.DB, error
-func NewAndMigrate(config DatabaseConfig, logger log.Logger, ctx context.Context) (*sql.DB, error) {
+func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}

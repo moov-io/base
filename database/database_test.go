@@ -8,7 +8,7 @@ import (
 )
 
 func Test_NewAndMigration_SQLite3(t *testing.T) {
-	db, err := NewAndMigrate(InMemorySqliteConfig, nil, nil)
+	db, err := NewAndMigrate(nil, nil, InMemorySqliteConfig)
 	if err != nil {
 		t.FailNow()
 	}
@@ -26,7 +26,7 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	}
 	defer container.Close()
 
-	db, err := NewAndMigrate(*config, nil, nil)
+	db, err := NewAndMigrate(nil, nil, *config)
 	if err != nil {
 		t.Fatal(err)
 	}
