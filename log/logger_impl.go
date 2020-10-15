@@ -109,13 +109,21 @@ func (l *logger) Logf(format string, args ...interface{}) {
 	l.Log(msg)
 }
 
-func (l *logger) LogError(err error) {
+func (l *logger) LogError(err error) LoggedError {
 	l.Set("errored", "true").Log(err.Error())
+	return LoggedError{err}
 }
 
 // LogError logs the error or creates a new one using the msg if `err` is nil and returns it.
-func (l *logger) LogErrorf(format string, args ...interface{}) error {
+func (l *logger) LogErrorf(format string, args ...interface{}) LoggedError {
 	err := fmt.Errorf(format, args...)
-	l.LogError(err)
-	return err
+	return l.LogError(err)
+}
+
+type LoggedError struct {
+	err error
+}
+
+func (l LoggedError) Err() error {
+	return l.err
 }
