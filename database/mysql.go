@@ -170,16 +170,16 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 		config.DatabaseName = "test"
 	}
 
-	if config.MySql == nil {
-		config.MySql = &MySqlConfig{}
+	if config.MySQL == nil {
+		config.MySQL = &MySQLConfig{}
 	}
 
-	if config.MySql.User == "" {
-		config.MySql.User = "moov"
+	if config.MySQL.User == "" {
+		config.MySQL.User = "moov"
 	}
 
-	if config.MySql.Password == "" {
-		config.MySql.Password = "secret"
+	if config.MySQL.Password == "" {
+		config.MySQL.Password = "secret"
 	}
 
 	pool, err := dockertest.NewPool("")
@@ -191,8 +191,8 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 		Repository: "mysql",
 		Tag:        "8",
 		Env: []string{
-			fmt.Sprintf("MYSQL_USER=%s", config.MySql.User),
-			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySql.Password),
+			fmt.Sprintf("MYSQL_USER=%s", config.MySQL.User),
+			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySQL.Password),
 			"MYSQL_ROOT_PASSWORD=secret",
 			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
 		},
@@ -206,8 +206,8 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 
 	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
 	dbURL := fmt.Sprintf("%s:%s@%s/%s",
-		config.MySql.User,
-		config.MySql.Password,
+		config.MySQL.User,
+		config.MySQL.Password,
 		address,
 		config.DatabaseName,
 	)
@@ -227,10 +227,10 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 
 	return &DatabaseConfig{
 		DatabaseName: config.DatabaseName,
-		MySql: &MySqlConfig{
+		MySQL: &MySQLConfig{
 			Address:  address,
-			User:     config.MySql.User,
-			Password: config.MySql.Password,
+			User:     config.MySQL.User,
+			Password: config.MySQL.Password,
 		},
 	}, resource, nil
 }

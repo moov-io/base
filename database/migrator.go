@@ -55,19 +55,19 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 }
 
 func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {
-	if config.MySql != nil {
-		return MySqlDriver(db)
+	if config.MySQL != nil {
+		return MySQLDriver(db)
 	} else if config.SQLite != nil {
-		return Sqlite3Driver(db)
+		return SQLite3Driver(db)
 	}
 
 	return nil, fmt.Errorf("database config not defined")
 }
 
-func MySqlDriver(db *sql.DB) (database.Driver, error) {
+func MySQLDriver(db *sql.DB) (database.Driver, error) {
 	return migmysql.WithInstance(db, &migmysql.Config{})
 }
 
-func Sqlite3Driver(db *sql.DB) (database.Driver, error) {
+func SQLite3Driver(db *sql.DB) (database.Driver, error) {
 	return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 }

@@ -1,12 +1,12 @@
 package database
 
 type DatabaseConfig struct {
-	MySql        *MySqlConfig
-	SQLite      *SQLiteConfig
+	MySQL        *MySQLConfig
+	SQLite       *SQLiteConfig
 	DatabaseName string
 }
 
-type MySqlConfig struct {
+type MySQLConfig struct {
 	Address  string
 	User     string
 	Password string

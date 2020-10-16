@@ -11,8 +11,8 @@ import (
 // New establishes a database connection according to the type and environmental
 // variables for that specific database.
 func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
-	if config.MySql != nil {
-		return mysqlConnection(logger, config.MySql.User, config.MySql.Password, config.MySql.Address, config.DatabaseName).Connect(ctx)
+	if config.MySQL != nil {
+		return mysqlConnection(logger, config.MySQL.User, config.MySQL.Password, config.MySQL.Address, config.DatabaseName).Connect(ctx)
 	} else if config.SQLite != nil {
 		return sqliteConnection(logger, config.SQLite.Path).Connect(ctx)
 	}
