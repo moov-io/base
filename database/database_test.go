@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func Test_NewAndMigration_SQLite3(t *testing.T) {
-	db, err := NewAndMigrate(nil, nil, InMemorySqliteConfig)
+	db, err := NewAndMigrate(context.Background(), nil, InMemorySqliteConfig)
 	if err != nil {
 		t.FailNow()
 	}
@@ -26,7 +27,7 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	}
 	defer container.Close()
 
-	db, err := NewAndMigrate(nil, nil, *config)
+	db, err := NewAndMigrate(context.Background(), nil, *config)
 	if err != nil {
 		t.Fatal(err)
 	}
