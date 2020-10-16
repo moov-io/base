@@ -1,25 +1,24 @@
 package database
 
 type DatabaseConfig struct {
-	MySql         *MySqlConfig
-	SqlLite       *SqlLiteConfig
-	DatabaseName  string
-	migrationsDir string
+	MySQL        *MySQLConfig
+	SQLite       *SQLiteConfig
+	DatabaseName string
 }
 
-type MySqlConfig struct {
+type MySQLConfig struct {
 	Address  string
 	User     string
 	Password string
 }
 
-type SqlLiteConfig struct {
+type SQLiteConfig struct {
 	Path string
 }
 
 var InMemorySqliteConfig = DatabaseConfig{
 	DatabaseName: "sqlite",
-	SqlLite: &SqlLiteConfig{
+	SQLite: &SQLiteConfig{
 		Path: ":memory:",
 	},
 }

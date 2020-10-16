@@ -84,16 +84,6 @@ func sqliteConnection(logger log.Logger, path string) *sqlite {
 	}
 }
 
-func getSqlitePath() string {
-	path := os.Getenv("SQLITE_DB_PATH")
-	if path == "" || strings.Contains(path, "..") {
-		// set default if empty or trying to escape
-		// don't filepath.ABS to avoid full-fs reads
-		path = "paygate.db"
-	}
-	return path
-}
-
 // TestSQLiteDB is a wrapper around sql.DB for SQLite connections designed for tests to provide
 // a clean database for each testcase.  Callers should cleanup with Close() when finished.
 type TestSQLiteDB struct {
@@ -122,14 +112,21 @@ func (r *TestSQLiteDB) Close() error {
 //
 // Callers should call close on the returned *TestSQLiteDB.
 func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
-	dir, err := ioutil.TempDir("", "paygate-sqlite")
+	dir, err := ioutil.TempDir("", "sqlite-test")
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, err := sqliteConnection(log.NewNopLogger(), filepath.Join(dir, "paygate.db")).Connect(ctx)
+	logger := log.NewNopLogger()
+
+	db, err := sqliteConnection(logger, filepath.Join(dir, "tests.db")).Connect(ctx)
+	if err != nil {
+		t.Fatalf("sqlite test: %v", err)
+	}
+
+	err = RunMigrations(logger, DatabaseConfig{SQLite: &SQLiteConfig{}})
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
@@ -138,6 +135,7 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 	db.SetMaxIdleConns(0)
 
 	return &TestSQLiteDB{DB: db, dir: dir, shutdown: cancelFunc}
+
 }
 
 // SqliteUniqueViolation returns true when the provided error matches the SQLite error

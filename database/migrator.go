@@ -1,9 +1,9 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -15,13 +15,16 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
-	if _, err := os.Stat(config.migrationsDir); os.IsNotExist(err) {
-		return fmt.Errorf("migrations directory=\"%s\" does not exist", config.migrationsDir)
+func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+	db, err := New(context.Background(), logger, config)
+	if err != nil {
+		return err
 	}
+	defer db.Close()
 
-	logger.Info().Logf("Running Migrations")
-	_ = pkger.Include(config.migrationsDir)
+	logger.Info().Log("Running Migrations")
+
+	_ = pkger.Include("/migrations/")
 
 	driver, err := GetDriver(db, config)
 	if err != nil {
@@ -29,7 +32,7 @@ func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("pkger://%s", config.migrationsDir),
+		"pkger:///migrations/",
 		config.DatabaseName,
 		driver,
 	)
@@ -41,30 +44,30 @@ func RunMigrations(logger log.Logger, db *sql.DB, config DatabaseConfig) error {
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		logger.Info().Logf("Database already at version")
+		logger.Info().Log("Database already at version")
 	default:
 		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
 	}
 
-	logger.Info().Logf("Migrations complete")
+	logger.Info().Log("Migrations complete")
 
 	return nil
 }
 
 func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {
-	if config.MySql != nil {
-		return MySqlDriver(db)
-	} else if config.SqlLite != nil {
-		return Sqlite3Driver(db)
+	if config.MySQL != nil {
+		return MySQLDriver(db)
+	} else if config.SQLite != nil {
+		return SQLite3Driver(db)
 	}
 
 	return nil, fmt.Errorf("database config not defined")
 }
 
-func MySqlDriver(db *sql.DB) (database.Driver, error) {
+func MySQLDriver(db *sql.DB) (database.Driver, error) {
 	return migmysql.WithInstance(db, &migmysql.Config{})
 }
 
-func Sqlite3Driver(db *sql.DB) (database.Driver, error) {
+func SQLite3Driver(db *sql.DB) (database.Driver, error) {
 	return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 }

@@ -1,18 +1,19 @@
 package database
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/moov-io/base/docker"
 )
 
-func Test_NewAndMigration_SqlLite3(t *testing.T) {
-	_, close, err := NewAndMigrate(InMemorySqliteConfig, nil, nil)
+func Test_NewAndMigration_SQLite3(t *testing.T) {
+	db, err := NewAndMigrate(context.Background(), nil, InMemorySqliteConfig)
 	if err != nil {
 		t.FailNow()
 	}
-	close()
+	db.Close()
 }
 
 func Test_NewAndMigration_MySql(t *testing.T) {
@@ -26,11 +27,11 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	}
 	defer container.Close()
 
-	_, close, err := NewAndMigrate(*config, nil, nil)
+	db, err := NewAndMigrate(context.Background(), nil, *config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	close()
+	db.Close()
 }
 
 func TestUniqueViolation(t *testing.T) {

@@ -6,15 +6,17 @@ import (
 	"testing"
 
 	"github.com/moov-io/base/log"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMySQL__basic(t *testing.T) {
 	db := CreateTestMySQLDB(t)
 	defer db.Close()
 
-	if err := db.DB.Ping(); err != nil {
-		t.Fatal(err)
-	}
+	err := db.DB.Ping()
+	require.NoError(t, err)
+
+	require.Equal(t, 0, db.DB.Stats().OpenConnections)
 
 	// create a phony MySQL
 	m := mysqlConnection(log.NewNopLogger(), "user", "pass", "127.0.0.1:3006", "db")
@@ -27,9 +29,8 @@ func TestMySQL__basic(t *testing.T) {
 			conn.Close()
 		}
 	}()
-	if conn != nil || err == nil {
-		t.Fatalf("conn=%#v expected error", conn)
-	}
+	require.Nil(t, conn)
+	require.Error(t, err)
 
 	cancelFunc()
 }
