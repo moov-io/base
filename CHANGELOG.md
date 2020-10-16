@@ -1,3 +1,19 @@
+## v0.13.0 (Released 2020-10-16)
+
+**BREAKING CHANGES**
+
+- log: `Logger.LogError` and `Logger.LogErrorf` no longer return an `error`, they will return `LoggedError` which can be called with `Err()` to return an `error`
+- database: changed signature of `New` and `NewAndMigrate` functions by reordering arguments and changing return types
+- database: renamed Sqlite to SQlite and MySql to MySQL in database config 
+
+ADDITIONS
+
+- database: load sql files for migrations from `/migrations` directory
+
+FIXES:
+
+- database: fix leaked DB connection created by migrator
+
 ## v0.12.0 (Released 2020-10-14)
 
 ADDITIONS
