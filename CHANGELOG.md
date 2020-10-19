@@ -1,3 +1,9 @@
+## v0.13.1
+
+FIXES:
+
+- database: CreateTestSqliteDB didn't use path of SQLite DB for migrations
+
 ## v0.13.0 (Released 2020-10-16)
 
 **BREAKING CHANGES**

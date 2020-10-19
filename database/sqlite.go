@@ -117,18 +117,19 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 		t.Fatalf("sqlite test: %v", err)
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	dbPath := filepath.Join(dir, "tests.db")
+
+	config := &DatabaseConfig{SQLite: &SQLiteConfig{
+		Path: dbPath,
+	}}
 
 	logger := log.NewNopLogger()
+	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, err := sqliteConnection(logger, filepath.Join(dir, "tests.db")).Connect(ctx)
+	db, err := NewAndMigrate(ctx, logger, *config)
 	if err != nil {
-		t.Fatalf("sqlite test: %v", err)
-	}
-
-	err = RunMigrations(logger, DatabaseConfig{SQLite: &SQLiteConfig{}})
-	if err != nil {
-		t.Fatalf("sqlite test: %v", err)
+		os.RemoveAll(dir)
+		t.Fatal(err)
 	}
 
 	// Don't allow idle connections so we can verify all are closed at the end of testing
