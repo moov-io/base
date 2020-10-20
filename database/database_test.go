@@ -13,6 +13,7 @@ func Test_NewAndMigration_SQLite3(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+
 	db.Close()
 }
 

@@ -15,12 +15,11 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
 	db, err := New(context.Background(), logger, config)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer db.Close()
 
 	logger.Info().Log("Running Migrations")
 
@@ -28,7 +27,7 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 
 	driver, err := GetDriver(db, config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
@@ -37,7 +36,7 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 		driver,
 	)
 	if err != nil {
-		return logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
+		return nil, logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
 	}
 
 	err = m.Up()
@@ -46,12 +45,12 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	case migrate.ErrNoChange:
 		logger.Info().Log("Database already at version")
 	default:
-		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
+		return nil, logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
 	}
 
 	logger.Info().Log("Migrations complete")
 
-	return nil
+	return db, nil
 }
 
 func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {

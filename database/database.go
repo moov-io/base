@@ -25,21 +25,18 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 		logger = log.NewNopLogger()
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
 	// run migrations first
-	if err := RunMigrations(logger, config); err != nil {
-		return nil, err
-	}
-
-	// create DB connection for our service
-	db, err := New(ctx, logger, config)
+	db, err := RunMigrations(logger, config)
 	if err != nil {
 		return nil, err
 	}
 
+	// // create DB connection for our service
+	// db, err := New(ctx, logger, config)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
 	return db, nil
 }
 
