@@ -19,8 +19,8 @@ func TestSQLite__basic(t *testing.T) {
 	require.NoError(t, err)
 
 	r, err := db.Query("select * from tests")
-	defer r.Close()
 	require.NoError(t, err)
+	defer r.Close()
 
 	if runtime.GOOS == "windows" {
 		t.Skip("/dev/null doesn't exist on Windows")
