@@ -96,8 +96,8 @@ func (r *TestSQLiteDB) Close() error {
 	r.shutdown()
 
 	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().Idle; conns != 0 {
-		panic(fmt.Sprintf("found %d open sqlite connection(s)", conns))
+	if conns := r.DB.Stats().OpenConnections; conns != 0 {
+		panic(fmt.Sprintf("found %d open sqlite connections", conns))
 	}
 	if err := r.DB.Close(); err != nil {
 		return err

@@ -23,6 +23,8 @@ func Test_NewAndMigration_SQLite(t *testing.T) {
 	}}
 
 	db, err := NewAndMigrate(context.Background(), nil, *config)
+	defer db.Close()
+
 	require.NoError(t, err)
 	_, err = db.Query("select * from tests")
 	require.NoError(t, err)

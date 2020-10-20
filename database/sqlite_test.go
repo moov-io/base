@@ -18,7 +18,8 @@ func TestSQLite__basic(t *testing.T) {
 	err := db.DB.Ping()
 	require.NoError(t, err)
 
-	_, err = db.Query("select * from tests")
+	r, err := db.Query("select * from tests")
+	defer r.Close()
 	require.NoError(t, err)
 
 	if runtime.GOOS == "windows" {
