@@ -15,10 +15,3 @@ type MySQLConfig struct {
 type SQLiteConfig struct {
 	Path string
 }
-
-var InMemorySqliteConfig = DatabaseConfig{
-	DatabaseName: "sqlite",
-	SQLite: &SQLiteConfig{
-		Path: ":memory:",
-	},
-}

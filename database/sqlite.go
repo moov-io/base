@@ -87,10 +87,8 @@ func sqliteConnection(logger log.Logger, path string) *sqlite {
 // TestSQLiteDB is a wrapper around sql.DB for SQLite connections designed for tests to provide
 // a clean database for each testcase.  Callers should cleanup with Close() when finished.
 type TestSQLiteDB struct {
-	DB *sql.DB
-
-	dir string // temp dir created for sqlite files
-
+	*sql.DB
+	dir      string // temp dir created for sqlite files
 	shutdown func() // context shutdown func
 }
 
@@ -98,8 +96,8 @@ func (r *TestSQLiteDB) Close() error {
 	r.shutdown()
 
 	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		panic(fmt.Sprintf("found %d open sqlite connections", conns))
+	if conns := r.DB.Stats().Idle; conns != 0 {
+		panic(fmt.Sprintf("found %d open sqlite connection(s)", conns))
 	}
 	if err := r.DB.Close(); err != nil {
 		return err
@@ -107,11 +105,11 @@ func (r *TestSQLiteDB) Close() error {
 	return os.RemoveAll(r.dir)
 }
 
-// CreateTestSqliteDB returns a TestSQLiteDB which can be used in tests
+// CreateTestSQLiteDB returns a TestSQLiteDB which can be used in tests
 // as a clean sqlite database. All migrations are ran on the db before.
 //
 // Callers should call close on the returned *TestSQLiteDB.
-func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
+func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
 	dir, err := ioutil.TempDir("", "sqlite-test")
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
@@ -136,12 +134,11 @@ func CreateTestSqliteDB(t *testing.T) *TestSQLiteDB {
 	db.SetMaxIdleConns(0)
 
 	return &TestSQLiteDB{DB: db, dir: dir, shutdown: cancelFunc}
-
 }
 
-// SqliteUniqueViolation returns true when the provided error matches the SQLite error
+// SQLiteUniqueViolation returns true when the provided error matches the SQLite error
 // for duplicate entries (violating a unique table constraint).
-func SqliteUniqueViolation(err error) bool {
+func SQLiteUniqueViolation(err error) bool {
 	match := strings.Contains(err.Error(), "UNIQUE constraint failed")
 	if e, ok := err.(sqlite3.Error); ok {
 		return match || e.Code == sqlite3.ErrConstraint

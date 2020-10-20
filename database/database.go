@@ -46,5 +46,5 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 // UniqueViolation returns true when the provided error matches a database error
 // for duplicate entries (violating a unique table constraint).
 func UniqueViolation(err error) bool {
-	return MySQLUniqueViolation(err) || SqliteUniqueViolation(err)
+	return MySQLUniqueViolation(err) || SQLiteUniqueViolation(err)
 }
