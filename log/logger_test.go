@@ -27,9 +27,10 @@ func Test_Log(t *testing.T) {
 	a.Contains(got, "level=info")
 
 	// check valid timestamp
-	idx := strings.Index(got, "time=")
+	tsKey := "ts="
+	idx := strings.Index(got, tsKey)
 	a.NotEqual(idx, -1)
-	timestamp := got[idx+len("time="):]
+	timestamp := got[idx+len(tsKey):]
 	timestamp = strings.Split(timestamp, " ")[0]
 	ts, err := time.Parse(time.RFC3339, timestamp)
 	a.NoError(err)

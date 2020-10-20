@@ -92,7 +92,7 @@ func (l *logger) Fatal() Logger {
 func (l *logger) Log(msg string) {
 	orig := []string{
 		"msg", msg,
-		"time", time.Now().UTC().Format(time.RFC3339),
+		"ts", time.Now().UTC().Format(time.RFC3339),
 	}
 
 	keyvals := make([]interface{}, (len(l.ctx)*2)+len(orig))
