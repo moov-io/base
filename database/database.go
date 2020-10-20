@@ -26,18 +26,13 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 	}
 
 	// run migrations first
-	db, err := RunMigrations(logger, config)
+	err := RunMigrations(logger, config)
 	if err != nil {
 		return nil, err
 	}
 
-	// In SQLite, we can reuse the same connection
-	if config.SQLite != nil {
-		return db, nil
-	}
-
 	// create DB connection for our service
-	db, err = New(ctx, logger, config)
+	db, err := New(ctx, logger, config)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/moov-io/base/log"
 )
 
@@ -34,6 +36,14 @@ func TestSQLite__basic(t *testing.T) {
 	cancelFunc()
 
 	conn.Close()
+}
+
+func TestSQLite_InMemoryConfig(t *testing.T) {
+	db, err := NewAndMigrate(context.Background(), log.NewNopLogger(), InMemorySqliteConfig)
+	require.NoError(t, err)
+
+	_, err = db.Query("select * from tests")
+	require.NoError(t, err)
 }
 
 func TestSqliteUniqueViolation(t *testing.T) {

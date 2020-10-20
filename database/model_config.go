@@ -19,6 +19,6 @@ type SQLiteConfig struct {
 var InMemorySqliteConfig = DatabaseConfig{
 	DatabaseName: "sqlite",
 	SQLite: &SQLiteConfig{
-		Path: ":memory:",
+		Path: "file::memory:?cache=shared",
 	},
 }
