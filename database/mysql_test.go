@@ -5,8 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/moov-io/base/log"
 )
 
 func TestMySQL__basic(t *testing.T) {
