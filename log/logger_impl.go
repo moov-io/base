@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-kit/kit/log"
 )
@@ -89,12 +90,17 @@ func (l *logger) Fatal() Logger {
 }
 
 func (l *logger) Log(msg string) {
-	keyvals := make([]interface{}, (len(l.ctx)*2)+2)
+	orig := []string{
+		"msg", msg,
+		"ts", time.Now().UTC().Format(time.RFC3339),
+	}
 
-	keyvals[0] = "msg"
-	keyvals[1] = msg
+	keyvals := make([]interface{}, (len(l.ctx)*2)+len(orig))
+	for i, v := range orig {
+		keyvals[i] = v
+	}
 
-	i := 2
+	i := len(orig)
 	for k, v := range l.ctx {
 		keyvals[i] = k
 		keyvals[i+1] = v

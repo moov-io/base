@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,9 +21,20 @@ func Test_Log(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	log.Log("my message")
+	got := buffer.String()
 
-	a.Contains(buffer.String(), "my message")
-	a.Contains(buffer.String(), "level=info")
+	a.Contains(got, "my message")
+	a.Contains(got, "level=info")
+
+	// check valid timestamp
+	tsKey := "ts="
+	idx := strings.Index(got, tsKey)
+	a.NotEqual(idx, -1)
+	timestamp := got[idx+len(tsKey):]
+	timestamp = strings.Split(timestamp, " ")[0]
+	ts, err := time.Parse(time.RFC3339, timestamp)
+	a.NoError(err)
+	a.NotZero(ts)
 }
 
 func Test_WithContext(t *testing.T) {
