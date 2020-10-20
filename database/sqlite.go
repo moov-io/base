@@ -15,6 +15,7 @@ import (
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mattn/go-sqlite3"
 	stdprom "github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
 
 	"github.com/moov-io/base/log"
 )
@@ -90,14 +91,18 @@ type TestSQLiteDB struct {
 	*sql.DB
 	dir      string // temp dir created for sqlite files
 	shutdown func() // context shutdown func
+	t        *testing.T
 }
 
 func (r *TestSQLiteDB) Close() error {
 	r.shutdown()
 
-	// Verify all connections are closed before closing DB
+	// Verify all connections are closed before closing the DB
 	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		panic(fmt.Sprintf("found %d open sqlite connections", conns))
+		require.FailNow(r.t, ErrOpenConnections{
+			Database:       "sqlite",
+			NumConnections: conns,
+		}.Error())
 	}
 	if err := r.DB.Close(); err != nil {
 		return err
@@ -133,7 +138,12 @@ func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
 	// Don't allow idle connections so we can verify all are closed at the end of testing
 	db.SetMaxIdleConns(0)
 
-	return &TestSQLiteDB{DB: db, dir: dir, shutdown: cancelFunc}
+	return &TestSQLiteDB{
+		DB:       db,
+		dir:      dir,
+		shutdown: cancelFunc,
+		t:        t,
+	}
 }
 
 // SQLiteUniqueViolation returns true when the provided error matches the SQLite error
