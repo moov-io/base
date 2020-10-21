@@ -1,3 +1,11 @@
+## v0.14.0 (Released 2020-10-21)
+
+**BREAKING CHANGES**
+- database: removed `InMemorySqliteConfig` object
+
+ADDITIONS
+- log: add timestamp field to all logs
+
 ## v0.13.1
 
 FIXES:
