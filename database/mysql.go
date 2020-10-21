@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
@@ -104,18 +106,24 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 // TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
 // a clean database for each testcase.  Callers should cleanup with Close() when finished.
 type TestMySQLDB struct {
-	DB *sql.DB
+	*sql.DB
 
 	container *dockertest.Resource
 
 	shutdown func() // context shutdown func
+	t        *testing.T
 }
 
 func (r *TestMySQLDB) Close() error {
-	// Verify all connections are closed before closing DB
-	conns := r.DB.Stats().OpenConnections
-
 	r.shutdown()
+
+	// Verify all connections are closed before closing DB
+	if conns := r.DB.Stats().OpenConnections; conns != 0 {
+		require.FailNow(r.t, ErrOpenConnections{
+			Database:       "mysql",
+			NumConnections: conns,
+		}.Error())
+	}
 
 	if err := r.container.Close(); err != nil {
 		return err
@@ -123,10 +131,6 @@ func (r *TestMySQLDB) Close() error {
 
 	if err := r.DB.Close(); err != nil {
 		return err
-	}
-
-	if conns != 0 {
-		panic(fmt.Sprintf("found %d open MySQL connections", conns))
 	}
 
 	return nil
@@ -162,7 +166,12 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	// Don't allow idle connections so we can verify all are closed at the end of testing
 	db.SetMaxIdleConns(0)
 
-	return &TestMySQLDB{DB: db, container: container, shutdown: cancelFunc}
+	return &TestMySQLDB{
+		DB:        db,
+		container: container,
+		shutdown:  cancelFunc,
+		t:         t,
+	}
 }
 
 func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {

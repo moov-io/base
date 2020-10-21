@@ -6,16 +6,21 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/moov-io/base/log"
 )
 
 func TestSQLite__basic(t *testing.T) {
-	db := CreateTestSqliteDB(t)
+	db := CreateTestSQLiteDB(t)
 	defer db.Close()
 
-	if err := db.DB.Ping(); err != nil {
-		t.Fatal(err)
-	}
+	err := db.DB.Ping()
+	require.NoError(t, err)
+
+	r, err := db.Query("select * from tests")
+	require.NoError(t, err)
+	defer r.Close()
 
 	if runtime.GOOS == "windows" {
 		t.Skip("/dev/null doesn't exist on Windows")
@@ -27,16 +32,15 @@ func TestSQLite__basic(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	conn, _ := s.Connect(ctx)
-	if err := conn.Ping(); err == nil {
-		t.Error("expected error")
-	}
+	err = conn.Ping()
+	require.EqualError(t, err, "unable to open database file")
 
 	cancelFunc()
 
 	conn.Close()
 }
 
-func TestSqliteUniqueViolation(t *testing.T) {
+func TestSQLiteUniqueViolation(t *testing.T) {
 	err := errors.New(`problem upserting depository="7d676c65eccd48090ff238a0d5e35eb6126c23f2", userId="80cfe1311d9eb7659d02cba9ee6cb04ed3739a85": UNIQUE constraint failed: depositories.depository_id`)
 	if !UniqueViolation(err) {
 		t.Error("should have matched unique violation")

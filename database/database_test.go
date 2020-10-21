@@ -3,17 +3,32 @@ package database
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/moov-io/base/docker"
 )
 
-func Test_NewAndMigration_SQLite3(t *testing.T) {
-	db, err := NewAndMigrate(context.Background(), nil, InMemorySqliteConfig)
-	if err != nil {
-		t.FailNow()
-	}
-	db.Close()
+func Test_NewAndMigration_SQLite(t *testing.T) {
+	dir, err := ioutil.TempDir("", "sqlite-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	config := &DatabaseConfig{SQLite: &SQLiteConfig{
+		Path: filepath.Join(dir, "tests.db"),
+	}}
+
+	db, err := NewAndMigrate(context.Background(), nil, *config)
+	require.NoError(t, err)
+	defer db.Close()
+
+	require.NoError(t, err)
+	_, err = db.Query("select * from tests")
+	require.NoError(t, err)
 }
 
 func Test_NewAndMigration_MySql(t *testing.T) {
