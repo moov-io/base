@@ -15,8 +15,8 @@ const Error = Level("error")
 const Fatal = Level("fatal")
 
 // Context returns the map that states that key value of `level={{l}}`
-func (l Level) Context() map[string]string {
-	return map[string]string{
+func (l Level) Context() map[string]interface{} {
+	return map[string]interface{}{
 		"level": string(l),
 	}
 }

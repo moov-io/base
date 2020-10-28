@@ -11,8 +11,9 @@ import (
 
 	"github.com/moov-io/base/idempotent"
 
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
+
+	"github.com/moov-io/base/log"
 )
 
 var (
@@ -58,7 +59,13 @@ func (w *ResponseWriter) WriteHeader(code int) {
 	}
 
 	if requestID := GetRequestID(w.request); requestID != "" && w.log != nil {
-		w.log.Log("method", w.request.Method, "path", w.request.URL.Path, "status", code, "duration", diff, "requestID", requestID)
+		w.log.With(log.Fields{
+			"method":    w.request.Method,
+			"path":      w.request.URL.Path,
+			"status":    code,
+			"duration":  diff,
+			"requestID": requestID,
+		}).Send()
 	}
 }
 

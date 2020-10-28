@@ -31,7 +31,7 @@ func NewBufferLogger() (*strings.Builder, Logger) {
 func NewLogger(writer log.Logger) Logger {
 	l := &logger{
 		writer: writer,
-		ctx:    map[string]string{},
+		ctx:    map[string]interface{}{},
 	}
 
 	// Default logs to be info until changed
@@ -42,10 +42,10 @@ var _ Logger = (*logger)(nil)
 
 type logger struct {
 	writer log.Logger
-	ctx    map[string]string
+	ctx    map[string]interface{}
 }
 
-func (l *logger) Set(key, value string) Logger {
+func (l *logger) Set(key string, value interface{}) Logger {
 	return l.With(Fields{
 		key: value,
 	})
@@ -54,7 +54,7 @@ func (l *logger) Set(key, value string) Logger {
 // With returns a new Logger with the contexts added to its own.
 func (l *logger) With(ctxs ...Context) Logger {
 	// Estimation assuming that for each ctxs has at least 1 value.
-	combined := make(map[string]string, len(l.ctx)+len(ctxs))
+	combined := make(map[string]interface{}, len(l.ctx)+len(ctxs))
 
 	for k, v := range l.ctx {
 		combined[k] = v
@@ -91,8 +91,10 @@ func (l *logger) Fatal() Logger {
 
 func (l *logger) Log(msg string) {
 	orig := []string{
-		"msg", msg,
 		"ts", time.Now().UTC().Format(time.RFC3339),
+	}
+	if msg != "" {
+		orig = append(orig, "msg", msg)
 	}
 
 	keyvals := make([]interface{}, (len(l.ctx)*2)+len(orig))
@@ -113,6 +115,11 @@ func (l *logger) Log(msg string) {
 func (l *logger) Logf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Log(msg)
+}
+
+// Send is equivalent to calling Msg("")
+func (l *logger) Send() {
+	l.Log("")
 }
 
 func (l *logger) LogError(err error) LoggedError {

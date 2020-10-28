@@ -1,7 +1,7 @@
 package log
 
 type Logger interface {
-	Set(key, value string) Logger
+	Set(key string, value interface{}) Logger
 	With(ctxs ...Context) Logger
 
 	Info() Logger
@@ -11,11 +11,12 @@ type Logger interface {
 
 	Log(message string)
 	Logf(format string, args ...interface{})
+	Send()
 
 	LogError(error error) LoggedError
 	LogErrorf(format string, args ...interface{}) LoggedError
 }
 
 type Context interface {
-	Context() map[string]string
+	Context() map[string]interface{}
 }
