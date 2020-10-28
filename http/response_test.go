@@ -7,16 +7,16 @@ package http
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/moov-io/base"
 	"github.com/moov-io/base/idempotent/lru"
 
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gorilla/mux"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+
+	"github.com/moov-io/base/log"
 )
 
 var (
@@ -53,7 +53,7 @@ func TestResposne_EnsureHeaders(t *testing.T) {
 	rec := lru.New()
 	w := httptest.NewRecorder()
 
-	logger := log.NewLogfmtLogger(os.Stderr)
+	logger := log.NewDefaultLogger()
 	ww, err := EnsureHeaders(logger, nil, rec, w, req)
 	if err != nil {
 		t.Error(err)

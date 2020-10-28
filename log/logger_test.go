@@ -1,6 +1,7 @@
 package log
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"regexp"
@@ -35,6 +36,52 @@ func Test_Log(t *testing.T) {
 	ts, err := time.Parse(time.RFC3339, timestamp)
 	a.NoError(err)
 	a.NotZero(ts)
+}
+
+func Test_LogWriteValue(t *testing.T) {
+	tests := []struct {
+		desc     string
+		key      string
+		val      interface{}
+		expected string
+	}{
+		{
+			key:      "foo",
+			val:      []byte("bar"),
+			expected: "foo=bar",
+		},
+		{
+			key:      "foo",
+			val:      bytes.NewBufferString("bar"),
+			expected: "foo=bar",
+		},
+		{
+			key:      "foo",
+			val:      errors.New("bar"),
+			expected: "foo=bar",
+		},
+		{
+			key:      "foo",
+			val:      100,
+			expected: "foo=100",
+		},
+	}
+	for _, tc := range tests {
+		a, buffer, log := Setup(t)
+		log.Set(tc.key, tc.val).Send()
+		got := buffer.String()
+		a.Contains(got, tc.expected)
+	}
+}
+
+func Test_Send(t *testing.T) {
+	a, buffer, log := Setup(t)
+	log.Set("foo", "bar").Send()
+
+	got := buffer.String()
+	a.NotContains(got, "msg=")
+	a.Contains(got, "ts=")
+	a.Contains(got, "foo=bar")
 }
 
 func Test_WithContext(t *testing.T) {
