@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/moov-io/base/docker"
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
@@ -43,9 +44,12 @@ func TestMySQLUniqueViolation(t *testing.T) {
 }
 
 func TestCreateTemporaryDatabase(t *testing.T) {
-	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
+	if !docker.Enabled() {
+		t.Skip("Docker not enabled")
+	}
+
+	config, _, err := RunMySQLDockerInstance(&DatabaseConfig{})
 	require.NoError(t, err)
-	defer container.Close()
 
 	name, err := CreateTemporaryDatabase(config)
 	require.NoError(t, err)
