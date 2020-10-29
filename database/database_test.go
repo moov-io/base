@@ -42,10 +42,11 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	}
 	defer container.Close()
 
+	config.DatabaseName, err = CreateTemporaryDatabase(config)
+	require.NoError(t, err)
+
 	db, err := NewAndMigrate(context.Background(), nil, *config)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	db.Close()
 }
 

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -109,9 +110,7 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 // a clean database for each testcase.  Callers should cleanup with Close() when finished.
 type TestMySQLDB struct {
 	*sql.DB
-
-	container *dockertest.Resource
-
+	name     string
 	shutdown func() // context shutdown func
 	t        *testing.T
 }
@@ -127,7 +126,8 @@ func (r *TestMySQLDB) Close() error {
 		}.Error())
 	}
 
-	if err := r.container.Close(); err != nil {
+	_, err := r.DB.Exec(fmt.Sprintf("drop database %s", r.name))
+	if err != nil {
 		return err
 	}
 
@@ -136,6 +136,34 @@ func (r *TestMySQLDB) Close() error {
 	}
 
 	return nil
+}
+
+var SharedMySQL mySQLServer
+
+type mySQLServer struct {
+	Config *DatabaseConfig
+
+	start     sync.Once
+	container *dockertest.Resource
+}
+
+// Start starts MySQL server or finds running server (container) we do not stop
+// MySQL server as we can re-use same container during multuple test runs. You
+// can safely stop/remove MySQL container manually.
+func (m *mySQLServer) Start() error {
+	var err error
+
+	m.start.Do(func() {
+		m.Config, m.container, err = RunMySQLDockerInstance(&DatabaseConfig{})
+	})
+
+	return err
+}
+
+// Stop stops container and removes linked volumes
+// We don't Stop MySQL to reduce startup time for the next test runs
+func (m *mySQLServer) Stop() error {
+	return m.container.Close()
 }
 
 // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
@@ -150,18 +178,21 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		t.Skip("Docker not enabled")
 	}
 
-	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
-	if err != nil {
-		t.Fatal(err)
+	err := SharedMySQL.Start()
+	require.NoError(t, err)
+
+	dbName, err := CreateTemporaryDatabase(SharedMySQL.Config)
+	require.NoError(t, err)
+
+	dbConfig := &DatabaseConfig{
+		DatabaseName: dbName,
+		MySQL:        SharedMySQL.Config.MySQL,
 	}
 
 	logger := log.NewNopLogger()
-
 	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	db, err := NewAndMigrate(ctx, logger, *config)
+	db, err := NewAndMigrate(ctx, logger, *dbConfig)
 	if err != nil {
-		container.Close()
 		t.Fatal(err)
 	}
 
@@ -169,13 +200,15 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	db.SetMaxIdleConns(0)
 
 	return &TestMySQLDB{
-		DB:        db,
-		container: container,
-		shutdown:  cancelFunc,
-		t:         t,
+		DB:       db,
+		name:     dbName,
+		shutdown: cancelFunc,
+		t:        t,
 	}
 }
 
+// We connect as root to MySQL server and create database with random name to
+// run our migrations on it later.
 func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
 	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.MySQL.Password, config.MySQL.Address)
 	db, err := sql.Open("mysql", dsn)
@@ -185,8 +218,13 @@ func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
 	defer db.Close()
 
 	dbName := "test" + base.ID()
-	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	_, err = db.ExecContext(ctx, fmt.Sprintf("create database %s", dbName))
+
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database %s", dbName))
+	if err != nil {
+		return "", err
+	}
+
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on %s.* to '%s'@'%%'", dbName, config.MySQL.User))
 	if err != nil {
 		return "", err
 	}
@@ -207,12 +245,34 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 		config.MySQL.Password = "secret"
 	}
 
-	pool, err := dockertest.NewPool("")
+	resource, err := findOrLaunchMySQLContainer(config)
 	if err != nil {
 		return nil, nil, err
 	}
+	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
 
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+	return &DatabaseConfig{
+		DatabaseName: config.DatabaseName,
+		MySQL: &MySQLConfig{
+			Address:  address,
+			User:     config.MySQL.User,
+			Password: config.MySQL.Password,
+		},
+	}, resource, nil
+}
+
+func findOrLaunchMySQLContainer(config *DatabaseConfig) (*dockertest.Resource, error) {
+	var containerName = "mysql-test-container"
+	var resource *dockertest.Resource
+	var err error
+
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = pool.RunWithOptions(&dockertest.RunOptions{
+		Name:       containerName,
 		Repository: "vaulty/mysql-volumeless",
 		Tag:        "8.0",
 		Env: []string{
@@ -220,15 +280,20 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySQL.Password),
 			fmt.Sprintf("MYSQL_ROOT_PASSWORD=%s", config.MySQL.Password),
 		},
-	}, func(dockerConfig *dc.HostConfig) {
-		dockerConfig.AutoRemove = true
-	},
-	)
-	if err != nil {
-		return nil, nil, err
+	})
+
+	if err != nil && !errors.Is(err, dc.ErrContainerAlreadyExists) {
+		return nil, err
+	}
+
+	// look for running container
+	resource, found := pool.ContainerByName(containerName)
+	if !found {
+		return nil, errors.New("failed to launch (or find) MySQL container")
 	}
 
 	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
+
 	dbURL := fmt.Sprintf("%s:%s@%s/%s",
 		config.MySQL.User,
 		config.MySQL.Password,
@@ -246,17 +311,10 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 	})
 	if err != nil {
 		resource.Close()
-		return nil, nil, err
+		return nil, err
 	}
 
-	return &DatabaseConfig{
-		DatabaseName: config.DatabaseName,
-		MySQL: &MySQLConfig{
-			Address:  address,
-			User:     config.MySQL.User,
-			Password: config.MySQL.Password,
-		},
-	}, resource, nil
+	return resource, nil
 }
 
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code
