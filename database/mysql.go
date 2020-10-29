@@ -197,13 +197,12 @@ func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertes
 	}
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "mysql",
-		Tag:        "8",
+		Repository: "vaulty/mysql-volumeless",
+		Tag:        "8.0",
 		Env: []string{
 			fmt.Sprintf("MYSQL_USER=%s", config.MySQL.User),
 			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySQL.Password),
-			"MYSQL_ROOT_PASSWORD=secret",
-			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
+			fmt.Sprintf("MYSQL_ROOT_PASSWORD=%s", config.MySQL.Password),
 		},
 	}, func(dockerConfig *dc.HostConfig) {
 		dockerConfig.AutoRemove = true
