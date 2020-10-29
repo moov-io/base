@@ -41,3 +41,13 @@ func TestMySQLUniqueViolation(t *testing.T) {
 		t.Error("should have matched unique violation")
 	}
 }
+
+func TestCreateTemporaryDatabase(t *testing.T) {
+	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
+	require.NoError(t, err)
+	defer container.Close()
+
+	name, err := CreateTemporaryDatabase(config)
+	require.NoError(t, err)
+	require.Contains(t, name, "test")
+}

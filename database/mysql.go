@@ -7,11 +7,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/moov-io/base"
 	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
@@ -174,11 +176,25 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	}
 }
 
-func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
-	if config.DatabaseName == "" {
-		config.DatabaseName = "test"
+func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
+	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.MySQL.Password, config.MySQL.Address)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+
+	dbName := "test" + base.ID()
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	_, err = db.ExecContext(ctx, fmt.Sprintf("create database %s", dbName))
+	if err != nil {
+		return "", err
 	}
 
+	return dbName, nil
+}
+
+func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
 	if config.MySQL == nil {
 		config.MySQL = &MySQLConfig{}
 	}
