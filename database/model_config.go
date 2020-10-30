@@ -1,16 +1,12 @@
 package database
 
-type Type string
-
-const (
-	TypeMySQL  Type = "mysql"
-	TypeSQLite Type = "sqlite"
+import (
+	"path/filepath"
+	"strings"
 )
 
-type Config struct {
-	Type   Type
-	MySQL  MySQLConfig
-	SQLite SQLiteConfig
+type Config interface {
+	DBName() string
 }
 
 type MySQLConfig struct {
@@ -20,6 +16,15 @@ type MySQLConfig struct {
 	Password string
 }
 
+func (c MySQLConfig) DBName() string {
+	return c.Name
+}
+
 type SQLiteConfig struct {
 	Path string
+}
+
+func (c SQLiteConfig) DBName() string {
+	s := filepath.Base(c.Path)
+	return strings.TrimSuffix(s, filepath.Ext(s))
 }

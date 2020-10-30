@@ -33,7 +33,7 @@ func RunMigrations(logger log.Logger, config Config) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"pkger:///migrations/",
-		string(config.Type),
+		config.DBName(),
 		driver,
 	)
 	if err != nil {
@@ -55,10 +55,10 @@ func RunMigrations(logger log.Logger, config Config) error {
 }
 
 func GetDriver(db *sql.DB, config Config) (database.Driver, error) {
-	switch config.Type {
-	case TypeMySQL:
+	switch config.(type) {
+	case MySQLConfig:
 		return migmysql.WithInstance(db, &migmysql.Config{})
-	case TypeSQLite:
+	case SQLiteConfig:
 		return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 	}
 

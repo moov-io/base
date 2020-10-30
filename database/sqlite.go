@@ -122,9 +122,7 @@ func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
 
 	dbPath := filepath.Join(dir, "tests.db")
 
-	config := Config{
-		Type:   TypeSQLite,
-		SQLite: SQLiteConfig{Path: dbPath}}
+	config := SQLiteConfig{Path: dbPath}
 
 	logger := log.NewNopLogger()
 	ctx, cancelFunc := context.WithCancel(context.Background())

@@ -11,11 +11,11 @@ import (
 // New establishes a database connection according to the type and environmental
 // variables for that specific database.
 func New(ctx context.Context, logger log.Logger, config Config) (*sql.DB, error) {
-	switch config.Type {
-	case TypeMySQL:
-		return mysqlConnection(logger, config.MySQL).Connect(ctx)
-	case TypeSQLite:
-		return sqliteConnection(logger, config.SQLite.Path).Connect(ctx)
+	switch c := config.(type) {
+	case MySQLConfig:
+		return mysqlConnection(logger, c).Connect(ctx)
+	case SQLiteConfig:
+		return sqliteConnection(logger, c.Path).Connect(ctx)
 	}
 
 	return nil, fmt.Errorf("database config not defined")

@@ -110,27 +110,24 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		t.Skip("Docker not enabled")
 	}
 
-	config := Config{
-		Type: TypeMySQL,
-		MySQL: MySQLConfig{
-			Name:     "test",
-			User:     "moov",
-			Password: "secret",
-		},
+	config := MySQLConfig{
+		Name:     "test",
+		User:     "moov",
+		Password: "secret",
 	}
 
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err)
 
-	container, err := getMySQLDockerInstance(pool, "mysql-test-db", &config.MySQL)
+	container, err := getMySQLDockerInstance(pool, "mysql-test-db", &config)
 	require.NoError(t, err)
 
-	config.MySQL.Address = fmt.Sprintf("tcp(localhost:%s)", container.GetPort("3306/tcp"))
+	config.Address = fmt.Sprintf("tcp(localhost:%s)", container.GetPort("3306/tcp"))
 	dbURL := fmt.Sprintf("%s:%s@%s/%s",
-		config.MySQL.User,
-		config.MySQL.Password,
-		config.MySQL.Address,
-		config.MySQL.Name,
+		config.User,
+		config.Password,
+		config.Address,
+		config.Name,
 	)
 
 	var db *sql.DB

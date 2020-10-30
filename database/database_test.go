@@ -16,14 +16,11 @@ func Test_NewAndMigration_SQLite(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	config := &Config{
-		Type: TypeSQLite,
-		SQLite: SQLiteConfig{
-			Path: filepath.Join(dir, "tests.db"),
-		},
+	config := SQLiteConfig{
+		Path: filepath.Join(dir, "tests.db"),
 	}
 
-	db, err := NewAndMigrate(context.Background(), nil, *config)
+	db, err := NewAndMigrate(context.Background(), nil, config)
 	require.NoError(t, err)
 	defer db.Close()
 
