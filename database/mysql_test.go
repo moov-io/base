@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ func TestMySQL_Teardown(t *testing.T) {
 		require.NoError(t, row.Scan(&count))
 		require.Equal(t, 0, count)
 
-		insertQuery := fmt.Sprintf("insert into tests (id) values (100),(200),(300);")
+		insertQuery := "insert into tests (id) values (100),(200),(300);"
 		_, err := db.Exec(insertQuery)
 		require.NoError(t, err)
 	}
