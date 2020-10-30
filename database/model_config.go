@@ -1,12 +1,20 @@
 package database
 
-type DatabaseConfig struct {
-	MySQL        *MySQLConfig
-	SQLite       *SQLiteConfig
-	DatabaseName string
+type Type string
+
+const (
+	TypeMySQL  Type = "mysql"
+	TypeSQLite Type = "sqlite"
+)
+
+type Config struct {
+	Type   Type
+	MySQL  MySQLConfig
+	SQLite SQLiteConfig
 }
 
 type MySQLConfig struct {
+	Name     string
 	Address  string
 	User     string
 	Password string

@@ -3,13 +3,15 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/moov-io/base/log"
 )
 
-func TestMySQL__basic(t *testing.T) {
+func TestMySQL__Basic(t *testing.T) {
 	db := CreateTestMySQLDB(t)
 	defer db.Close()
 
@@ -17,9 +19,33 @@ func TestMySQL__basic(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 0, db.DB.Stats().OpenConnections)
+}
 
+func TestMySQL_Teardown(t *testing.T) {
+	for i := 0; i < 3; i++ {
+		db := CreateTestMySQLDB(t)
+		defer db.Close()
+
+		row := db.QueryRow("SELECT COUNT(*) FROM tests")
+		var count int
+		require.NoError(t, row.Scan(&count))
+		require.Equal(t, 0, count)
+
+		insertQuery := fmt.Sprintf("insert into tests (id) values (100),(200),(300);")
+		_, err := db.Exec(insertQuery)
+		require.NoError(t, err)
+	}
+
+}
+
+func TestMySQL_BadConnection(t *testing.T) {
 	// create a phony MySQL
-	m := mysqlConnection(log.NewNopLogger(), "user", "pass", "127.0.0.1:3006", "db")
+	m := mysqlConnection(log.NewNopLogger(), MySQLConfig{
+		Name:     "fake",
+		Address:  "9000",
+		User:     "moov",
+		Password: "secret",
+	})
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 

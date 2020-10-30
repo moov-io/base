@@ -10,17 +10,18 @@ import (
 
 // New establishes a database connection according to the type and environmental
 // variables for that specific database.
-func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
-	if config.MySQL != nil {
-		return mysqlConnection(logger, config.MySQL.User, config.MySQL.Password, config.MySQL.Address, config.DatabaseName).Connect(ctx)
-	} else if config.SQLite != nil {
+func New(ctx context.Context, logger log.Logger, config Config) (*sql.DB, error) {
+	switch config.Type {
+	case TypeMySQL:
+		return mysqlConnection(logger, config.MySQL).Connect(ctx)
+	case TypeSQLite:
 		return sqliteConnection(logger, config.SQLite.Path).Connect(ctx)
 	}
 
 	return nil, fmt.Errorf("database config not defined")
 }
 
-func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
+func NewAndMigrate(ctx context.Context, logger log.Logger, config Config) (*sql.DB, error) {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}

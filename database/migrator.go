@@ -15,7 +15,7 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config Config) error {
 	db, err := New(context.Background(), logger, config)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"pkger:///migrations/",
-		config.DatabaseName,
+		string(config.Type),
 		driver,
 	)
 	if err != nil {
@@ -54,20 +54,13 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	return nil
 }
 
-func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {
-	if config.MySQL != nil {
-		return MySQLDriver(db)
-	} else if config.SQLite != nil {
-		return SQLite3Driver(db)
+func GetDriver(db *sql.DB, config Config) (database.Driver, error) {
+	switch config.Type {
+	case TypeMySQL:
+		return migmysql.WithInstance(db, &migmysql.Config{})
+	case TypeSQLite:
+		return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 	}
 
 	return nil, fmt.Errorf("database config not defined")
-}
-
-func MySQLDriver(db *sql.DB) (database.Driver, error) {
-	return migmysql.WithInstance(db, &migmysql.Config{})
-}
-
-func SQLite3Driver(db *sql.DB) (database.Driver, error) {
-	return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 }

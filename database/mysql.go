@@ -7,19 +7,19 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
-
-	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
+	"github.com/moov-io/base/docker"
 	"github.com/moov-io/base/log"
 )
 
@@ -42,14 +42,6 @@ var (
 		return 16
 	}()
 )
-
-type discardLogger struct{}
-
-func (l discardLogger) Print(v ...interface{}) {}
-
-func init() {
-	gomysql.SetLogger(discardLogger{})
-}
 
 type mysql struct {
 	dsn    string
@@ -89,13 +81,13 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func mysqlConnection(logger log.Logger, user, pass string, address string, database string) *mysql {
+func mysqlConnection(logger log.Logger, config MySQLConfig) *mysql {
 	timeout := "30s"
 	if v := os.Getenv("MYSQL_TIMEOUT"); v != "" {
 		timeout = v
 	}
 	params := fmt.Sprintf("timeout=%s&charset=utf8mb4&parseTime=true&sql_mode=ALLOW_INVALID_DATES", timeout)
-	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
+	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", config.User, config.Password, config.Address, config.Name, params)
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
@@ -103,38 +95,7 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	}
 }
 
-// TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
-// a clean database for each testcase.  Callers should cleanup with Close() when finished.
-type TestMySQLDB struct {
-	*sql.DB
-
-	container *dockertest.Resource
-
-	shutdown func() // context shutdown func
-	t        *testing.T
-}
-
-func (r *TestMySQLDB) Close() error {
-	r.shutdown()
-
-	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		require.FailNow(r.t, ErrOpenConnections{
-			Database:       "mysql",
-			NumConnections: conns,
-		}.Error())
-	}
-
-	if err := r.container.Close(); err != nil {
-		return err
-	}
-
-	if err := r.DB.Close(); err != nil {
-		return err
-	}
-
-	return nil
-}
+var onceRunMigrations sync.Once
 
 // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
 // as a clean mysql database. All migrations are ran on the db before.
@@ -144,104 +105,147 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	if testing.Short() {
 		t.Skip("-short flag enabled")
 	}
+
 	if !docker.Enabled() {
 		t.Skip("Docker not enabled")
 	}
 
-	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	logger := log.NewNopLogger()
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	db, err := NewAndMigrate(ctx, logger, *config)
-	if err != nil {
-		container.Close()
-		t.Fatal(err)
-	}
-
-	// Don't allow idle connections so we can verify all are closed at the end of testing
-	db.SetMaxIdleConns(0)
-
-	return &TestMySQLDB{
-		DB:        db,
-		container: container,
-		shutdown:  cancelFunc,
-		t:         t,
-	}
-}
-
-func RunMySQLDockerInstance(config *DatabaseConfig) (*DatabaseConfig, *dockertest.Resource, error) {
-	if config.DatabaseName == "" {
-		config.DatabaseName = "test"
-	}
-
-	if config.MySQL == nil {
-		config.MySQL = &MySQLConfig{}
-	}
-
-	if config.MySQL.User == "" {
-		config.MySQL.User = "moov"
-	}
-
-	if config.MySQL.Password == "" {
-		config.MySQL.Password = "secret"
+	config := Config{
+		Type: TypeMySQL,
+		MySQL: MySQLConfig{
+			Name:     "test",
+			User:     "moov",
+			Password: "secret",
+		},
 	}
 
 	pool, err := dockertest.NewPool("")
+	require.NoError(t, err)
+
+	container, err := getMySQLDockerInstance(pool, "mysql-test-db", &config.MySQL)
+	require.NoError(t, err)
+
+	config.MySQL.Address = fmt.Sprintf("tcp(localhost:%s)", container.GetPort("3306/tcp"))
+	dbURL := fmt.Sprintf("%s:%s@%s/%s",
+		config.MySQL.User,
+		config.MySQL.Password,
+		config.MySQL.Address,
+		config.MySQL.Name,
+	)
+
+	var db *sql.DB
+	err = pool.Retry(func() error {
+		db, err = sql.Open("mysql", dbURL)
+		require.NoError(t, err)
+
+		return db.Ping()
+	})
 	if err != nil {
-		return nil, nil, err
+		container.Close()
+		require.FailNow(t, err.Error())
+	}
+	// Don't allow idle connections so we can verify all are closed at the end of testing
+	db.SetMaxIdleConns(0)
+
+	// Run DB migrations
+	onceRunMigrations.Do(func() {
+		err = RunMigrations(log.NewNopLogger(), config)
+		require.NoError(t, err)
+	})
+
+	result := &TestMySQLDB{
+		DB:        db,
+		container: nil,
+		t:         t,
+		logger:    log.NewDefaultLogger(),
+	}
+	// Teardown to ensure we're working with a clean DB
+	result.Teardown()
+
+	return result
+}
+
+func getMySQLDockerInstance(pool *dockertest.Pool, containerName string, config *MySQLConfig) (*dockertest.Resource, error) {
+	resource, ok := pool.ContainerByName(containerName)
+	if ok {
+		return resource, nil
 	}
 
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+	return pool.RunWithOptions(&dockertest.RunOptions{
+		Name:       containerName,
 		Repository: "mysql",
 		Tag:        "8",
 		Env: []string{
-			fmt.Sprintf("MYSQL_USER=%s", config.MySQL.User),
-			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySQL.Password),
+			fmt.Sprintf("MYSQL_USER=%s", config.User),
+			fmt.Sprintf("MYSQL_PASSWORD=%s", config.Password),
 			"MYSQL_ROOT_PASSWORD=secret",
-			fmt.Sprintf("MYSQL_DATABASE=%s", config.DatabaseName),
+			fmt.Sprintf("MYSQL_DATABASE=%s", config.Name),
 		},
 	}, func(dockerConfig *dc.HostConfig) {
 		dockerConfig.AutoRemove = true
 	},
 	)
-	if err != nil {
-		return nil, nil, err
+}
+
+// TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
+// a clean database for each testcase.  Callers should cleanup with Close() when finished.
+type TestMySQLDB struct {
+	*sql.DB
+	container *dockertest.Resource
+	t         *testing.T
+	logger    log.Logger
+}
+
+func (r *TestMySQLDB) Close() error {
+	// Verify all connections are closed before closing DB
+	if conns := r.DB.Stats().OpenConnections; conns != 0 {
+		require.FailNow(r.t, ErrOpenConnections{
+			Database:       "mysql",
+			NumConnections: conns,
+		}.Error())
 	}
 
-	address := fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
-	dbURL := fmt.Sprintf("%s:%s@%s/%s",
-		config.MySQL.User,
-		config.MySQL.Password,
-		address,
-		config.DatabaseName,
-	)
+	if err := r.DB.Close(); err != nil {
+		return err
+	}
 
-	err = pool.Retry(func() error {
-		db, err := sql.Open("mysql", dbURL)
-		if err != nil {
-			return err
+	return nil
+}
+
+func (r *TestMySQLDB) Teardown() {
+	// List of tables we don't want to touch in this teardown
+	blockList := map[string]bool{
+		"schema_migrations": true,
+	}
+
+	// Temporarily disable foreign key requirements
+	_, err := r.DB.Exec("SET FOREIGN_KEY_CHECKS = 0;")
+	require.NoError(r.t, err)
+	defer r.DB.Exec("SET FOREIGN_KEY_CHECKS = 1;")
+
+	// Delete all rows from all tables
+	query := "select TABLE_NAME from information_schema.tables where table_schema = (select database());"
+	stmt, err := r.DB.Prepare(query)
+	require.NoError(r.t, err)
+	rows, err := stmt.Query()
+	require.NoError(r.t, err)
+
+	for rows.Next() {
+		var table string
+		require.NoError(r.t, rows.Scan(&table))
+
+		if _, ok := blockList[table]; ok {
+			continue
 		}
-		defer db.Close()
-		return db.Ping()
-	})
-	if err != nil {
-		resource.Close()
-		return nil, nil, err
-	}
 
-	return &DatabaseConfig{
-		DatabaseName: config.DatabaseName,
-		MySQL: &MySQLConfig{
-			Address:  address,
-			User:     config.MySQL.User,
-			Password: config.MySQL.Password,
-		},
-	}, resource, nil
+		result, err := r.DB.Exec(fmt.Sprintf("delete from %s", table))
+		require.NoError(r.t, err)
+
+		numRowsDeleted, err := result.RowsAffected()
+		require.NoError(r.t, err)
+
+		r.logger.Logf("Deleted %d rows from %s", numRowsDeleted, table)
+	}
 }
 
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code

@@ -122,14 +122,14 @@ func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
 
 	dbPath := filepath.Join(dir, "tests.db")
 
-	config := &DatabaseConfig{SQLite: &SQLiteConfig{
-		Path: dbPath,
-	}}
+	config := Config{
+		Type:   TypeSQLite,
+		SQLite: SQLiteConfig{Path: dbPath}}
 
 	logger := log.NewNopLogger()
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	db, err := NewAndMigrate(ctx, logger, *config)
+	db, err := NewAndMigrate(ctx, logger, config)
 	if err != nil {
 		os.RemoveAll(dir)
 		t.Fatal(err)
