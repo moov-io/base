@@ -96,6 +96,7 @@ func mysqlConnection(logger log.Logger, config MySQLConfig) *mysql {
 }
 
 var onceRunMigrations sync.Once
+var dbMutex sync.Mutex
 
 // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
 // as a clean mysql database. All migrations are ran on the db before.
@@ -156,9 +157,13 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		t:         t,
 		logger:    log.NewDefaultLogger(),
 	}
+
+	dbMutex.Lock()
+	t.Cleanup(func() {
+		dbMutex.Unlock()
+	})
 	// Teardown to ensure we're working with a clean DB
 	result.Teardown()
-
 	return result
 }
 

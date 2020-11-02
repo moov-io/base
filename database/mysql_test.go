@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -64,5 +65,24 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	err := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": Error 1062: Duplicate entry '282f6ffcd9ba5b029afbf2b739ee826e22d9df3b' for key 'PRIMARY'`)
 	if !UniqueViolation(err) {
 		t.Error("should have matched unique violation")
+	}
+}
+
+func TestDatabaseMutex(t *testing.T) {
+	for i := 0; i < 30; i++ {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			t.Parallel()
+			db := CreateTestMySQLDB(t)
+			defer db.Close()
+
+			insertQuery := "insert into tests (id) values (100),(200),(300);"
+			_, err := db.Exec(insertQuery)
+			require.NoError(t, err)
+
+			row := db.QueryRow("SELECT COUNT(*) FROM tests")
+			var count int
+			require.NoError(t, row.Scan(&count))
+			require.Equal(t, 3, count)
+		})
 	}
 }
