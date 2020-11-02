@@ -21,23 +21,6 @@ func TestMySQL__Basic(t *testing.T) {
 	require.Equal(t, 0, db.DB.Stats().OpenConnections)
 }
 
-func TestMySQL_Teardown(t *testing.T) {
-	for i := 0; i < 3; i++ {
-		db := CreateTestMySQLDB(t)
-		defer db.Close()
-
-		row := db.QueryRow("SELECT COUNT(*) FROM tests")
-		var count int
-		require.NoError(t, row.Scan(&count))
-		require.Equal(t, 0, count)
-
-		insertQuery := "insert into tests (id) values (100),(200),(300);"
-		_, err := db.Exec(insertQuery)
-		require.NoError(t, err)
-	}
-
-}
-
 func TestMySQL_BadConnection(t *testing.T) {
 	// create a phony MySQL
 	m := mysqlConnection(log.NewNopLogger(), MySQLConfig{
@@ -68,8 +51,8 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	}
 }
 
-func TestDatabaseMutex(t *testing.T) {
-	for i := 0; i < 30; i++ {
+func TestTeardown__Parallel(t *testing.T) {
+	for i := 0; i < 10; i++ {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 			db := CreateTestMySQLDB(t)

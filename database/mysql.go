@@ -145,12 +145,6 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	// Don't allow idle connections so we can verify all are closed at the end of testing
 	db.SetMaxIdleConns(0)
 
-	// Run DB migrations
-	onceRunMigrations.Do(func() {
-		err = RunMigrations(log.NewNopLogger(), config)
-		require.NoError(t, err)
-	})
-
 	result := &TestMySQLDB{
 		DB:        db,
 		container: nil,
@@ -162,8 +156,16 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 	t.Cleanup(func() {
 		dbMutex.Unlock()
 	})
+
+	onceRunMigrations.Do(func() {
+		// Run db migrations
+		err = RunMigrations(result.logger, config)
+		require.NoError(t, err)
+	})
+
 	// Teardown to ensure we're working with a clean DB
 	result.Teardown()
+
 	return result
 }
 
