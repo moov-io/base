@@ -48,7 +48,7 @@ func TestCreateTemporaryDatabase(t *testing.T) {
 		t.Skip("Docker not enabled")
 	}
 
-	config, _, err := RunMySQLDockerInstance(&DatabaseConfig{})
+	config, err := findOrLaunchMySQLContainer()
 	require.NoError(t, err)
 
 	name, err := CreateTemporaryDatabase(config)
