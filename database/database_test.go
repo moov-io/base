@@ -36,11 +36,8 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 		t.SkipNow()
 	}
 
-	config, container, err := RunMySQLDockerInstance(&DatabaseConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer container.Close()
+	config, err := findOrLaunchMySQLContainer()
+	require.NoError(t, err)
 
 	config.DatabaseName, err = CreateTemporaryDatabase(config)
 	require.NoError(t, err)
