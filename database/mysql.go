@@ -138,7 +138,7 @@ func (r *TestMySQLDB) Close() error {
 	return nil
 }
 
-var sharedMySQLConfig *DatabaseConfig
+var sharedMySQLConfig *MySQLConfig
 var mySQLTestDBSetup sync.Once
 
 // CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
@@ -164,7 +164,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 	dbConfig := &DatabaseConfig{
 		DatabaseName: dbName,
-		MySQL:        sharedMySQLConfig.MySQL,
+		MySQL:        sharedMySQLConfig,
 	}
 
 	logger := log.NewNopLogger()
@@ -187,8 +187,8 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 // We connect as root to MySQL server and create database with random name to
 // run our migrations on it later.
-func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
-	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.MySQL.Password, config.MySQL.Address)
+func CreateTemporaryDatabase(config *MySQLConfig) (string, error) {
+	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.Password, config.Address)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return "", err
@@ -202,7 +202,7 @@ func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
 		return "", err
 	}
 
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on %s.* to '%s'@'%%'", dbName, config.MySQL.User))
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on %s.* to '%s'@'%%'", dbName, config.User))
 	if err != nil {
 		return "", err
 	}
@@ -210,16 +210,14 @@ func CreateTemporaryDatabase(config *DatabaseConfig) (string, error) {
 	return dbName, nil
 }
 
-func findOrLaunchMySQLContainer() (*DatabaseConfig, error) {
+func findOrLaunchMySQLContainer() (*MySQLConfig, error) {
 	var containerName = "mysql-test-container"
 	var resource *dockertest.Resource
 	var err error
 
-	config := &DatabaseConfig{
-		MySQL: &MySQLConfig{
-			User:     "moov",
-			Password: "secret",
-		},
+	config := &MySQLConfig{
+		User:     "moov",
+		Password: "secret",
 	}
 
 	pool, err := dockertest.NewPool("")
@@ -232,9 +230,9 @@ func findOrLaunchMySQLContainer() (*DatabaseConfig, error) {
 		Repository: "vaulty/mysql-volumeless",
 		Tag:        "8.0",
 		Env: []string{
-			fmt.Sprintf("MYSQL_USER=%s", config.MySQL.User),
-			fmt.Sprintf("MYSQL_PASSWORD=%s", config.MySQL.Password),
-			fmt.Sprintf("MYSQL_ROOT_PASSWORD=%s", config.MySQL.Password),
+			fmt.Sprintf("MYSQL_USER=%s", config.User),
+			fmt.Sprintf("MYSQL_PASSWORD=%s", config.Password),
+			fmt.Sprintf("MYSQL_ROOT_PASSWORD=%s", config.Password),
 		},
 	})
 
@@ -248,12 +246,12 @@ func findOrLaunchMySQLContainer() (*DatabaseConfig, error) {
 		return nil, errors.New("failed to launch (or find) MySQL container")
 	}
 
-	config.MySQL.Address = fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
+	config.Address = fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
 
 	dbURL := fmt.Sprintf("%s:%s@%s/",
-		config.MySQL.User,
-		config.MySQL.Password,
-		config.MySQL.Address,
+		config.User,
+		config.Password,
+		config.Address,
 	)
 
 	err = pool.Retry(func() error {
