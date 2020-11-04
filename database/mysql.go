@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -19,7 +18,6 @@ import (
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/moov-io/base/log"
@@ -158,33 +156,14 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		Password: "secret",
 	}
 
-	resource, err := findOrLaunchMySQLContainer(pool, containerName, mysqlConfig)
+	resource, err := findOrLaunchMySQLContainer(pool, containerName, mysqlConfig, "3306")
 	require.NoError(t, err)
 	mysqlConfig.Address = fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
 
 	dbName, err := CreateTemporaryDatabase(mysqlConfig)
 	require.NoError(t, err)
 
-	dbURL := fmt.Sprintf("%s:%s@%s/%s",
-		mysqlConfig.User,
-		mysqlConfig.Password,
-		mysqlConfig.Address,
-		dbName,
-	)
-
 	var db *sql.DB
-	err = pool.Retry(func() error {
-		db, err := sql.Open("mysql", dbURL)
-		if err != nil {
-			return err
-		}
-		defer db.Close()
-		return db.Ping()
-	})
-	if err != nil {
-		resource.Close()
-		require.FailNow(t, err.Error())
-	}
 
 	logger := log.NewNopLogger()
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -231,11 +210,13 @@ func CreateTemporaryDatabase(config MySQLConfig) (string, error) {
 	return dbName, nil
 }
 
-func findOrLaunchMySQLContainer(pool *dockertest.Pool, containerName string, config MySQLConfig) (*dockertest.Resource, error) {
-	var resource *dockertest.Resource
-	var err error
+func findOrLaunchMySQLContainer(pool *dockertest.Pool, containerName string, config MySQLConfig, port string) (*dockertest.Resource, error) {
+	// look for running container
+	if resource, found := pool.ContainerByName(containerName); found {
+		return resource, nil
+	}
 
-	_, err = pool.RunWithOptions(&dockertest.RunOptions{
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Name:       containerName,
 		Repository: "vaulty/mysql-volumeless",
 		Tag:        "8.0",
@@ -246,14 +227,24 @@ func findOrLaunchMySQLContainer(pool *dockertest.Pool, containerName string, con
 		},
 	})
 
-	if err != nil && !errors.Is(err, dc.ErrContainerAlreadyExists) {
-		return nil, err
-	}
+	dbURL := fmt.Sprintf("%s:%s@%s/%s",
+		config.User,
+		config.Password,
+		fmt.Sprintf("tcp(localhost:%s)", resource.GetPort(port+"/tcp")),
+		"mysql", // database name
+	)
 
-	// look for running container
-	resource, found := pool.ContainerByName(containerName)
-	if !found {
-		return nil, errors.New("failed to launch (or find) MySQL container")
+	err = pool.Retry(func() error {
+		db, err := sql.Open("mysql", dbURL)
+		if err != nil {
+			return err
+		}
+		defer db.Close()
+		return db.Ping()
+	})
+	if err != nil {
+		resource.Close()
+		return nil, err
 	}
 
 	return resource, nil
