@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/moov-io/base/log"
 )
+
+var migrationMutex sync.Mutex
 
 func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	db, err := New(context.Background(), logger, config)
@@ -31,6 +34,7 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 		return err
 	}
 
+	migrationMutex.Lock()
 	m, err := migrate.NewWithDatabaseInstance(
 		"pkger:///migrations/",
 		config.DatabaseName,
@@ -41,6 +45,8 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	}
 
 	err = m.Up()
+	migrationMutex.Unlock()
+
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
