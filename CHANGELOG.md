@@ -1,3 +1,10 @@
+## v0.14.1 (Released 2020-11-06)
+
+FIXES:
+
+- database: fix parallel tests data race in migrations
+
+
 ## v0.14.0 (Released 2020-10-21)
 
 **BREAKING CHANGES**
