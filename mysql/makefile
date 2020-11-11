@@ -1,3 +1,5 @@
+DOCKER_CONTAINER_LIST := $(shell docker ps -aq -f status=exited -f name=mysql-volumeless)
+
 build: clean
 	docker build -t mysql-volumeless:8.0 .
 	docker run -d \
@@ -15,4 +17,4 @@ build: clean
 push:
 	docker push moov/mysql-volumeless:8.0
 clean:
-	docker rm mysql-volumeless
+	@if [ -n "$(DOCKER_CONTAINER_LIST)" ]; then docker rm "$(DOCKER_CONTAINER_LIST)"; fi;
