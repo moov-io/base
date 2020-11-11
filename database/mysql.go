@@ -211,7 +211,7 @@ func createTemporaryDatabase(config *MySQLConfig) (string, error) {
 }
 
 func findOrLaunchMySQLContainer() (*MySQLConfig, error) {
-	var containerName = "mysql-test-container"
+	var containerName = "moov-mysql-test-container"
 	var resource *dockertest.Resource
 	var err error
 
