@@ -1,3 +1,9 @@
+## v0.14.2 (Released 2020-11-11)
+
+IMPROVEMENTS
+
+- database: run and share single MySQL docker container with all tests
+
 ## v0.14.1 (Released 2020-11-06)
 
 FIXES:
