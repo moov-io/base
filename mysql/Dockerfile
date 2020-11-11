@@ -1,0 +1,4 @@
+FROM mysql:8.0
+
+RUN mkdir /var/lib/mysql-volume
+CMD ["--datadir", "/var/lib/mysql-volume"]
