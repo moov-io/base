@@ -51,7 +51,7 @@ func TestCreateTemporaryDatabase(t *testing.T) {
 	config, err := findOrLaunchMySQLContainer()
 	require.NoError(t, err)
 
-	name, err := CreateTemporaryDatabase(config)
+	name, err := createTemporaryDatabase(config)
 	require.NoError(t, err)
 	require.Contains(t, name, "test")
 }

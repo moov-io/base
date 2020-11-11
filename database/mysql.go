@@ -159,7 +159,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		require.NoError(t, err)
 	})
 
-	dbName, err := CreateTemporaryDatabase(sharedMySQLConfig)
+	dbName, err := createTemporaryDatabase(sharedMySQLConfig)
 	require.NoError(t, err)
 
 	dbConfig := &DatabaseConfig{
@@ -187,7 +187,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 // We connect as root to MySQL server and create database with random name to
 // run our migrations on it later.
-func CreateTemporaryDatabase(config *MySQLConfig) (string, error) {
+func createTemporaryDatabase(config *MySQLConfig) (string, error) {
 	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.Password, config.Address)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
