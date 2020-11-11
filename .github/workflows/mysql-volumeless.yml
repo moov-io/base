@@ -9,7 +9,8 @@ jobs:
     name: Build and push MySQL volumeless docker image
     runs-on: ubuntu-latest
     defaults:
-      working-directory: ./mysql
+      run:
+        working-directory: ./mysql
     steps:
     - name: Check out code
       uses: actions/checkout@v2
