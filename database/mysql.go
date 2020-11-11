@@ -227,7 +227,7 @@ func findOrLaunchMySQLContainer() (*MySQLConfig, error) {
 
 	_, err = pool.RunWithOptions(&dockertest.RunOptions{
 		Name:       containerName,
-		Repository: "vaulty/mysql-volumeless",
+		Repository: "moov/mysql-volumeless",
 		Tag:        "8.0",
 		Env: []string{
 			fmt.Sprintf("MYSQL_USER=%s", config.User),
