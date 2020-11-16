@@ -36,15 +36,15 @@ func Bool(b bool) Renderer {
 	return &any{b}
 }
 
-func Duration(d time.Duration) Renderer {
+func TimeDuration(d time.Duration) Renderer {
 	return &any{d.String()}
 }
 
-func Timestamp(t time.Time) Renderer {
-	return TimestampFormat(t, time.RFC3339Nano)
+func Time(t time.Time) Renderer {
+	return TimeFormatted(t, time.RFC3339Nano)
 }
 
-func TimestampFormat(t time.Time, format string) Renderer {
+func TimeFormatted(t time.Time, format string) Renderer {
 	return String(t.Format(format))
 }
 
@@ -52,6 +52,6 @@ func ByteString(b []byte) Renderer {
 	return String(string(b))
 }
 
-func Bytes64(b []byte) Renderer {
+func ByteBase64(b []byte) Renderer {
 	return String(base64.RawURLEncoding.EncodeToString(b))
 }

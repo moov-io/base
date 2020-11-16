@@ -52,7 +52,7 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
-			val:      lib.Bytes64([]byte("bar")),
+			val:      lib.ByteBase64([]byte("bar")),
 			expected: "foo=YmFy",
 		},
 		{
@@ -82,17 +82,17 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
-			val:      lib.Duration(time.Duration(1)),
+			val:      lib.TimeDuration(time.Duration(1)),
 			expected: "foo=1ns",
 		},
 		{
 			key:      "foo",
-			val:      lib.Timestamp(time.Unix(0, 0)),
+			val:      lib.Time(time.Unix(0, 0)),
 			expected: "foo=1969-12-31T18:00:00-06:00",
 		},
 		{
 			key:      "foo",
-			val:      lib.TimestampFormat(time.Unix(0, 0), time.RFC822),
+			val:      lib.TimeFormatted(time.Unix(0, 0), time.RFC822),
 			expected: "foo=\"31 Dec 69 18:00 CST\"",
 		},
 	}

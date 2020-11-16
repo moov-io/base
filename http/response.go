@@ -63,7 +63,7 @@ func (w *ResponseWriter) WriteHeader(code int) {
 			"method":    log.String(w.request.Method),
 			"path":      log.String(w.request.URL.Path),
 			"status":    log.Int(code),
-			"duration":  log.Duration(diff),
+			"duration":  log.TimeDuration(diff),
 			"requestID": log.String(requestID),
 		}).Send()
 	}
