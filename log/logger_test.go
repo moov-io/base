@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	lib "github.com/moov-io/base/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -39,6 +40,8 @@ func Test_Log(t *testing.T) {
 }
 
 func Test_LogWriteValue(t *testing.T) {
+	uuid := uuid.New()
+
 	tests := []struct {
 		desc     string
 		key      string
@@ -94,6 +97,11 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.TimeFormatted(time.Unix(0, 0).UTC(), time.RFC822),
 			expected: "foo=\"01 Jan 70 00:00 UTC\"",
+		},
+		{
+			key:      "foo",
+			val:      lib.Stringer(uuid),
+			expected: "foo=" + uuid.String(),
 		},
 	}
 	for _, tc := range tests {

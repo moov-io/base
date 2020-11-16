@@ -2,6 +2,7 @@ package log
 
 import (
 	"encoding/base64"
+	"fmt"
 	"time"
 )
 
@@ -54,4 +55,8 @@ func ByteString(b []byte) Valuer {
 
 func ByteBase64(b []byte) Valuer {
 	return String(base64.RawURLEncoding.EncodeToString(b))
+}
+
+func Stringer(s fmt.Stringer) Valuer {
+	return &any{s.String()}
 }
