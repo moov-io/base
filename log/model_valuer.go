@@ -55,3 +55,7 @@ func ByteString(b []byte) Valuer {
 func ByteBase64(b []byte) Valuer {
 	return String(base64.RawURLEncoding.EncodeToString(b))
 }
+
+func Stringer(i interface{ String() string }) Valuer {
+	return String(i.String())
+}
