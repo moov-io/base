@@ -87,8 +87,8 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
-			val:      lib.Time(time.Unix(0, 0)),
-			expected: "foo=1969-12-31T18:00:00-06:00",
+			val:      lib.Time(time.Unix(0, 0).UTC()),
+			expected: "foo=1970-01-01T00:00:00Z",
 		},
 		{
 			key:      "foo",
