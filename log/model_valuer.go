@@ -59,5 +59,3 @@ func ByteBase64(b []byte) Valuer {
 func Stringer(s fmt.Stringer) Valuer {
    	return &any{s.String()}
 }
-	return String(i.String())
-}
