@@ -1,7 +1,6 @@
-package log
+package log_test
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"regexp"
@@ -9,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	lib "github.com/moov-io/base/log"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_LogImplementations(t *testing.T) {
-	NewDefaultLogger()
-	NewNopLogger()
-	NewJSONLogger()
+	lib.NewDefaultLogger()
+	lib.NewNopLogger()
+	lib.NewJSONLogger()
 }
 
 func Test_Log(t *testing.T) {
@@ -42,27 +42,22 @@ func Test_LogWriteValue(t *testing.T) {
 	tests := []struct {
 		desc     string
 		key      string
-		val      interface{}
+		val      lib.Renderer
 		expected string
 	}{
 		{
 			key:      "foo",
-			val:      []byte("bar"),
+			val:      lib.ByteString([]byte("bar")),
 			expected: "foo=bar",
 		},
 		{
 			key:      "foo",
-			val:      bytes.NewBufferString("bar"),
+			val:      lib.String(errors.New("bar").Error()),
 			expected: "foo=bar",
 		},
 		{
 			key:      "foo",
-			val:      errors.New("bar"),
-			expected: "foo=bar",
-		},
-		{
-			key:      "foo",
-			val:      100,
+			val:      lib.Int(100),
 			expected: "foo=100",
 		},
 	}
@@ -76,7 +71,7 @@ func Test_LogWriteValue(t *testing.T) {
 
 func Test_Send(t *testing.T) {
 	a, buffer, log := Setup(t)
-	log.Set("foo", "bar").Send()
+	log.Set("foo", lib.String("bar")).Send()
 
 	got := buffer.String()
 	a.NotContains(got, "msg=")
@@ -87,7 +82,7 @@ func Test_Send(t *testing.T) {
 func Test_WithContext(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.With(Error).Logf("my error message")
+	log.With(lib.Error).Logf("my error message")
 
 	a.Contains(buffer.String(), "level=error")
 }
@@ -95,7 +90,7 @@ func Test_WithContext(t *testing.T) {
 func Test_ReplaceContextValue(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.With(Error).With(Info).Logf("my error message")
+	log.With(lib.Error).With(lib.Info).Logf("my error message")
 
 	a.Contains(buffer.String(), "level=info")
 }
@@ -137,7 +132,7 @@ func Test_Fatal(t *testing.T) {
 func Test_CustomKeyValue(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Set("custom", "value").Logf("test")
+	log.Set("custom", lib.String("value")).Logf("test")
 
 	a.Contains(buffer.String(), "custom=value")
 }
@@ -145,9 +140,9 @@ func Test_CustomKeyValue(t *testing.T) {
 func Test_CustomMap(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.With(Fields{
-		"custom1": "value1",
-		"custom2": "value2",
+	log.With(lib.Fields{
+		"custom1": lib.String("value1"),
+		"custom2": lib.String("value2"),
 	}).Logf("test")
 
 	output := buffer.String()
@@ -159,8 +154,8 @@ func Test_MultipleContexts(t *testing.T) {
 	a, buffer, log := Setup(t)
 
 	log.
-		Set("custom1", "value1").
-		Set("custom2", "value2").
+		Set("custom1", lib.String("value1")).
+		Set("custom2", lib.String("value2")).
 		Logf("test")
 
 	output := buffer.String()
@@ -187,12 +182,12 @@ func Test_LogError(t *testing.T) {
 func Test_Caller(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.Info().With(stacktrace).Logf("message")
+	log.Info().With(lib.StackTrace).Logf("message")
 	a.Regexp(regexp.MustCompile(`caller_0=(.*?)(\/log\/logger_test\.go)`), buffer.String())
 }
 
-func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, Logger) {
+func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, lib.Logger) {
 	a := assert.New(t)
-	buffer, log := NewBufferLogger()
+	buffer, log := lib.NewBufferLogger()
 	return a, buffer, log
 }

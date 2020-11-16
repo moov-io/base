@@ -6,6 +6,7 @@ type Level string
 // Info is sets level=info in the log output
 const Info = Level("info")
 
+// Info is sets level=warn in the log output
 const Warn = Level("warn")
 
 // Error sets level=error in the log output
@@ -15,8 +16,8 @@ const Error = Level("error")
 const Fatal = Level("fatal")
 
 // Context returns the map that states that key value of `level={{l}}`
-func (l Level) Context() map[string]interface{} {
-	return map[string]interface{}{
-		"level": string(l),
+func (l Level) Context() map[string]Renderer {
+	return map[string]Renderer{
+		"level": String(string(l)),
 	}
 }

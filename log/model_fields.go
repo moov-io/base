@@ -1,7 +1,7 @@
 package log
 
-type Fields map[string]interface{}
+type Fields map[string]Renderer
 
-func (f Fields) Context() map[string]interface{} {
+func (f Fields) Context() map[string]Renderer {
 	return f
 }

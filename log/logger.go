@@ -1,7 +1,7 @@
 package log
 
 type Logger interface {
-	Set(key string, value interface{}) Logger
+	Set(key string, value Renderer) Logger
 	With(ctxs ...Context) Logger
 
 	Info() Logger
@@ -18,5 +18,5 @@ type Logger interface {
 }
 
 type Context interface {
-	Context() map[string]interface{}
+	Context() map[string]Renderer
 }

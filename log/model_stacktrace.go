@@ -8,11 +8,11 @@ import (
 
 type st string
 
-const stacktrace = st("stacktrace")
+const StackTrace = st("stacktrace")
 
 // Context returns the map that states that key value of `level={{l}}`
-func (s st) Context() map[string]interface{} {
-	kv := map[string]interface{}{}
+func (s st) Context() map[string]Renderer {
+	kv := map[string]Renderer{}
 
 	i := 0
 	c := 0
@@ -21,7 +21,7 @@ func (s st) Context() map[string]interface{} {
 		if c > 0 || (!strings.HasSuffix(file, "model_stacktrace.go") && !strings.HasSuffix(file, "logger_impl.go")) {
 			key := fmt.Sprintf("caller_%d", c)
 			value := fmt.Sprintf("%s:%d", file, line)
-			kv[key] = value
+			kv[key] = String(value)
 			c++
 		}
 		_, file, line, ok = runtime.Caller(i + 1)
