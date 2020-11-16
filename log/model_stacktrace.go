@@ -11,8 +11,8 @@ type st string
 const StackTrace = st("stacktrace")
 
 // Context returns the map that states that key value of `level={{l}}`
-func (s st) Context() map[string]Renderer {
-	kv := map[string]Renderer{}
+func (s st) Context() map[string]Valuer {
+	kv := map[string]Valuer{}
 
 	i := 0
 	c := 0

@@ -42,7 +42,7 @@ func Test_LogWriteValue(t *testing.T) {
 	tests := []struct {
 		desc     string
 		key      string
-		val      lib.Renderer
+		val      lib.Valuer
 		expected string
 	}{
 		{
