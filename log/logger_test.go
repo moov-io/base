@@ -125,9 +125,9 @@ func Test_WithContext(t *testing.T) {
 func Test_ReplaceContextValue(t *testing.T) {
 	a, buffer, log := Setup(t)
 
-	log.With(lib.Error).With(lib.Info).Logf("my error message")
+	log.With(lib.Error).Warn().Logf("my error message")
 
-	a.Contains(buffer.String(), "level=info")
+	a.Contains(buffer.String(), "level=warn")
 }
 
 func Test_Info(t *testing.T) {
