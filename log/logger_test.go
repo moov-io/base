@@ -52,6 +52,11 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
+			val:      lib.Bytes64([]byte("bar")),
+			expected: "foo=YmFy",
+		},
+		{
+			key:      "foo",
 			val:      lib.String(errors.New("bar").Error()),
 			expected: "foo=bar",
 		},
@@ -59,6 +64,36 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.Int(100),
 			expected: "foo=100",
+		},
+		{
+			key:      "foo",
+			val:      lib.String("bleh"),
+			expected: "foo=bleh",
+		},
+		{
+			key:      "foo",
+			val:      lib.Float64(0.001),
+			expected: "foo=0.001",
+		},
+		{
+			key:      "foo",
+			val:      lib.Bool(true),
+			expected: "foo=true",
+		},
+		{
+			key:      "foo",
+			val:      lib.Duration(time.Duration(1)),
+			expected: "foo=1ns",
+		},
+		{
+			key:      "foo",
+			val:      lib.Timestamp(time.Unix(0, 0)),
+			expected: "foo=1969-12-31T18:00:00-06:00",
+		},
+		{
+			key:      "foo",
+			val:      lib.TimestampFormat(time.Unix(0, 0), time.RFC822),
+			expected: "foo=\"31 Dec 69 18:00 CST\"",
 		},
 	}
 	for _, tc := range tests {
