@@ -92,8 +92,8 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
-			val:      lib.TimeFormatted(time.Unix(0, 0), time.RFC822),
-			expected: "foo=\"31 Dec 69 18:00 CST\"",
+			val:      lib.TimeFormatted(time.Unix(0, 0).UTC(), time.RFC822),
+			expected: "foo=\"01 Jan 70 00:00 UTC\"",
 		},
 	}
 	for _, tc := range tests {
