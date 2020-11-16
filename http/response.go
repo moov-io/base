@@ -60,11 +60,11 @@ func (w *ResponseWriter) WriteHeader(code int) {
 
 	if requestID := GetRequestID(w.request); requestID != "" && w.log != nil {
 		w.log.With(log.Fields{
-			"method":    w.request.Method,
-			"path":      w.request.URL.Path,
-			"status":    code,
-			"duration":  diff,
-			"requestID": requestID,
+			"method":    log.String(w.request.Method),
+			"path":      log.String(w.request.URL.Path),
+			"status":    log.Int(code),
+			"duration":  log.TimeDuration(diff),
+			"requestID": log.String(requestID),
 		}).Send()
 	}
 }

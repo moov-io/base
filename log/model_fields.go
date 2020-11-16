@@ -1,7 +1,7 @@
 package log
 
-type Fields map[string]interface{}
+type Fields map[string]Valuer
 
-func (f Fields) Context() map[string]interface{} {
+func (f Fields) Context() map[string]Valuer {
 	return f
 }

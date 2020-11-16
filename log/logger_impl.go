@@ -31,7 +31,7 @@ func NewBufferLogger() (*strings.Builder, Logger) {
 func NewLogger(writer log.Logger) Logger {
 	l := &logger{
 		writer: writer,
-		ctx:    map[string]interface{}{},
+		ctx:    make(map[string]Valuer),
 	}
 
 	// Default logs to be info until changed
@@ -42,10 +42,10 @@ var _ Logger = (*logger)(nil)
 
 type logger struct {
 	writer log.Logger
-	ctx    map[string]interface{}
+	ctx    map[string]Valuer
 }
 
-func (l *logger) Set(key string, value interface{}) Logger {
+func (l *logger) Set(key string, value Valuer) Logger {
 	return l.With(Fields{
 		key: value,
 	})
@@ -54,7 +54,7 @@ func (l *logger) Set(key string, value interface{}) Logger {
 // With returns a new Logger with the contexts added to its own.
 func (l *logger) With(ctxs ...Context) Logger {
 	// Estimation assuming that for each ctxs has at least 1 value.
-	combined := make(map[string]interface{}, len(l.ctx)+len(ctxs))
+	combined := make(map[string]Valuer, len(l.ctx)+len(ctxs))
 
 	for k, v := range l.ctx {
 		combined[k] = v
@@ -105,7 +105,7 @@ func (l *logger) Log(msg string) {
 	i := len(orig)
 	for k, v := range l.ctx {
 		keyvals[i] = k
-		keyvals[i+1] = v
+		keyvals[i+1] = v.getValue()
 		i += 2
 	}
 
@@ -123,7 +123,7 @@ func (l *logger) Send() {
 }
 
 func (l *logger) LogError(err error) LoggedError {
-	l.Set("errored", "true").Log(err.Error())
+	l.Set("errored", Bool(true)).Log(err.Error())
 	return LoggedError{err}
 }
 

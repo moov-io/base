@@ -16,7 +16,7 @@ type Service struct {
 
 func NewService(logger log.Logger) Service {
 	return Service{
-		logger: logger.Set("component", "Service"),
+		logger: logger.Set("component", log.String("Service")),
 	}
 }
 
@@ -27,7 +27,7 @@ func (s *Service) Load(config interface{}) error {
 	}
 
 	if file, ok := os.LookupEnv("APP_CONFIG"); ok && strings.TrimSpace(file) != "" {
-		logger := s.logger.Set("app_config", file)
+		logger := s.logger.Set("app_config", log.String(file))
 		logger.Info().Logf("Loading APP_CONFIG config file")
 
 		overrides := viper.New()
@@ -46,7 +46,7 @@ func (s *Service) Load(config interface{}) error {
 }
 
 func (s *Service) LoadFile(file string, config interface{}) error {
-	logger := s.logger.Set("file", file)
+	logger := s.logger.Set("file", log.String(file))
 	logger.Info().Logf("loading config file")
 
 	f, err := pkger.Open(file)
