@@ -1,3 +1,9 @@
+## v0.15.0 (Released 2020-11-16)
+
+IMPROVEMENTS
+
+- logging: Restricts the logging values from `interface{}` to specific types that are easily converted into a log line.
+
 ## v0.14.2 (Released 2020-11-11)
 
 IMPROVEMENTS
