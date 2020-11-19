@@ -33,7 +33,7 @@ func TestSQLite__basic(t *testing.T) {
 
 	conn, _ := s.Connect(ctx)
 	err = conn.Ping()
-	require.EqualError(t, err, "unable to open database file")
+	require.EqualError(t, err, "unable to open database file: no such file or directory")
 
 	cancelFunc()
 
