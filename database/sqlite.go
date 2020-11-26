@@ -120,6 +120,10 @@ func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
 		t.Fatalf("sqlite test: %v", err)
 	}
 
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
+
 	dbPath := filepath.Join(dir, "tests.db")
 
 	config := &DatabaseConfig{SQLite: &SQLiteConfig{

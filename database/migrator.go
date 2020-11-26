@@ -10,8 +10,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
 	migsqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/pkger"
-	"github.com/markbates/pkger"
+	"github.com/golang-migrate/migrate/v4/source"
 
 	"github.com/moov-io/base/log"
 )
@@ -27,16 +26,15 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 
 	logger.Info().Log("Running Migrations")
 
-	_ = pkger.Include("/migrations/")
-
-	driver, err := GetDriver(db, config)
+	source, driver, err := GetDriver(db, config)
 	if err != nil {
 		return err
 	}
 
 	migrationMutex.Lock()
-	m, err := migrate.NewWithDatabaseInstance(
-		"pkger:///migrations/",
+	m, err := migrate.NewWithInstance(
+		"filtering-pkger",
+		source,
 		config.DatabaseName,
 		driver,
 	)
@@ -60,14 +58,34 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	return nil
 }
 
-func GetDriver(db *sql.DB, config DatabaseConfig) (database.Driver, error) {
+func GetDriver(db *sql.DB, config DatabaseConfig) (source.Driver, database.Driver, error) {
 	if config.MySQL != nil {
-		return MySQLDriver(db)
+		src, err := NewPkgerSource("mysql")
+		if err != nil {
+			return nil, nil, err
+		}
+
+		drv, err := MySQLDriver(db)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return src, drv, nil
 	} else if config.SQLite != nil {
-		return SQLite3Driver(db)
+		src, err := NewPkgerSource("sqlite")
+		if err != nil {
+			return nil, nil, err
+		}
+
+		drv, err := SQLite3Driver(db)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return src, drv, nil
 	}
 
-	return nil, fmt.Errorf("database config not defined")
+	return nil, nil, fmt.Errorf("database config not defined")
 }
 
 func MySQLDriver(db *sql.DB) (database.Driver, error) {
