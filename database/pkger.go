@@ -44,7 +44,7 @@ func NewPkgerSource(database string) (source.Driver, error) {
 			return fmt.Errorf("doesn't follow format of {version}_{title}.up{.db}?.sql - %s", info.Name())
 		}
 
-		if splits[:-1] != "sql" {
+		if splits[slen-1] != "sql" {
 			return fmt.Errorf("must end in .sql")
 		}
 

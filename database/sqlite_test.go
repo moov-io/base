@@ -38,8 +38,6 @@ func TestSQLite__basic(t *testing.T) {
 	cancelFunc()
 
 	conn.Close()
-
-	t.FailNow()
 }
 
 func TestSQLiteUniqueViolation(t *testing.T) {
