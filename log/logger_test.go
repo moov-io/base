@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	lib "github.com/moov-io/base/log"
 	"github.com/stretchr/testify/assert"
+
+	lib "github.com/moov-io/base/log"
 )
 
 func Test_LogImplementations(t *testing.T) {
@@ -102,6 +103,11 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.Stringer(uuid),
 			expected: "foo=" + uuid.String(),
+		},
+		{
+			key:      "foo",
+			val:      lib.Strings([]string{"a", "b", "c"}),
+			expected: "foo=\"[a, b, c]\"",
 		},
 	}
 	for _, tc := range tests {

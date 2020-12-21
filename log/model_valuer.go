@@ -3,6 +3,7 @@ package log
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -59,4 +60,9 @@ func ByteBase64(b []byte) Valuer {
 
 func Stringer(s fmt.Stringer) Valuer {
 	return &any{s.String()}
+}
+
+func Strings(vals []string) Valuer {
+	out := fmt.Sprintf("[%s]", strings.Join(vals, ", "))
+	return String(out)
 }
