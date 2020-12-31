@@ -10,6 +10,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+const APP_CONFIG = "APP_CONFIG"
+const APP_CONFIG_SECRETS = "APP_CONFIG_SECRETS"
+
 type Service struct {
 	logger log.Logger
 }
@@ -21,25 +24,16 @@ func NewService(logger log.Logger) Service {
 }
 
 func (s *Service) Load(config interface{}) error {
-	err := s.LoadFile(pkger.Include("/configs/config.default.yml"), config)
-	if err != nil {
+	if err := s.LoadFile(pkger.Include("/configs/config.default.yml"), config); err != nil {
 		return err
 	}
 
-	if file, ok := os.LookupEnv("APP_CONFIG"); ok && strings.TrimSpace(file) != "" {
-		logger := s.logger.Set("app_config", log.String(file))
-		logger.Info().Logf("Loading APP_CONFIG config file")
+	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, config); err != nil {
+		return err
+	}
 
-		overrides := viper.New()
-		overrides.SetConfigFile(file)
-
-		if err := overrides.ReadInConfig(); err != nil {
-			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
-		}
-
-		if err := overrides.Unmarshal(config); err != nil {
-			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
-		}
+	if err := LoadEnvironmentFile(s.logger, APP_CONFIG_SECRETS, config); err != nil {
+		return err
 	}
 
 	return nil
@@ -62,6 +56,30 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 
 	if err := deflt.Unmarshal(config); err != nil {
 		return logger.LogErrorf("unable to unmarshal the defaults: %w", err).Err()
+	}
+
+	return nil
+}
+
+func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) error {
+	if file, ok := os.LookupEnv(envVar); ok && strings.TrimSpace(file) != "" {
+
+		logger := logger.Set(envVar, log.String(file))
+		logger.Info().Logf("Loading %s config file", envVar)
+
+		logger = logger.Set("file", log.String(file))
+		logger.Info().Logf("loading config file")
+
+		overrides := viper.New()
+		overrides.SetConfigFile(file)
+
+		if err := overrides.ReadInConfig(); err != nil {
+			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
+		}
+
+		if err := overrides.Unmarshal(config); err != nil {
+			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
+		}
 	}
 
 	return nil
