@@ -42,6 +42,7 @@ func Test_Log(t *testing.T) {
 
 func Test_LogWriteValue(t *testing.T) {
 	uuid := uuid.New()
+	barStr := "bar"
 
 	tests := []struct {
 		desc     string
@@ -73,6 +74,16 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.String("bleh"),
 			expected: "foo=bleh",
+		},
+		{
+			key:      "foo",
+			val:      lib.StringOrNil(&barStr),
+			expected: "foo=bar",
+		},
+		{
+			key:      "foo",
+			val:      lib.StringOrNil(nil),
+			expected: "foo=null",
 		},
 		{
 			key:      "foo",
