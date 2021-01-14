@@ -26,6 +26,13 @@ func String(s string) Valuer {
 	return &any{s}
 }
 
+func StringOrNil(s *string) Valuer {
+	if s == nil {
+		return &any{nil}
+	}
+	return String(*s)
+}
+
 func Int(i int) Valuer {
 	return &any{i}
 }
