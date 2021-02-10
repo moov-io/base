@@ -57,7 +57,7 @@ func Now(location *time.Location) Time {
 // now := Now()
 // fmt.Println(start.Sub(now.Time))
 func NewTime(t time.Time) Time {
-	tt := Now()
+	tt := Now(time.UTC)
 	tt.Time = t.UTC() // overwrite underlying Time
 	return tt
 }
