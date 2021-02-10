@@ -1,3 +1,21 @@
+## v0.16.0 (Released 2021-02-10)
+
+BREAKING CHANGES
+
+- Adding timezone/location parameter to time Now func
+
+IMPROVEMENTS
+
+- docs: update "Getting Help" section
+
+BUILD
+
+- chore(deps): update module golang-migrate/migrate/v4 to v4.14.1
+- chore(deps): update module google/uuid to v1.2.0
+- chore(deps): update module mattn/go-sqlite3 to v1.14.6
+- chore(deps): update module ory/dockertest/v3 to v3.6.3
+- chore(deps): update module prometheus/client_golang to v1.9.0
+
 ## v0.15.0 (Released 2020-11-16)
 
 IMPROVEMENTS
@@ -37,7 +55,7 @@ FIXES:
 
 - log: `Logger.LogError` and `Logger.LogErrorf` no longer return an `error`, they will return `LoggedError` which can be called with `Err()` to return an `error`
 - database: changed signature of `New` and `NewAndMigrate` functions by reordering arguments and changing return types
-- database: renamed Sqlite to SQlite and MySql to MySQL in database config 
+- database: renamed Sqlite to SQlite and MySql to MySQL in database config
 
 ADDITIONS
 
