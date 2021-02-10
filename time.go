@@ -37,8 +37,7 @@ type Time struct {
 }
 
 // Now returns a Time object with the current clock time set.
-// By default, America/New_York will be the chosen time zone.
-func Now() Time {
+func Now(location *time.Location) Time {
 	// Create our calendar to attach on Time
 	calendar := cal.NewCalendar()
 	cal.AddUsHolidays(calendar)
@@ -46,7 +45,7 @@ func Now() Time {
 
 	return Time{
 		cal:  calendar,
-		Time: time.Now().UTC().Truncate(1 * time.Second),
+		Time: time.Now().In(location).Truncate(1 * time.Second),
 	}
 }
 
@@ -58,7 +57,7 @@ func Now() Time {
 // now := Now()
 // fmt.Println(start.Sub(now.Time))
 func NewTime(t time.Time) Time {
-	tt := Now()
+	tt := Now(time.UTC)
 	tt.Time = t.UTC() // overwrite underlying Time
 	return tt
 }

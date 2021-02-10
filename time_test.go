@@ -25,7 +25,7 @@ func init() {
 }
 
 func TestTime(t *testing.T) {
-	t1 := Now()
+	t1 := Now(time.UTC)
 
 	// Verify time.Time methods work
 	if diff := t1.Sub(t1.Time); diff != 0 {
@@ -43,13 +43,13 @@ func TestTime__NewTime(t *testing.T) {
 	start := time.Now().Add(-1 * time.Second)
 
 	// Example from NewTime godoc
-	now := Now()
+	now := Now(time.UTC)
 	fmt.Println(start.Sub(now.Time))
 }
 
 func TestTime__JSON(t *testing.T) {
 	// marshal and then unmarshal
-	t1 := Now()
+	t1 := Now(time.UTC)
 
 	bs, err := t1.MarshalJSON()
 	if err != nil {
