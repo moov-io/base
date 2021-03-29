@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -54,4 +55,27 @@ func TestCreateTemporaryDatabase(t *testing.T) {
 	name, err := createTemporaryDatabase(config)
 	require.NoError(t, err)
 	require.Contains(t, name, "test")
+}
+
+func TestMySQLModes(t *testing.T) {
+	db := CreateTestMySQLDB(t)
+	defer db.Close()
+
+	// Inspect the global and session SQL modes
+	// See: https://dev.mysql.com/doc/refman/8.0/en/sql-mode.html#sql-mode-setting
+	sqlModes := readSQLModes(t, db.DB, "SELECT @@SESSION.sql_mode;")
+	require.Contains(t, sqlModes, "ALLOW_INVALID_DATES")
+	require.Contains(t, sqlModes, "STRICT_ALL_TABLES")
+}
+
+func readSQLModes(t *testing.T, db *sql.DB, query string) string {
+	stmt, err := db.Prepare(query)
+	require.NoError(t, err)
+
+	row := stmt.QueryRow()
+	require.NoError(t, row.Err())
+
+	var sqlModes string
+	require.NoError(t, row.Scan(&sqlModes))
+	return sqlModes
 }
