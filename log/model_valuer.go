@@ -53,6 +53,13 @@ func Time(t time.Time) Valuer {
 	return TimeFormatted(t, time.RFC3339Nano)
 }
 
+func TimeOrNil(t *time.Time) Valuer {
+	if t == nil {
+		return &any{nil}
+	}
+	return Time(*t)
+}
+
 func TimeFormatted(t time.Time, format string) Valuer {
 	return String(t.Format(format))
 }

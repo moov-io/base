@@ -43,6 +43,7 @@ func Test_Log(t *testing.T) {
 func Test_LogWriteValue(t *testing.T) {
 	uuid := uuid.New()
 	barStr := "bar"
+	zeroTime := time.Unix(0, 0).UTC()
 
 	tests := []struct {
 		desc     string
@@ -102,8 +103,18 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
-			val:      lib.Time(time.Unix(0, 0).UTC()),
+			val:      lib.Time(zeroTime),
 			expected: "foo=1970-01-01T00:00:00Z",
+		},
+		{
+			key:      "foo",
+			val:      lib.TimeOrNil(&zeroTime),
+			expected: "foo=1970-01-01T00:00:00Z",
+		},
+		{
+			key:      "foo",
+			val:      lib.TimeOrNil(nil),
+			expected: "foo=null",
 		},
 		{
 			key:      "foo",
