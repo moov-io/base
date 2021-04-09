@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdmin__pprof(t *testing.T) {
@@ -145,4 +148,40 @@ func TestAdmin__BindAddr(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("bogus HTTP status code: %d", resp.StatusCode)
 	}
+}
+
+func TestServer_Subrouter(t *testing.T) {
+	svc := NewServer(":0")
+	subrouter := svc.Subrouter("/sub")
+	subrouter.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("middleware\n"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	subrouter.Path("/test").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("/sub/test"))
+	})
+	go svc.Listen()
+	defer svc.Shutdown()
+
+	// This request is expected to go through the subrouter with its middleware
+	resp, err := http.DefaultClient.Get("http://" + svc.BindAddr() + "/sub/test")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Equal(t, "middleware\n/sub/test", string(body))
+
+	// This request hits the main router, so should not have a path prefix or middleware
+	liveResponse, err := http.DefaultClient.Get("http://" + svc.BindAddr() + "/live")
+	require.NoError(t, err)
+	defer liveResponse.Body.Close()
+
+	assert.Equal(t, http.StatusOK, liveResponse.StatusCode)
+	liveBody, err := ioutil.ReadAll(liveResponse.Body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(liveBody), "middleware")
 }
