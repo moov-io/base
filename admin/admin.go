@@ -103,7 +103,7 @@ func (s *Server) AddVersionHandler(version string) {
 
 // Subrouter creates and returns a subrouter with the specific prefix.
 //
-// The returned subrouter can Use() middleware without impacting
+// The returned subrouter can use middleware without impacting
 // the parent router. For example:
 //
 //     svr := NewServer(":8080")
