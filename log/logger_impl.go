@@ -140,3 +140,7 @@ type LoggedError struct {
 func (l LoggedError) Err() error {
 	return l.err
 }
+
+func (l LoggedError) Nil() error {
+	return nil
+}
