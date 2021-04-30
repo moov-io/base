@@ -45,7 +45,7 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 
 	f, err := pkger.Open(file)
 	if err != nil {
-		return logger.LogErrorf("pkger unable to load: %w", err).Err()
+		return logger.LogErrorf("pkger unable to load %s: %w", file, err).Err()
 	}
 
 	deflt := viper.New()
