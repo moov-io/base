@@ -1,3 +1,45 @@
+## v0.18.3 (Released 2021-04-30)
+
+IMPROVEMENTS
+
+- config: include which file is missing
+
+BUILD
+
+- fix(deps): update module github.com/go-sql-driver/mysql to v1.6.0
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.7
+- fix(deps): update module github.com/ory/dockertest/v3 to v3.6.5
+
+## v0.18.2 (Released 2021-04-09)
+
+ADDITIONS
+
+- add subrouter function to Server (#160)
+
+## v0.18.1 (Released 2021-04-09)
+
+ADDITIONS
+
+- log: timeOrNil() (#157)
+- Adding in a .Nil() method to the logged error so you can log and return nil in the same oneliner
+
+## v0.18.0 (Released 2021-03-29)
+
+IMPROVEMENTS
+
+- database: set STRICT_ALL_TABLES on mysql connections
+
+BUILD
+
+- Bump gogo/protobuf to fix CVE
+- fix(deps): update module github.com/prometheus/client_golang to v1.10.0
+
+## v0.17.0 (Released 2021-02-18)
+
+ADDITIONS
+
+- Adding in configurable sql connections
+
 ## v0.16.0 (Released 2021-02-10)
 
 BREAKING CHANGES
