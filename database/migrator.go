@@ -17,7 +17,7 @@ import (
 
 var migrationMutex sync.Mutex
 
-func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource source.Driver) error {
 	db, err := New(context.Background(), logger, config)
 	if err != nil {
 		return err
@@ -33,8 +33,8 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
-		"filtering-pkger",
-		source,
+		"iofs",
+		migrationsSource,
 		config.DatabaseName,
 		driver,
 	)
