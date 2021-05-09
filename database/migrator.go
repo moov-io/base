@@ -31,10 +31,14 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource so
 		return err
 	}
 
+	if migrationsSource != nil {
+		source = migrationsSource
+	}
+
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
 		"iofs",
-		migrationsSource,
+		source,
 		config.DatabaseName,
 		driver,
 	)

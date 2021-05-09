@@ -35,7 +35,7 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 	}
 
 	// run migrations first
-	if err := RunMigrations(logger, config); err != nil {
+	if err := RunMigrations(logger, config, nil); err != nil {
 		return nil, err
 	}
 
