@@ -37,7 +37,7 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource so
 
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
-		"iofs",
+		"migrations",
 		source,
 		config.DatabaseName,
 		driver,
@@ -46,7 +46,18 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource so
 		return logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
 	}
 
+	ver, _, err := m.Version()
+	switch {
+	case err == migrate.ErrNilVersion:
+		logger.Info().Log("Clean DB, no migrations")
+	case err != nil:
+		return logger.Fatal().LogErrorf("Error getting current migration version: %w", err).Err()
+	default:
+		logger.Info().Logf("DB is at version: %d", ver)
+	}
+
 	err = m.Up()
+
 	migrationMutex.Unlock()
 
 	switch err {
@@ -55,6 +66,16 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource so
 		logger.Info().Log("Database already at version")
 	default:
 		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
+	}
+
+	ver, _, err = m.Version()
+	switch {
+	case err == migrate.ErrNilVersion:
+		logger.Info().Log("Clean DB, no migrations")
+	case err != nil:
+		return logger.Fatal().LogErrorf("Error getting current migration version: %w", err).Err()
+	default:
+		logger.Info().Logf("DB migrated to version: %d", ver)
 	}
 
 	logger.Info().Log("Migrations complete")
