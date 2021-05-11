@@ -1,7 +1,7 @@
-package txdb
+package database
 
 type RunInTx func() error
 
-func NoopInTx() error {
+func NopInTx() error {
 	return nil
 }
