@@ -21,6 +21,15 @@ var (
 	ErrNoUserID = errors.New("no X-User-Id header provided")
 )
 
+// ErrorResponse is a http response wrapper type for all moov errors. This type is used to give
+// a consistency user experience with errors.
+type ErrorResponse struct {
+	// Error describes the error
+	Error string `json:"error"`
+	// Data is any additional data used to enrich the Error description. For example, ozzo validation errors.
+	Data interface{} `json:"data"`
+}
+
 // ResponseWriter implements Go's standard library http.ResponseWriter to complete HTTP requests
 type ResponseWriter struct {
 	http.ResponseWriter
