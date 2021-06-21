@@ -1,3 +1,15 @@
+## v0.20.0 (Released 2021-06-21)
+
+ADDITIONS
+
+- database: mask mysql password in JSON marshaling
+
+BUILD
+
+- fix(deps): update module github.com/prometheus/client_golang to v1.11.0
+- fix(deps): update module github.com/ory/dockertest/v3 to v3.7.0
+- build: update gotilla/websocket and spf13/viper
+
 ## v0.19.0 (Released 2021-05-11)
 
 ADDITIONS
