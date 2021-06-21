@@ -1,3 +1,9 @@
+## v0.19.0 (Released 2021-05-11)
+
+ADDITIONS
+
+- Add database Transaction functions
+
 ## v0.18.3 (Released 2021-04-30)
 
 IMPROVEMENTS
