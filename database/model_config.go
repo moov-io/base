@@ -1,6 +1,11 @@
 package database
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/moov-io/base/mask"
+)
 
 type DatabaseConfig struct {
 	MySQL        *MySQLConfig
@@ -13,6 +18,21 @@ type MySQLConfig struct {
 	User        string
 	Password    string
 	Connections ConnectionsConfig
+}
+
+func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
+	type Aux struct {
+		Address     string
+		User        string
+		Password    string
+		Connections ConnectionsConfig
+	}
+	return json.Marshal(Aux{
+		Address:     m.Address,
+		User:        m.User,
+		Password:    mask.Password(m.Password),
+		Connections: m.Connections,
+	})
 }
 
 type SQLiteConfig struct {
