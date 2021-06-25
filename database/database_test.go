@@ -39,7 +39,7 @@ func Test_NewAndMigration_MySql(t *testing.T) {
 	mySQLConfig, err := findOrLaunchMySQLContainer()
 	require.NoError(t, err)
 
-	databaseName, err := createTemporaryDatabase(mySQLConfig)
+	databaseName, err := createTemporaryDatabase(t, mySQLConfig)
 	require.NoError(t, err)
 
 	config := DatabaseConfig{
