@@ -199,13 +199,14 @@ func createTemporaryDatabase(t *testing.T, config *MySQLConfig) (string, error) 
 		maxIdx = 20
 	}
 
-	// Set dbName to something like "TestCreateTemporaryD.._Jun_24_20:24:46"
+	// Set dbName to something like `TestCreateTemporaryD-Jun-25-08:30:07`
 	dbName := fmt.Sprintf(
-		"%s.._%s",
+		"%s %s",
 		t.Name()[:maxIdx],
 		time.Now().Local().Format(time.Stamp),
 	)
-	dbName = strings.ReplaceAll(dbName, " ", "_")
+	dbName = strings.ReplaceAll(dbName, " ", "-")
+	dbName = "`" + dbName + "`"
 
 	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database %s", dbName))
 	if err != nil {
