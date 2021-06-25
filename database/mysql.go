@@ -12,14 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/moov-io/base"
 	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
-	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
@@ -159,7 +158,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 		require.NoError(t, err)
 	})
 
-	dbName, err := createTemporaryDatabase(sharedMySQLConfig)
+	dbName, err := createTemporaryDatabase(t, sharedMySQLConfig)
 	require.NoError(t, err)
 
 	dbConfig := &DatabaseConfig{
@@ -187,7 +186,7 @@ func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
 
 // We connect as root to MySQL server and create database with random name to
 // run our migrations on it later.
-func createTemporaryDatabase(config *MySQLConfig) (string, error) {
+func createTemporaryDatabase(t *testing.T, config *MySQLConfig) (string, error) {
 	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.Password, config.Address)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -195,14 +194,25 @@ func createTemporaryDatabase(config *MySQLConfig) (string, error) {
 	}
 	defer db.Close()
 
-	dbName := "test" + base.ID()
+	maxIdx := len(t.Name()) - 1
+	if maxIdx > 20 {
+		maxIdx = 20
+	}
 
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database %s", dbName))
+	// Set dbName to something like `TestCreateTemporaryD-Jun-25-08:30:07`
+	dbName := fmt.Sprintf(
+		"%s %s",
+		t.Name()[:maxIdx],
+		time.Now().Local().Format(time.Stamp),
+	)
+	dbName = strings.ReplaceAll(dbName, " ", "-")
+
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database `%s`", dbName))
 	if err != nil {
 		return "", err
 	}
 
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on %s.* to '%s'@'%%'", dbName, config.User))
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on `%s`.* to '%s'@'%%'", dbName, config.User))
 	if err != nil {
 		return "", err
 	}
