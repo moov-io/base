@@ -206,14 +206,13 @@ func createTemporaryDatabase(t *testing.T, config *MySQLConfig) (string, error) 
 		time.Now().Local().Format(time.Stamp),
 	)
 	dbName = strings.ReplaceAll(dbName, " ", "-")
-	dbName = "`" + dbName + "`"
 
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database %s", dbName))
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database `%s`", dbName))
 	if err != nil {
 		return "", err
 	}
 
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on %s.* to '%s'@'%%'", dbName, config.User))
+	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on `%s`.* to '%s'@'%%'", dbName, config.User))
 	if err != nil {
 		return "", err
 	}
