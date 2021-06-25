@@ -194,10 +194,15 @@ func createTemporaryDatabase(t *testing.T, config *MySQLConfig) (string, error) 
 	}
 	defer db.Close()
 
+	maxIdx := len(t.Name()) - 1
+	if maxIdx > 20 {
+		maxIdx = 20
+	}
+
 	// Set dbName to something like "TestCreateTemporaryD.._Jun_24_20:24:46"
 	dbName := fmt.Sprintf(
 		"%s.._%s",
-		t.Name()[:20],
+		t.Name()[:maxIdx],
 		time.Now().Local().Format(time.Stamp),
 	)
 	dbName = strings.ReplaceAll(dbName, " ", "_")
