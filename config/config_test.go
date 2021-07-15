@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"embed"
 	"os"
 	"testing"
 
@@ -17,6 +18,7 @@ type ConfigModel struct {
 	Default string
 	App     string
 	Secret  string
+	Custom  string
 }
 
 func Test_Load(t *testing.T) {
@@ -36,4 +38,21 @@ func Test_Load(t *testing.T) {
 	require.Equal(t, "default", cfg.Config.Default)
 	require.Equal(t, "app", cfg.Config.App)
 	require.Equal(t, "keep secret!", cfg.Config.Secret)
+}
+
+//go:embed testdata/*.yml
+var configs embed.FS
+
+func Test_LoadFile(t *testing.T) {
+	cfg := &GlobalConfigModel{}
+
+	service := config.NewService(log.NewDefaultLogger())
+
+	file, err := configs.Open("testdata/config.yml")
+	require.NoError(t, err)
+
+	err = service.LoadFromReader(file, cfg)
+	require.NoError(t, err)
+
+	require.Equal(t, "custom", cfg.Config.Custom)
 }

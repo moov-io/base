@@ -20,7 +20,7 @@ import (
 
 var migrationMutex sync.Mutex
 
-func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config DatabaseConfig, migrationsSource source.Driver) error {
 	db, err := New(context.Background(), logger, config)
 	if err != nil {
 		return err
@@ -34,9 +34,13 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 		return err
 	}
 
+	if migrationsSource != nil {
+		source = migrationsSource
+	}
+
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
-		"filtering-pkger",
+		"migrations",
 		source,
 		config.DatabaseName,
 		driver,
@@ -45,7 +49,18 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 		return logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
 	}
 
+	ver, _, err := m.Version()
+	switch {
+	case err == migrate.ErrNilVersion:
+		logger.Info().Log("Clean DB, no migrations")
+	case err != nil:
+		return logger.Fatal().LogErrorf("Error getting current migration version: %w", err).Err()
+	default:
+		logger.Info().Logf("DB is at version: %d", ver)
+	}
+
 	err = m.Up()
+
 	migrationMutex.Unlock()
 
 	switch err {
@@ -54,6 +69,16 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 		logger.Info().Log("Database already at version")
 	default:
 		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
+	}
+
+	ver, _, err = m.Version()
+	switch {
+	case err == migrate.ErrNilVersion:
+		logger.Info().Log("Clean DB, no migrations")
+	case err != nil:
+		return logger.Fatal().LogErrorf("Error getting current migration version: %w", err).Err()
+	default:
+		logger.Info().Logf("DB migrated to version: %d", ver)
 	}
 
 	logger.Info().Log("Migrations complete")

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -25,7 +27,7 @@ func NewService(logger log.Logger) Service {
 
 func (s *Service) Load(config interface{}) error {
 	if err := s.LoadFile(pkger.Include("/configs/config.default.yml"), config); err != nil {
-		return err
+		s.logger.LogErrorf("loading default config file using pkger: %w", err)
 	}
 
 	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, config); err != nil {
@@ -45,12 +47,29 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 
 	f, err := pkger.Open(file)
 	if err != nil {
-		return logger.LogErrorf("pkger unable to load %s: %w", file, err).Err()
+		return fmt.Errorf("pkger unable to load %s: %w", file, err)
 	}
 
 	deflt := viper.New()
 	deflt.SetConfigType("yaml")
 	if err := deflt.ReadConfig(f); err != nil {
+		return fmt.Errorf("unable to load the defaults: %w", err)
+	}
+
+	if err := deflt.Unmarshal(config); err != nil {
+		return fmt.Errorf("unable to unmarshal the defaults: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) LoadFromReader(in io.Reader, config interface{}) error {
+	logger := s.logger
+	logger.Info().Logf("loading config file from reader")
+
+	deflt := viper.New()
+	deflt.SetConfigType("yaml")
+	if err := deflt.ReadConfig(in); err != nil {
 		return logger.LogErrorf("unable to load the defaults: %w", err).Err()
 	}
 
