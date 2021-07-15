@@ -1,3 +1,7 @@
+// Copyright 2020 The Moov Authors
+// Use of this source code is governed by an Apache License
+// license that can be found in the LICENSE file.
+
 package database
 
 import (
@@ -19,7 +23,11 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 
 		return ApplyConnectionsConfig(db, &config.MySQL.Connections), nil
 	} else if config.SQLite != nil {
-		return sqliteConnection(logger, config.SQLite.Path).Connect(ctx)
+		db, err := sqliteConnection(logger, config.SQLite.Path)
+		if err != nil {
+			return nil, err
+		}
+		return db.Connect(ctx)
 	}
 
 	return nil, fmt.Errorf("database config not defined")

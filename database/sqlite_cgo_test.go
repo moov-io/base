@@ -1,3 +1,10 @@
+//go:build cgo
+// +build cgo
+
+// Copyright 2020 The Moov Authors
+// Use of this source code is governed by an Apache License
+// license that can be found in the LICENSE file.
+
 package database
 
 import (
@@ -27,7 +34,8 @@ func TestSQLite__basic(t *testing.T) {
 	}
 
 	// error case
-	s := sqliteConnection(log.NewNopLogger(), "/tmp/path/doesnt/exist")
+	s, err := sqliteConnection(log.NewNopLogger(), "/tmp/path/doesnt/exist")
+	require.NoError(t, err)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 

@@ -1,3 +1,10 @@
+//go:build cgo
+// +build cgo
+
+// Copyright 2020 The Moov Authors
+// Use of this source code is governed by an Apache License
+// license that can be found in the LICENSE file.
+
 package database
 
 import (
@@ -77,12 +84,12 @@ func (s *sqlite) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, err
 }
 
-func sqliteConnection(logger log.Logger, path string) *sqlite {
+func sqliteConnection(logger log.Logger, path string) (*sqlite, error) {
 	return &sqlite{
 		path:        path,
 		logger:      logger,
 		connections: sqliteConnections,
-	}
+	}, nil
 }
 
 // TestSQLiteDB is a wrapper around sql.DB for SQLite connections designed for tests to provide
