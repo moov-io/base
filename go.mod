@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/markbates/pkger v0.17.1
-	github.com/mattn/go-sqlite3 v1.14.7
+	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rickar/cal v1.0.5
