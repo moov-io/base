@@ -1,3 +1,17 @@
+## v0.21.0 (Released 2021-07-15)
+
+IMPROVEMENTS
+
+- database: support disabling cgo by removing sqlite support
+- Set meaningful names for databases used in tests (#172)
+
+BUILD
+
+- fix(deps): update module github.com/go-kit/kit to v0.11.0
+- fix(deps): update module github.com/google/uuid to v1.3.0
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.8
+- fix(deps): update module github.com/spf13/viper to v1.8.1
+
 ## v0.20.0 (Released 2021-06-21)
 
 ADDITIONS
