@@ -118,13 +118,19 @@ func (t Time) IsBankingDay() bool {
 	return true
 }
 
-// AddBankingDay takes an integer for the number of valid banking days to add and returns a Time
+// AddBankingDay takes an integer for the number of valid banking days to add and returns a Time.
+// Negative values and large values (over 500 days) will not modify the Time.
 func (t Time) AddBankingDay(d int) Time {
-	t.Time = t.Time.AddDate(0, 0, d)
-	if !t.IsBankingDay() {
-		return t.AddBankingDay(1)
+	if d < 1 || d > 500 {
+		return t
 	}
-	return t
+
+	t.Time = t.Time.AddDate(0, 0, 1)
+	if t.IsBankingDay() {
+		return t.AddBankingDay(d - 1)
+	}
+
+	return t.AddBankingDay(d)
 }
 
 // IsWeekend reports whether the given date falls on a weekend.

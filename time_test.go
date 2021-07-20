@@ -227,6 +227,7 @@ func TestTime__IsWeekend(t *testing.T) {
 }
 
 func TestTime_AddBankingDay(t *testing.T) {
+	unchangeable := time.Date(2021, time.July, 15, 1, 0, 0, 0, est)
 	tests := []struct {
 		Date   time.Time
 		Future time.Time
@@ -240,6 +241,17 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{time.Date(2018, time.January, 12, 1, 0, 0, 0, est), time.Date(2018, time.January, 17, 1, 0, 0, 0, est), 2},
 		// Friday add two days over a sunday public holiday (moved to monday) needs to be following wednesday
 		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2021, time.July, 7, 1, 0, 0, 0, est), 2},
+		// Negative input
+		{unchangeable, unchangeable, 0},
+		{unchangeable, unchangeable, -1},
+		{unchangeable, unchangeable, -10},
+		// Input above the max
+		{unchangeable, unchangeable, 501},
+		{unchangeable, unchangeable, 600},
+		// Input at the max
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.June, 28, 1, 0, 0, 0, est), 500},
+		// Find one year in the future
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 28, 1, 0, 0, 0, est), 365 - 12 - (52 * 2)},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
