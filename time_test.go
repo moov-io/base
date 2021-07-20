@@ -232,18 +232,24 @@ func TestTime_AddBankingDay(t *testing.T) {
 		Future time.Time
 		Days   int
 	}{
-		// Thursday add two days over a monday holiday abd needs to be following tuesday
+		// Thursday add one day needs to be friday
+		{time.Date(2018, time.January, 11, 1, 0, 0, 0, est), time.Date(2018, time.January, 12, 1, 0, 0, 0, est), 1},
+		// Thursday add two days over a monday holiday and needs to be following tuesday
 		{time.Date(2018, time.January, 11, 1, 0, 0, 0, est), time.Date(2018, time.January, 16, 1, 0, 0, 0, est), 2},
+		// Friday add two days over a monday holiday abd needs to be following wednesday
+		{time.Date(2018, time.January, 12, 1, 0, 0, 0, est), time.Date(2018, time.January, 17, 1, 0, 0, 0, est), 2},
+		// Friday add two days over a sunday public holiday (moved to monday) needs to be following wednesday
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2021, time.July, 7, 1, 0, 0, 0, est), 2},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
 		if !actual.Equal(NewTime(test.Future)) {
-			t.Errorf("Adding %d days: expected %s, got %s", test.Days, test.Future.Weekday().String(), actual)
+			t.Errorf("Adding %d days: expected %s, got %s", test.Days, NewTime(test.Future), actual)
 		}
 
 		actual = NewTime(test.Date).AddBankingDay(test.Days)
 		if !actual.Equal(NewTime(test.Future)) {
-			t.Errorf("Adding %d days: expected %s, got %s", test.Days, test.Future.Weekday().String(), actual)
+			t.Errorf("Adding %d days: expected %s, got %s", test.Days, NewTime(test.Future), actual)
 		}
 	}
 }
