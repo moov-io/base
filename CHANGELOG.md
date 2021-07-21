@@ -1,3 +1,9 @@
+## v0.21.1 (Released 2021-07-21)
+
+BUG FIXES
+
+- time: fix `AddBankingDay` calculation around weekend holidays
+
 ## v0.21.0 (Released 2021-07-15)
 
 IMPROVEMENTS
