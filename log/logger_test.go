@@ -166,6 +166,14 @@ func Test_ReplaceContextValue(t *testing.T) {
 	a.Contains(buffer.String(), "level=warn")
 }
 
+func Test_Debug(t *testing.T) {
+	a, buffer, log := Setup(t)
+
+	log.Debug().Logf("message")
+
+	a.Contains(buffer.String(), "level=debug")
+}
+
 func Test_Info(t *testing.T) {
 	a, buffer, log := Setup(t)
 

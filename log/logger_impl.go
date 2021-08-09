@@ -73,6 +73,10 @@ func (l *logger) With(ctxs ...Context) Logger {
 	}
 }
 
+func (l *logger) Debug() Logger {
+	return l.With(Debug)
+}
+
 func (l *logger) Info() Logger {
 	return l.With(Info)
 }
