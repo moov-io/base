@@ -4,6 +4,9 @@ package log
 type Level string
 
 // Info is sets level=info in the log output
+const Debug = Level("debug")
+
+// Info is sets level=info in the log output
 const Info = Level("info")
 
 // Info is sets level=warn in the log output
