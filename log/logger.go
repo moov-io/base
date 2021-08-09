@@ -4,6 +4,7 @@ type Logger interface {
 	Set(key string, value Valuer) Logger
 	With(ctxs ...Context) Logger
 
+	Debug() Logger
 	Info() Logger
 	Warn() Logger
 	Error() Logger
