@@ -1,3 +1,9 @@
+## v0.22.0 (Released 2021-08-09)
+
+IMPROVEMENTS
+
+- log: added debug log level
+
 ## v0.21.1 (Released 2021-07-21)
 
 BUG FIXES
