@@ -1,3 +1,9 @@
+## v0.23.0 (Released 2021-08-11)
+
+IMPROVEMENTS
+
+- log: added more valuer types (`uint32`, `uint64`, `float32`)
+
 ## v0.22.0 (Released 2021-08-09)
 
 IMPROVEMENTS

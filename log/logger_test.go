@@ -73,6 +73,27 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
+			val:      lib.Uint32(100),
+			expected: "foo=100",
+		},
+		{
+			key:      "foo",
+			val:      lib.Uint64(100),
+			expected: "foo=100",
+		},
+		{
+			key:      "foo",
+			val:      lib.Float32(100),
+			expected: "foo=100",
+		},
+
+		{
+			key:      "foo",
+			val:      lib.Float64(0.001),
+			expected: "foo=0.001",
+		},
+		{
+			key:      "foo",
 			val:      lib.String("bleh"),
 			expected: "foo=bleh",
 		},
@@ -85,11 +106,6 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.StringOrNil(nil),
 			expected: "foo=null",
-		},
-		{
-			key:      "foo",
-			val:      lib.Float64(0.001),
-			expected: "foo=0.001",
 		},
 		{
 			key:      "foo",
