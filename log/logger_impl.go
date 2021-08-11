@@ -51,6 +51,21 @@ func (l *logger) Set(key string, value Valuer) Logger {
 	})
 }
 
+func (l *logger) WithPrefix(ctxs ...Context) Logger {
+	prefixes := []interface{}{}
+
+	for _, ctx := range ctxs {
+		for k, v := range ctx.Context() {
+			prefixes = append(prefixes, k, v.getValue())
+		}
+	}
+
+	return &logger{
+		writer: log.WithPrefix(l.writer, prefixes...),
+		ctx:    l.ctx,
+	}
+}
+
 // With returns a new Logger with the contexts added to its own.
 func (l *logger) With(ctxs ...Context) Logger {
 	// Estimation assuming that for each ctxs has at least 1 value.

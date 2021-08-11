@@ -166,6 +166,72 @@ func Test_Send(t *testing.T) {
 	a.Contains(got, "foo=bar")
 }
 
+func Test_WithPrefix(t *testing.T) {
+	a, buffer, log := Setup(t)
+	log = log.WithPrefix(lib.Fields{"persist": lib.Bool(true)})
+	log.Log("prefix")
+	a.Contains(buffer.String(), "persist=true")
+
+	buffer.Reset()
+	log.With(lib.Fields{"a": lib.String("a"), "b": lib.String("b")}).Log("with")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "a=a")
+	a.Contains(buffer.String(), "b=b")
+
+	buffer.Reset()
+	log.Log("prefix")
+	a.Contains(buffer.String(), "persist=true")
+	a.NotContains(buffer.String(), "a=a")
+	a.NotContains(buffer.String(), "b=b")
+
+	buffer.Reset()
+	log = log.WithPrefix(lib.Fields{"another": lib.String("one")})
+	log.Log("two prefix, nested")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+
+	buffer.Reset()
+	log.With(lib.Fields{"a": lib.String("a"), "b": lib.String("b")}).Log("two prefix, nested, with")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+	a.Contains(buffer.String(), "a=a")
+	a.Contains(buffer.String(), "b=b")
+
+	buffer.Reset()
+	log.Log("two prefix, nested")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+	a.NotContains(buffer.String(), "a=a")
+	a.NotContains(buffer.String(), "b=b")
+
+	// two prefix, nested, one prefix with two fields
+	buffer.Reset()
+	log = log.WithPrefix(lib.Fields{"one": lib.String("one"), "two": lib.String("two")})
+	log.Log("two prefix, nested, one prefix with two fields")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+	a.Contains(buffer.String(), "one=one")
+	a.Contains(buffer.String(), "two=two")
+
+	buffer.Reset()
+	log.With(lib.Fields{"a": lib.String("a"), "b": lib.String("b")}).Log("two prefix, nested, one prefix with two fields, with")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+	a.Contains(buffer.String(), "one=one")
+	a.Contains(buffer.String(), "two=two")
+	a.Contains(buffer.String(), "a=a")
+	a.Contains(buffer.String(), "b=b")
+
+	buffer.Reset()
+	log.Log("two prefix, nested, one prefix with two fields")
+	a.Contains(buffer.String(), "persist=true")
+	a.Contains(buffer.String(), "another=one")
+	a.Contains(buffer.String(), "one=one")
+	a.Contains(buffer.String(), "two=two")
+	a.NotContains(buffer.String(), "a=a")
+	a.NotContains(buffer.String(), "b=b")
+}
+
 func Test_WithContext(t *testing.T) {
 	a, buffer, log := Setup(t)
 

@@ -2,6 +2,7 @@ package log
 
 type Logger interface {
 	Set(key string, value Valuer) Logger
+	WithPrefix(ctxs ...Context) Logger
 	With(ctxs ...Context) Logger
 
 	Debug() Logger
