@@ -1,3 +1,9 @@
+## v0.23.0 (Released 2021-08-11)
+
+IMPROVEMENTS
+
+- log: added WithPrefix method for persistence contextual logging
+
 ## v0.22.0 (Released 2021-08-09)
 
 IMPROVEMENTS
