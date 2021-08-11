@@ -37,6 +37,18 @@ func Int(i int) Valuer {
 	return &any{i}
 }
 
+func Uint32(i uint32) Valuer {
+	return &any{i}
+}
+
+func Uint64(i uint64) Valuer {
+	return &any{i}
+}
+
+func Float32(f float32) Valuer {
+	return &any{f}
+}
+
 func Float64(f float64) Valuer {
 	return &any{f}
 }
