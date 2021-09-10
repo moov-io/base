@@ -1,3 +1,9 @@
+## v0.24.0 (Released 2021-09-10)
+
+ADDITIONS
+
+- log: add `Int64(..)` valuer
+
 ## v0.23.0 (Released 2021-08-11)
 
 IMPROVEMENTS
