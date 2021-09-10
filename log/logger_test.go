@@ -73,6 +73,11 @@ func Test_LogWriteValue(t *testing.T) {
 		},
 		{
 			key:      "foo",
+			val:      lib.Int64(100),
+			expected: "foo=100",
+		},
+		{
+			key:      "foo",
 			val:      lib.Uint32(100),
 			expected: "foo=100",
 		},
