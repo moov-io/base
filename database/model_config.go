@@ -20,6 +20,7 @@ type MySQLConfig struct {
 	Address     string
 	User        string
 	Password    string
+	SSLCA       string
 	Connections ConnectionsConfig
 }
 
