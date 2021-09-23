@@ -122,6 +122,8 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 
 		gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tls)
 		params = params + fmt.Sprintf("&tls=%s", TLS_CONFIG_NAME)
+		// TODO @alexjplant remove below debug
+		fmt.Println("TLS INITIALIZED FOR MYSQL")
 	}
 
 	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
