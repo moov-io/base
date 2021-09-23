@@ -94,25 +94,13 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func mysqlConnection(logger log.Logger, user, pass string, address string, database string, sslCA string) *mysql {
+func mysqlConnection(logger log.Logger, user, pass string, address string, database string) *mysql {
 	timeout := "30s"
 	if v := os.Getenv("MYSQL_TIMEOUT"); v != "" {
 		timeout = v
 	}
-
-	var params []string
-	params = append(params, fmt.Sprintf("timeout=%s", timeout))
-	params = append(params, "charset=utf8mb4")
-	params = append(params, "parseTime=true")
-	params = append(params, `sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`)
-
-	if sslCA != "" {
-		params = append(params, fmt.Sprintf("sslca=%s", sslCA))
-	}
-
-	renderedParams := strings.Join(params, "&")
-
-	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, renderedParams)
+	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`, timeout)
+	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
