@@ -21,6 +21,7 @@ type MySQLConfig struct {
 	User        string
 	Password    string
 	Connections ConnectionsConfig
+	TLSCAFile   string
 }
 
 func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
@@ -29,12 +30,14 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 		User        string
 		Password    string
 		Connections ConnectionsConfig
+		TLSCAFile   string
 	}
 	return json.Marshal(Aux{
 		Address:     m.Address,
 		User:        m.User,
 		Password:    mask.Password(m.Password),
 		Connections: m.Connections,
+		TLSCAFile:   m.TLSCAFile,
 	})
 }
 

@@ -5,9 +5,12 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -59,6 +62,7 @@ func init() {
 type mysql struct {
 	dsn    string
 	logger log.Logger
+	tls    *tls.Config
 
 	connections *kitprom.Gauge
 }
@@ -94,18 +98,40 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func mysqlConnection(logger log.Logger, user, pass string, address string, database string) *mysql {
+func mysqlConnection(logger log.Logger, user, pass string, address string, database string, tlsCAFile string) (*mysql, error) {
 	timeout := "30s"
 	if v := os.Getenv("MYSQL_TIMEOUT"); v != "" {
 		timeout = v
 	}
 	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`, timeout)
+
+	var tls *tls.Config = nil
+
+	if tlsCAFile != "" {
+		rootCertPool := x509.NewCertPool()
+		pem, err := ioutil.ReadFile(tlsCAFile)
+		if err != nil {
+			return nil, err
+		}
+		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+			return nil, err
+		}
+		tls.RootCAs = rootCertPool
+
+		const TLS_CONFIG_NAME = "custom"
+
+		gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tls)
+		params = params + fmt.Sprintf("&tls=%s", TLS_CONFIG_NAME)
+	}
+
 	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
+
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
+		tls:         tls,
 		connections: mysqlConnections,
-	}
+	}, nil
 }
 
 // TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide

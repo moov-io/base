@@ -16,7 +16,12 @@ import (
 // variables for that specific database.
 func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
 	if config.MySQL != nil {
-		db, err := mysqlConnection(logger, config.MySQL.User, config.MySQL.Password, config.MySQL.Address, config.DatabaseName).Connect(ctx)
+		preppedDb, err := mysqlConnection(logger, config.MySQL.User, config.MySQL.Password, config.MySQL.Address, config.DatabaseName, config.MySQL.TLSCAFile)
+		if err != nil {
+			return nil, err
+		}
+
+		db, err := preppedDb.Connect(ctx)
 		if err != nil {
 			return nil, err
 		}
