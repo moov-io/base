@@ -105,9 +105,10 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	}
 	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`, timeout)
 
-	var tls *tls.Config = nil
+	var tlsConfig *tls.Config = nil
 
 	if tlsCAFile != "" {
+		tlsConfig = &tls.Config{}
 		rootCertPool := x509.NewCertPool()
 		pem, err := ioutil.ReadFile(tlsCAFile)
 		if err != nil {
@@ -116,11 +117,11 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
 			return nil, err
 		}
-		tls.RootCAs = rootCertPool
+		tlsConfig.RootCAs = rootCertPool
 
 		const TLS_CONFIG_NAME = "custom"
 
-		gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tls)
+		gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tlsConfig)
 		params = params + fmt.Sprintf("&tls=%s", TLS_CONFIG_NAME)
 		// TODO @alexjplant remove below debug
 		fmt.Println("TLS INITIALIZED FOR MYSQL")
@@ -131,7 +132,7 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
-		tls:         tls,
+		tls:         tlsConfig,
 		connections: mysqlConnections,
 	}, nil
 }
