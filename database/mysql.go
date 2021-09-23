@@ -5,9 +5,13 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -59,6 +63,7 @@ func init() {
 type mysql struct {
 	dsn    string
 	logger log.Logger
+	tls    *tls.Config
 
 	connections *kitprom.Gauge
 }
@@ -94,18 +99,69 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func mysqlConnection(logger log.Logger, user, pass string, address string, database string) *mysql {
+func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName string) (*mysql, error) {
 	timeout := "30s"
 	if v := os.Getenv("MYSQL_TIMEOUT"); v != "" {
 		timeout = v
 	}
 	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`, timeout)
-	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
+
+	var tlsConfig *tls.Config
+
+	if mysqlConfig.UseTLS {
+		// If any custom options are set then we need to create a custom TLS configuration. Otherwise we can just set
+		// tls=true in the DSN
+		if mysqlConfig.InsecureSkipVerify || mysqlConfig.TLSCAFile != "" || mysqlConfig.VerifyCAFile {
+			tlsConfig = &tls.Config{
+				InsecureSkipVerify: mysqlConfig.InsecureSkipVerify,
+			}
+
+			if mysqlConfig.TLSCAFile != "" {
+				rootCertPool := x509.NewCertPool()
+				certPem, err := ioutil.ReadFile(mysqlConfig.TLSCAFile)
+				if err != nil {
+					return nil, err
+				}
+
+				block, _ := pem.Decode(certPem)
+				caCert, err := x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return nil, err
+				}
+
+				if appendOK := rootCertPool.AppendCertsFromPEM(certPem); !appendOK {
+					return nil, err
+				}
+				tlsConfig.RootCAs = rootCertPool
+
+				if mysqlConfig.VerifyCAFile {
+					tlsConfig.VerifyConnection = func(state tls.ConnectionState) error {
+						if !(state.PeerCertificates[len(state.PeerCertificates)-1].Equal(caCert)) {
+							return errors.New("server certificate chain does not start with CA cert")
+						}
+						return nil
+					}
+				}
+			}
+
+			const TLS_CONFIG_NAME = "custom"
+
+			gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tlsConfig)
+			params = params + fmt.Sprintf("&tls=%s", TLS_CONFIG_NAME)
+
+		} else {
+			params = params + "&tls=true"
+		}
+	}
+
+	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", mysqlConfig.User, mysqlConfig.Password, mysqlConfig.Address, databaseName, params)
+
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
+		tls:         tlsConfig,
 		connections: mysqlConnections,
-	}
+	}, nil
 }
 
 // TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
