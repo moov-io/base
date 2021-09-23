@@ -24,7 +24,7 @@ require (
 	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/prometheus/client_golang v1.11.0
-	github.com/rickar/cal v1.0.5
+	github.com/rickar/cal/v2 v2.0.2
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
