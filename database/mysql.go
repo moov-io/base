@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -108,23 +109,38 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	var tlsConfig *tls.Config = nil
 
 	if tlsCAFile != "" {
-		tlsConfig = &tls.Config{}
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify : true,
+
+		}
 		rootCertPool := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(tlsCAFile)
+		certPem, err := ioutil.ReadFile(tlsCAFile)
 		if err != nil {
 			return nil, err
 		}
-		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+
+		block, _ := pem.Decode(certPem)
+		caCert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		if appendOK := rootCertPool.AppendCertsFromPEM(certPem); !appendOK {
 			return nil, err
 		}
 		tlsConfig.RootCAs = rootCertPool
+
+		tlsConfig.VerifyConnection = func(state tls.ConnectionState) error {
+			if !(state.PeerCertificates[0].Equal(caCert)) {
+				return errors.New("server certificate chain does not start with CA cert")
+			}
+			return nil
+		}
 
 		const TLS_CONFIG_NAME = "custom"
 
 		gomysql.RegisterTLSConfig(TLS_CONFIG_NAME, tlsConfig)
 		params = params + fmt.Sprintf("&tls=%s", TLS_CONFIG_NAME)
-		// TODO @alexjplant remove below debug
-		fmt.Println("TLS INITIALIZED FOR MYSQL")
 	}
 
 	dsn := fmt.Sprintf("%s:%s@%s/%s?%s", user, pass, address, database, params)
