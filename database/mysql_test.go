@@ -24,7 +24,12 @@ func TestMySQL__basic(t *testing.T) {
 	require.Equal(t, 0, db.DB.Stats().OpenConnections)
 
 	// create a phony MySQL
-	m, err := mysqlConnection(log.NewNopLogger(), "user", "pass", "127.0.0.1:3006", "db", "")
+	mysqlConfig := &MySQLConfig{
+		User:     "user",
+		Password: "pass",
+		Address:  "127.0.0.1:3306",
+	}
+	m, err := mysqlConnection(log.NewNopLogger(), mysqlConfig, "db")
 	require.NoError(t, err)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
