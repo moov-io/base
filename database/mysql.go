@@ -132,7 +132,7 @@ func mysqlConnection(logger log.Logger, user, pass string, address string, datab
 	return &mysql{
 		dsn:         dsn,
 		logger:      logger,
-		tls:         tls,
+		tls:         tlsConfig,
 		connections: mysqlConnections,
 	}, nil
 }
