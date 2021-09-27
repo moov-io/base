@@ -136,10 +136,6 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 
 				if mysqlConfig.VerifyCAFile {
 					tlsConfig.VerifyConnection = func(state tls.ConnectionState) error {
-						if !(state.PeerCertificates[len(state.PeerCertificates)-1].Equal(caCert)) {
-							return errors.New("server certificate chain does not start with CA cert")
-						}
-
 						_, err := state.PeerCertificates[0].Verify(x509.VerifyOptions{Roots: rootCertPool})
 						if err != nil {
 							return err
