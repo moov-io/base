@@ -124,7 +124,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 				}
 
 				block, _ := pem.Decode(certPem)
-				caCert, err := x509.ParseCertificate(block.Bytes)
+				_, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return nil, err
 				}
