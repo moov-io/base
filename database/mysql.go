@@ -130,7 +130,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 				}
 
 				if appendOK := rootCertPool.AppendCertsFromPEM(certPem); !appendOK {
-					return nil, err
+					return nil, errors.New("failed to append certificate PEM to root cert pool")
 				}
 				tlsConfig.RootCAs = rootCertPool
 
