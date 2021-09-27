@@ -109,14 +109,17 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 	var tlsConfig *tls.Config
 
 	if mysqlConfig.UseTLS {
+		logger.Log("using TLS for MySQL connection")
 		// If any custom options are set then we need to create a custom TLS configuration. Otherwise we can just set
 		// tls=true in the DSN
 		if mysqlConfig.InsecureSkipVerify || mysqlConfig.TLSCAFile != "" || mysqlConfig.VerifyCAFile {
+			logger.Log("creating custom TLS configuration for MySQL connection")
 			tlsConfig = &tls.Config{
 				InsecureSkipVerify: mysqlConfig.InsecureSkipVerify,
 			}
 
 			if mysqlConfig.TLSCAFile != "" {
+				logger.Logf("reading and adding MySQL CA file from %s", mysqlConfig.TLSCAFile)
 				rootCertPool := x509.NewCertPool()
 				certPem, err := ioutil.ReadFile(mysqlConfig.TLSCAFile)
 				if err != nil {
@@ -136,6 +139,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 
 				if mysqlConfig.VerifyCAFile {
 					tlsConfig.VerifyConnection = func(state tls.ConnectionState) error {
+						logger.Logf("verifying MySQL server certificate using CA from file %s", mysqlConfig.TLSCAFile)
 						_, err := state.PeerCertificates[0].Verify(x509.VerifyOptions{Roots: rootCertPool})
 						if err != nil {
 							return err
