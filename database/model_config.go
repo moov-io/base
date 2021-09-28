@@ -17,25 +17,36 @@ type DatabaseConfig struct {
 }
 
 type MySQLConfig struct {
-	Address     string
-	User        string
-	Password    string
-	SSLCA       string
-	Connections ConnectionsConfig
+	Address            string
+	User               string
+	Password           string
+	Connections        ConnectionsConfig
+	UseTLS             bool
+	TLSCAFile          string
+	InsecureSkipVerify bool
+	VerifyCAFile       bool
 }
 
 func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 	type Aux struct {
-		Address     string
-		User        string
-		Password    string
-		Connections ConnectionsConfig
+		Address            string
+		User               string
+		Password           string
+		Connections        ConnectionsConfig
+		UseTLS             bool
+		TLSCAFile          string
+		InsecureSkipVerify bool
+		VerifyCAFile       bool
 	}
 	return json.Marshal(Aux{
-		Address:     m.Address,
-		User:        m.User,
-		Password:    mask.Password(m.Password),
-		Connections: m.Connections,
+		Address:            m.Address,
+		User:               m.User,
+		Password:           mask.Password(m.Password),
+		Connections:        m.Connections,
+		UseTLS:             m.UseTLS,
+		TLSCAFile:          m.TLSCAFile,
+		InsecureSkipVerify: m.InsecureSkipVerify,
+		VerifyCAFile:       m.VerifyCAFile,
 	})
 }
 

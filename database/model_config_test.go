@@ -16,7 +16,6 @@ func TestMySQLConfig(t *testing.T) {
 		Address:  "tcp(localhost:3306)",
 		User:     "app",
 		Password: "secret",
-		SSLCA:    "/etc/ssl/certs/dummy.crt",
 		Connections: ConnectionsConfig{
 			MaxOpen: 100,
 		},
