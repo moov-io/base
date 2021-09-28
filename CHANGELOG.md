@@ -1,3 +1,10 @@
+## v0.24.0 (Released 2021-09-28)
+
+ADDITIONS
+
+- database: add TLS support to MySQL
+
+
 ## v0.24.0 (Released 2021-09-10)
 
 ADDITIONS
