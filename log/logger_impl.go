@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -73,6 +74,14 @@ func (l *logger) With(ctxs ...Context) Logger {
 	}
 }
 
+func (l *logger) Values() map[string]interface{} {
+	m := make(map[string]interface{}, len(l.ctx))
+	for k, v := range l.ctx {
+		m[k] = v.getValue()
+	}
+	return m
+}
+
 func (l *logger) Debug() Logger {
 	return l.With(Debug)
 }
@@ -94,23 +103,25 @@ func (l *logger) Fatal() Logger {
 }
 
 func (l *logger) Log(msg string) {
-	orig := []string{
+	// Frontload the timestamp and msg
+	keyvals := []interface{}{
 		"ts", time.Now().UTC().Format(time.RFC3339),
 	}
 	if msg != "" {
-		orig = append(orig, "msg", msg)
+		keyvals = append(keyvals, "msg", msg)
 	}
 
-	keyvals := make([]interface{}, (len(l.ctx)*2)+len(orig))
-	for i, v := range orig {
-		keyvals[i] = v
+	// Sort the rest of the list so the log lines look similar
+	values := l.Values()
+	keys := make([]string, 0, len(l.ctx))
+	for k := range values {
+		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 
-	i := len(orig)
-	for k, v := range l.ctx {
-		keyvals[i] = k
-		keyvals[i+1] = v.getValue()
-		i += 2
+	// Lets add them into the arguments
+	for _, k := range keys {
+		keyvals = append(keyvals, k, values[k])
 	}
 
 	_ = l.writer.Log(keyvals...)
