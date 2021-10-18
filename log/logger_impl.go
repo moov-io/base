@@ -74,7 +74,7 @@ func (l *logger) With(ctxs ...Context) Logger {
 	}
 }
 
-func (l *logger) Values() map[string]interface{} {
+func (l *logger) Details() map[string]interface{} {
 	m := make(map[string]interface{}, len(l.ctx))
 	for k, v := range l.ctx {
 		m[k] = v.getValue()
@@ -112,16 +112,16 @@ func (l *logger) Log(msg string) {
 	}
 
 	// Sort the rest of the list so the log lines look similar
-	values := l.Values()
+	details := l.Details()
 	keys := make([]string, 0, len(l.ctx))
-	for k := range values {
+	for k := range details {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	// Lets add them into the arguments
 	for _, k := range keys {
-		keyvals = append(keyvals, k, values[k])
+		keyvals = append(keyvals, k, details[k])
 	}
 
 	_ = l.writer.Log(keyvals...)

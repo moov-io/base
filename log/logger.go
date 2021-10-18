@@ -3,7 +3,7 @@ package log
 type Logger interface {
 	Set(key string, value Valuer) Logger
 	With(ctxs ...Context) Logger
-	Values() map[string]interface{}
+	Details() map[string]interface{}
 
 	Debug() Logger
 	Info() Logger
