@@ -2,3 +2,4 @@ Config:
   Default: "default"
   Values:
     - "default"
+  Zero: "hero"

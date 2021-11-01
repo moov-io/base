@@ -18,6 +18,7 @@ type ConfigModel struct {
 	App     string
 	Secret  string
 	Values  []string
+	Zero    string
 }
 
 func Test_Load(t *testing.T) {
@@ -40,4 +41,6 @@ func Test_Load(t *testing.T) {
 
 	require.Len(t, cfg.Config.Values, 1)
 	require.Equal(t, "secret", cfg.Config.Values[0])
+
+	require.Equal(t, "", cfg.Config.Zero)
 }
