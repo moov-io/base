@@ -17,6 +17,7 @@ type ConfigModel struct {
 	Default string
 	App     string
 	Secret  string
+	Values  []string
 }
 
 func Test_Load(t *testing.T) {
@@ -36,4 +37,7 @@ func Test_Load(t *testing.T) {
 	require.Equal(t, "default", cfg.Config.Default)
 	require.Equal(t, "app", cfg.Config.App)
 	require.Equal(t, "keep secret!", cfg.Config.Secret)
+
+	require.Len(t, cfg.Config.Values, 1)
+	require.Equal(t, "secret", cfg.Config.Values[0])
 }

@@ -1,2 +1,4 @@
 Config:
   Default: "default"
+  Values:
+    - "default"
