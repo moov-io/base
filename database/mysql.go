@@ -104,7 +104,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 	if v := os.Getenv("MYSQL_TIMEOUT"); v != "" {
 		timeout = v
 	}
-	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"`, timeout)
+	params := fmt.Sprintf(`timeout=%s&charset=utf8mb4&parseTime=true&sql_mode="ALLOW_INVALID_DATES,STRICT_ALL_TABLES"&multiStatements=true`, timeout)
 
 	var tlsConfig *tls.Config
 
