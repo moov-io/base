@@ -1,2 +1,5 @@
 Config:
   App: "app"
+  Values:
+    - "app"
+  Zero: ""
