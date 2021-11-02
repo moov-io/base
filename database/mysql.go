@@ -115,7 +115,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 		if mysqlConfig.InsecureSkipVerify || mysqlConfig.TLSCAFile != "" || mysqlConfig.VerifyCAFile {
 			logger.Log("creating custom TLS configuration for MySQL connection")
 			tlsConfig = &tls.Config{
-				InsecureSkipVerify: mysqlConfig.InsecureSkipVerify,
+				InsecureSkipVerify: mysqlConfig.InsecureSkipVerify, //nolint:gosec
 			}
 
 			if mysqlConfig.TLSCAFile != "" {
