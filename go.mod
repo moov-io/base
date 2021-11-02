@@ -9,6 +9,7 @@ require (
 	github.com/docker/cli v20.10.8+incompatible // indirect
 	github.com/docker/docker v20.10.8+incompatible // indirect
 	github.com/go-kit/kit v0.12.0
+	github.com/go-kit/log v0.2.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobuffalo/here v0.6.2 // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.0
