@@ -31,8 +31,9 @@ func Test_NewAndMigration_SQLite(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.Query("select * from tests")
+	rows, err := db.Query("select * from tests")
 	require.NoError(t, err)
+	require.NoError(t, rows.Err())
 }
 
 func TestUniqueViolation(t *testing.T) {

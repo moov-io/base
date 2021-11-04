@@ -27,6 +27,7 @@ func TestSQLite__basic(t *testing.T) {
 
 	r, err := db.Query("select * from tests")
 	require.NoError(t, err)
+	require.NoError(t, r.Err())
 	defer r.Close()
 
 	if runtime.GOOS == "windows" {
