@@ -54,7 +54,7 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 		return logger.LogErrorf("unable to load the defaults: %w", err).Err()
 	}
 
-	if err := deflt.Unmarshal(config); err != nil {
+	if err := deflt.UnmarshalExact(config); err != nil {
 		return logger.LogErrorf("unable to unmarshal the defaults: %w", err).Err()
 	}
 
@@ -77,7 +77,7 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
 		}
 
-		if err := overrides.Unmarshal(config); err != nil {
+		if err := overrides.UnmarshalExact(config); err != nil {
 			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
 		}
 	}
