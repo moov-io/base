@@ -1,3 +1,21 @@
+## v0.27.0 (Released 2021-11-05)
+
+BREAKING CHANGES
+
+- config: fail loading if there are unused (extra) fields
+
+IMPROVEMENTS
+
+- config: verify blank strings replace populated strings
+- database: verify TLS connections work as expected
+- database: check sql rows error
+
+BUILD
+
+- build: enable gosec, fix go-kit depreciations
+- fix(deps): update module github.com/go-kit/kit to v0.12.0
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.9
+
 ## v0.26.1 (Released 2021-11-01)
 
 ADDITIONS
