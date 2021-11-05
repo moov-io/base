@@ -1,9 +1,27 @@
-## v0.24.0 (Released 2021-09-28)
+## v0.26.1 (Released 2021-11-01)
+
+ADDITIONS
+
+- database: add `multiStatement=true` to DSN to allow multiple statements in a migration
+
+## v0.26.0 (Released 2021-09-28)
+
+IMPROVEMENTS
+
+- log: allow fetching of the values and setting up the log values to be sorted by keys
+- log: add Details method to return a map of context values
+
+## v0.25.0 (Released 2021-09-28)
 
 ADDITIONS
 
 - database: add TLS support to MySQL
 
+BUILD
+
+- fix(deps): update module github.com/golang-migrate/migrate/v4 to v4.15.0
+- fix(deps): update module github.com/ory/dockertest/v3 to v3.8.0
+- fix(deps): update module github.com/spf13/viper to v1.9.0
 
 ## v0.24.0 (Released 2021-09-10)
 
