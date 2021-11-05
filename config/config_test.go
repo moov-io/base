@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/moov-io/base/config"
@@ -22,8 +23,8 @@ type ConfigModel struct {
 }
 
 func Test_Load(t *testing.T) {
-	os.Setenv(config.APP_CONFIG, "../configs/config.app.yml")
-	os.Setenv(config.APP_CONFIG_SECRETS, "../configs/config.secrets.yml")
+	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
+	os.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
 	t.Cleanup(func() {
 		os.Unsetenv(config.APP_CONFIG)
 		os.Unsetenv(config.APP_CONFIG_SECRETS)
@@ -43,4 +44,17 @@ func Test_Load(t *testing.T) {
 	require.Equal(t, "secret", cfg.Config.Values[0])
 
 	require.Equal(t, "", cfg.Config.Zero)
+
+	// Verify attempting to load from our default file errors on extra fields
+	cfg = &GlobalConfigModel{}
+	err = service.LoadFile("/configs/config.extra.yml", &cfg)
+	require.NotNil(t, err)
+	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
+
+	// Verify attempting to load additional fields via env vars errors out
+	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.extra.yml"))
+	cfg = &GlobalConfigModel{}
+	err = service.Load(cfg)
+	require.NotNil(t, err)
+	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
 }
