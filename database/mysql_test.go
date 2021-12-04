@@ -104,6 +104,7 @@ func TestMySQLModes(t *testing.T) {
 func readSQLModes(t *testing.T, db *sql.DB, query string) string {
 	stmt, err := db.Prepare(query)
 	require.NoError(t, err)
+	defer stmt.Close()
 
 	row := stmt.QueryRow()
 	require.NoError(t, row.Err())

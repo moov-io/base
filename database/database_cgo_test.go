@@ -33,6 +33,7 @@ func Test_NewAndMigration_SQLite(t *testing.T) {
 
 	rows, err := db.Query("select * from tests")
 	require.NoError(t, err)
+	defer rows.Close()
 	require.NoError(t, rows.Err())
 }
 
