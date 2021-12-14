@@ -62,6 +62,10 @@ func (l *logger) With(ctxs ...Context) Logger {
 	}
 
 	for _, c := range ctxs {
+		if c == nil {
+			continue
+		}
+
 		itemCtx := c.Context()
 		for k, v := range itemCtx {
 			combined[k] = v
