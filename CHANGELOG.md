@@ -1,3 +1,14 @@
+## v0.27.1 (Released 2021-12-14)
+
+IMPROVEMENTS
+
+- log: add nil pointer check in adding log contexts 
+- database: close sql test resources
+
+BUILD
+
+- fix(deps): update github.com/mitchellh/mapstructure to v1.4.3
+
 ## v0.27.0 (Released 2021-11-05)
 
 BREAKING CHANGES
