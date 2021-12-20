@@ -23,8 +23,7 @@ require (
 	github.com/ory/dockertest/v3 v3.8.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rickar/cal v1.0.5
-	github.com/spf13/viper v1.9.0
+	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
 )
