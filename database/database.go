@@ -26,7 +26,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 			return nil, err
 		}
 
-		return ApplyConnectionsConfig(db, &config.MySQL.Connections), nil
+		return ApplyConnectionsConfig(db, &config.MySQL.Connections, logger), nil
 	} else if config.SQLite != nil {
 		db, err := sqliteConnection(logger, config.SQLite.Path)
 		if err != nil {
@@ -67,20 +67,24 @@ func UniqueViolation(err error) bool {
 	return MySQLUniqueViolation(err) || SQLiteUniqueViolation(err)
 }
 
-func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig) *sql.DB {
+func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
 	if connections.MaxOpen > 0 {
+		logger.Logf("setting SQL max open connections to %s", connections.MaxOpen)
 		db.SetMaxOpenConns(connections.MaxOpen)
 	}
 
 	if connections.MaxIdle > 0 {
-		db.SetMaxOpenConns(connections.MaxIdle)
+		logger.Logf("setting SQL max idle connections to %s", connections.MaxIdle)
+		db.SetMaxIdleConns(connections.MaxIdle)
 	}
 
 	if connections.MaxLifetime > 0 {
+		logger.Logf("setting SQL max lifetime to %s", connections.MaxLifetime)
 		db.SetConnMaxLifetime(connections.MaxLifetime)
 	}
 
 	if connections.MaxIdleTime > 0 {
+		logger.Logf("setting SQL max idle time to %s", connections.MaxIdleTime)
 		db.SetConnMaxIdleTime(connections.MaxIdleTime)
 	}
 
