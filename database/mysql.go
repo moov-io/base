@@ -76,6 +76,8 @@ type mysql struct {
 	logger log.Logger
 	tls    *tls.Config
 
+	db *sql.DB
+
 	connections *kitprom.Gauge
 	counters    *kitprom.Gauge
 }
@@ -85,6 +87,7 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	db.SetMaxOpenConns(maxActiveMySQLConnections)
 
 	// Check out DB is up and working
@@ -100,20 +103,31 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				stats := db.Stats()
-				my.connections.With("state", "idle").Set(float64(stats.Idle))
-				my.connections.With("state", "inuse").Set(float64(stats.InUse))
-				my.connections.With("state", "open").Set(float64(stats.OpenConnections))
-				my.counters.With("counter", "wait_count").Set(float64(stats.WaitCount))
-				my.counters.With("counter", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
-				my.counters.With("counter", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
-				my.counters.With("counter", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
-				my.counters.With("counter", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
+				my.RecordStats()
 			}
 		}
 	}()
 
+	my.db = db
 	return db, nil
+}
+
+func (my *mysql) RecordStats() error {
+	if my.db == nil {
+		return errors.New("database not connected")
+	}
+
+	stats := my.db.Stats()
+	my.connections.With("state", "idle").Set(float64(stats.Idle))
+	my.connections.With("state", "inuse").Set(float64(stats.InUse))
+	my.connections.With("state", "open").Set(float64(stats.OpenConnections))
+	my.counters.With("counter", "wait_count").Set(float64(stats.WaitCount))
+	my.counters.With("counter", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
+	my.counters.With("counter", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
+	my.counters.With("counter", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
+	my.counters.With("counter", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
+
+	return nil
 }
 
 func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName string) (*mysql, error) {

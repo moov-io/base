@@ -68,6 +68,8 @@ func TestMySQL__TLS(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, conn.Ping())
+
+	require.NoError(t, m.RecordStats())
 }
 
 func TestMySQLUniqueViolation(t *testing.T) {
