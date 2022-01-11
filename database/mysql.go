@@ -38,6 +38,17 @@ var (
 		Help: "How many MySQL connections and what status they're in.",
 	}, []string{"state"})
 
+	mysqlConnectionsCounters = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
+		Name: "mysql_connections_counters",
+		Help: `Counters specific to the sql connections. 
+			wait_count: The total number of connections waited for.
+			wait_duration: The total time blocked waiting for a new connection.
+			max_idle_closed: The total number of connections closed due to SetMaxIdleConns.
+			max_idle_time_closed: The total number of connections closed due to SetConnMaxIdleTime.
+			max_lifetime_closed: The total number of connections closed due to SetConnMaxLifetime.
+		`,
+	}, []string{"counter"})
+
 	// mySQLErrDuplicateKey is the error code for duplicate entries
 	// https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_dup_entry
 	mySQLErrDuplicateKey uint16 = 1062
@@ -66,6 +77,7 @@ type mysql struct {
 	tls    *tls.Config
 
 	connections *kitprom.Gauge
+	counters    *kitprom.Gauge
 }
 
 func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
@@ -92,6 +104,11 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 				my.connections.With("state", "idle").Set(float64(stats.Idle))
 				my.connections.With("state", "inuse").Set(float64(stats.InUse))
 				my.connections.With("state", "open").Set(float64(stats.OpenConnections))
+				my.counters.With("stat", "wait_count").Set(float64(stats.WaitCount))
+				my.counters.With("stat", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
+				my.counters.With("stat", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
+				my.counters.With("stat", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
+				my.counters.With("stat", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
 			}
 		}
 	}()
@@ -166,6 +183,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 		logger:      logger,
 		tls:         tlsConfig,
 		connections: mysqlConnections,
+		counters:    mysqlConnectionsCounters,
 	}, nil
 }
 
