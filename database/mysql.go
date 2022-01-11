@@ -78,6 +78,7 @@ type mysql struct {
 
 	db *sql.DB
 
+	statsLock   *sync.Mutex
 	connections *kitprom.Gauge
 	counters    *kitprom.Gauge
 }
@@ -109,6 +110,8 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	}()
 
 	my.db = db
+	my.statsLock = &sync.Mutex{}
+
 	return db, nil
 }
 
@@ -116,6 +119,9 @@ func (my *mysql) RecordStats() error {
 	if my.db == nil {
 		return errors.New("database not connected")
 	}
+
+	my.statsLock.Lock()
+	defer my.statsLock.Unlock()
 
 	stats := my.db.Stats()
 	my.connections.With("state", "idle").Set(float64(stats.Idle))
