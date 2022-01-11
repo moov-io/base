@@ -104,11 +104,11 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 				my.connections.With("state", "idle").Set(float64(stats.Idle))
 				my.connections.With("state", "inuse").Set(float64(stats.InUse))
 				my.connections.With("state", "open").Set(float64(stats.OpenConnections))
-				my.counters.With("stat", "wait_count").Set(float64(stats.WaitCount))
-				my.counters.With("stat", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
-				my.counters.With("stat", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
-				my.counters.With("stat", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
-				my.counters.With("stat", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
+				my.counters.With("counter", "wait_count").Set(float64(stats.WaitCount))
+				my.counters.With("counter", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
+				my.counters.With("counter", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
+				my.counters.With("counter", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
+				my.counters.With("counter", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
 			}
 		}
 	}()
