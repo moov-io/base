@@ -142,7 +142,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 						logger.Logf("verifying MySQL server certificate using CA from file %s", mysqlConfig.TLSCAFile)
 						_, err := state.PeerCertificates[0].Verify(x509.VerifyOptions{Roots: rootCertPool})
 						if err != nil {
-							return err
+							return logger.Error().LogError(err).Err()
 						}
 						return nil
 					}
