@@ -24,28 +24,30 @@ import (
 
 	"github.com/moov-io/base/docker"
 
+	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
 	dc "github.com/ory/dockertest/v3/docker"
+	stdprom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/moov-io/base/log"
 )
 
 var (
-	// mysqlConnections = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
-	// 	Name: "mysql_connections",
-	// 	Help: "How many MySQL connections and what status they're in.",
-	// }, []string{"state"})
+	mysqlConnections = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
+		Name: "mysql_connections",
+		Help: "How many MySQL connections and what status they're in.",
+	}, []string{"state"})
 
-	// mysqlConnectionsCounters = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
-	// 	Name: "mysql_connections_counters",
-	// 	Help: `Counters specific to the sql connections.
-	// 		wait_count: The total number of connections waited for.
-	// 		wait_duration: The total time blocked waiting for a new connection.
-	// 		max_idle_closed: The total number of connections closed due to SetMaxIdleConns.
-	// 		max_idle_time_closed: The total number of connections closed due to SetConnMaxIdleTime.
-	// 		max_lifetime_closed: The total number of connections closed due to SetConnMaxLifetime.
-	// 	`,
-	// }, []string{"counter"})
+	mysqlConnectionsCounters = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
+		Name: "mysql_connections_counters",
+		Help: `Counters specific to the sql connections. 
+			wait_count: The total number of connections waited for.
+			wait_duration: The total time blocked waiting for a new connection.
+			max_idle_closed: The total number of connections closed due to SetMaxIdleConns.
+			max_idle_time_closed: The total number of connections closed due to SetConnMaxIdleTime.
+			max_lifetime_closed: The total number of connections closed due to SetConnMaxLifetime.
+		`,
+	}, []string{"counter"})
 
 	// mySQLErrDuplicateKey is the error code for duplicate entries
 	// https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_dup_entry
@@ -60,6 +62,22 @@ var (
 		return 16
 	}()
 )
+
+func RecordMySQLStats(db *sql.DB) error {
+	stats := db.Stats()
+
+	mysqlConnections.With("state", "idle").Set(float64(stats.Idle))
+	mysqlConnections.With("state", "inuse").Set(float64(stats.InUse))
+	mysqlConnections.With("state", "open").Set(float64(stats.OpenConnections))
+
+	mysqlConnectionsCounters.With("counter", "wait_count").Set(float64(stats.WaitCount))
+	mysqlConnectionsCounters.With("counter", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
+	mysqlConnectionsCounters.With("counter", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
+	mysqlConnectionsCounters.With("counter", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
+	mysqlConnectionsCounters.With("counter", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
+
+	return nil
+}
 
 type discardLogger struct{}
 
@@ -95,43 +113,22 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	}
 
 	// Setup metrics after the database is setup
-	// go func() {
-	// 	t := time.NewTicker(1 * time.Minute)
-	// 	for {
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			return
-	// 		case <-t.C:
-	// 			my.RecordStats()
-	// 		}
-	// 	}
-	// }()
+	go func(db *sql.DB) {
+		t := time.NewTicker(1 * time.Minute)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				RecordMySQLStats(db)
+			}
+		}
+	}(db)
 
 	// my.db = db
 	// my.statsLock = &sync.Mutex{}
 
 	return db, nil
-}
-
-func (my *mysql) RecordStats() error {
-	// if my.db == nil {
-	// 	return errors.New("database not connected")
-	// }
-
-	// my.statsLock.Lock()
-	// defer my.statsLock.Unlock()
-
-	// stats := my.db.Stats()
-	// my.connections.With("state", "idle").Set(float64(stats.Idle))
-	// my.connections.With("state", "inuse").Set(float64(stats.InUse))
-	// my.connections.With("state", "open").Set(float64(stats.OpenConnections))
-	// my.counters.With("counter", "wait_count").Set(float64(stats.WaitCount))
-	// my.counters.With("counter", "wait_ms").Set(float64(stats.WaitDuration.Milliseconds()))
-	// my.counters.With("counter", "max_idle_closed").Set(float64(stats.MaxIdleClosed))
-	// my.counters.With("counter", "max_idle_time_closed").Set(float64(stats.MaxIdleTimeClosed))
-	// my.counters.With("counter", "max_lifetime_closed").Set(float64(stats.MaxLifetimeClosed))
-
-	return nil
 }
 
 func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName string) (*mysql, error) {
