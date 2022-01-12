@@ -91,12 +91,6 @@ type mysql struct {
 	dsn    string
 	logger log.Logger
 	tls    *tls.Config
-
-	// db *sql.DB
-
-	// statsLock   *sync.Mutex
-	// connections *kitprom.Gauge
-	// counters    *kitprom.Gauge
 }
 
 func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
@@ -124,9 +118,6 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 			}
 		}
 	}(db)
-
-	// my.db = db
-	// my.statsLock = &sync.Mutex{}
 
 	return db, nil
 }
@@ -197,8 +188,6 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 		dsn:    dsn,
 		logger: logger,
 		tls:    tlsConfig,
-		// connections: mysqlConnections,
-		// counters:    mysqlConnectionsCounters,
 	}, nil
 }
 
