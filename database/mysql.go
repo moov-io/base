@@ -33,6 +33,8 @@ import (
 )
 
 var (
+	metricsMu = &sync.Mutex{}
+
 	mysqlConnections = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
 		Name: "mysql_connections",
 		Help: "How many MySQL connections and what status they're in.",
@@ -64,7 +66,11 @@ var (
 )
 
 func RecordMySQLStats(db *sql.DB) error {
+
 	stats := db.Stats()
+
+	metricsMu.Lock()
+	defer metricsMu.Unlock()
 
 	mysqlConnections.With("state", "idle").Set(float64(stats.Idle))
 	mysqlConnections.With("state", "inuse").Set(float64(stats.InUse))
