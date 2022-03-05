@@ -7,7 +7,8 @@ package base
 import (
 	"time"
 
-	"github.com/rickar/cal"
+	"github.com/rickar/cal/v2"
+	"github.com/rickar/cal/v2/us"
 )
 
 const (
@@ -39,10 +40,11 @@ type Time struct {
 // Now returns a Time object with the current clock time set.
 func Now(location *time.Location) Time {
 	// Create our calendar to attach on Time
-	calendar := cal.NewCalendar()
-	cal.AddUsHolidays(calendar)
-	calendar.Observed = cal.ObservedMonday
-
+	calendar := &cal.Calendar{
+		Name: "moov-io/base",
+	}
+	calendar.AddHoliday(us.Holidays...) // TODO(adam): check for more? June 19th?
+	// calendar.Observed = cal.ObservedMonday // TODO(adam):
 	return Time{
 		cal:  calendar,
 		Time: time.Now().In(location).Truncate(1 * time.Second),
@@ -107,13 +109,16 @@ func (t Time) IsBankingDay() bool {
 		return false
 	}
 	// and not a holiday
-	if t.cal.IsHoliday(t.Time) {
+	actual, observed, _ := t.cal.IsHoliday(t.Time)
+	if actual || observed {
 		return false
 	}
 	// and not a monday after a holiday
 	if t.Time.Weekday() == time.Monday {
 		sun := t.Time.AddDate(0, 0, -1)
-		return !t.cal.IsHoliday(sun)
+
+		actual, observed, _ := t.cal.IsHoliday(sun)
+		return !actual && !observed
 	}
 	return true
 }

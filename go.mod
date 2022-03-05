@@ -12,17 +12,15 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/markbates/pkger v0.17.1
 	github.com/mattn/go-sqlite3 v1.14.12
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
-	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/ory/dockertest/v3 v3.8.1
 	github.com/prometheus/client_golang v1.12.1
-	github.com/rickar/cal v1.0.5
+	github.com/rickar/cal/v2 v2.1.3
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
