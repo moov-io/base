@@ -1,3 +1,9 @@
+## v0.28.1 (Released 2022-03-07)
+
+ADDITIONS
+
+- time: add IsHoliday()
+
 ## v0.28.0 (Released 2021-01-09)
 
 BUILD
