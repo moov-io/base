@@ -102,6 +102,11 @@ func (t Time) Equal(other Time) bool {
 	return t1.Equal(t2)
 }
 
+func (t Time) IsHoliday() bool {
+	actual, observed, _ := t.cal.IsHoliday(t.Time)
+	return actual || observed
+}
+
 // IsBankingDay checks the rules around holidays (i.e. weekends) to determine if the given day is a banking day.
 func (t Time) IsBankingDay() bool {
 	// if date is not a weekend and not a holiday it is banking day.
@@ -109,8 +114,7 @@ func (t Time) IsBankingDay() bool {
 		return false
 	}
 	// and not a holiday
-	actual, observed, _ := t.cal.IsHoliday(t.Time)
-	if actual || observed {
+	if t.IsHoliday() {
 		return false
 	}
 	// and not a monday after a holiday
