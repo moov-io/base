@@ -249,9 +249,9 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{unchangeable, unchangeable, 501},
 		{unchangeable, unchangeable, 600},
 		// Input at the max
-		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.June, 28, 1, 0, 0, 0, est), 500},
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.June, 30, 1, 0, 0, 0, est), 500},
 		// Find one year in the future
-		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 28, 1, 0, 0, 0, est), 365 - 12 - (52 * 2)},
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 30, 1, 0, 0, 0, est), 365 - 12 - (52 * 2)},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
