@@ -1,8 +1,47 @@
+## v0.28.0 (Released 2021-01-09)
+
+BUILD
+
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.12
+- fix(deps): update module github.com/prometheus/client_golang to v1.12.1
+- time: update github.com/rickar/cal to v2 release
+
+## v0.27.5 (Released 2021-01-09)
+
+IMPROVEMENTS
+
+- Adding in a lock around writing to the metrics
+
+## v0.27.4 (Released 2021-01-09)
+
+IMPROVEMENTS
+
+- Cleanup and simplify the recording of metrics
+
+## v0.27.3 (Released 2021-01-09)
+
+IMPROVEMENTS
+
+- Adding logging to the error that could come back from verify ca
+- Adding in additional metrics to track for database connections
+- Adding in test cases to make sure the metrics get recorded
+
+## v0.27.2 (Released 2021-01-09)
+
+BUG FIXES
+
+- database: Fix ApplyConnectionsConfig
+
+BUILD
+
+- fix(deps): update module github.com/spf13/viper to v1.10.1
+- fix(deps): update module github.com/ory/dockertest/v3 to v3.8.1
+
 ## v0.27.1 (Released 2021-12-14)
 
 IMPROVEMENTS
 
-- log: add nil pointer check in adding log contexts 
+- log: add nil pointer check in adding log contexts
 - database: close sql test resources
 
 BUILD
