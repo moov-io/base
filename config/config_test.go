@@ -57,4 +57,25 @@ func Test_Load(t *testing.T) {
 	err = service.Load(cfg)
 	require.NotNil(t, err)
 	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
+
+	t.Run("read from reader", func(t *testing.T) {
+		os.Unsetenv(config.APP_CONFIG)
+
+		cfg := &GlobalConfigModel{}
+
+		service := config.NewService(log.NewDefaultLogger())
+
+		fAppCfg, err := os.Open(filepath.Join("..", "configs", "config.app.yml"))
+		require.NoError(t, err)
+
+		fDefaultCfg, err := os.Open(filepath.Join("..", "configs", "config.default.yml"))
+		require.NoError(t, err)
+
+		err = service.LoadWithReaders(cfg, fDefaultCfg, fAppCfg)
+		require.NoError(t, err)
+
+		require.Equal(t, "default", cfg.Config.Default)
+		require.Equal(t, "app", cfg.Config.App)
+		require.Equal(t, "keep secret!", cfg.Config.Secret)
+	})
 }
