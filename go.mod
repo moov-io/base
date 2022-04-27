@@ -3,12 +3,11 @@ module github.com/moov-io/base
 go 1.13
 
 require (
-	github.com/containerd/continuity v0.2.0 // indirect
 	github.com/go-kit/kit v0.12.0
 	github.com/go-kit/log v0.2.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobuffalo/here v0.6.2 // indirect
-	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0 // indirect
