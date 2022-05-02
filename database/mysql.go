@@ -16,17 +16,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"testing"
 	"time"
-
-	"github.com/ory/dockertest/v3"
-	"github.com/stretchr/testify/require"
-
-	"github.com/moov-io/base/docker"
 
 	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	gomysql "github.com/go-sql-driver/mysql"
-	dc "github.com/ory/dockertest/v3/docker"
 	stdprom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/moov-io/base/log"
@@ -42,7 +35,7 @@ var (
 
 	mysqlConnectionsCounters = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
 		Name: "mysql_connections_counters",
-		Help: `Counters specific to the sql connections. 
+		Help: `Counters specific to the sql connections.
 			wait_count: The total number of connections waited for.
 			wait_duration: The total time blocked waiting for a new connection.
 			max_idle_closed: The total number of connections closed due to SetMaxIdleConns.
@@ -195,181 +188,6 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 		logger: logger,
 		tls:    tlsConfig,
 	}, nil
-}
-
-// TestMySQLDB is a wrapper around sql.DB for MySQL connections designed for tests to provide
-// a clean database for each testcase.  Callers should cleanup with Close() when finished.
-type TestMySQLDB struct {
-	*sql.DB
-	name     string
-	shutdown func() // context shutdown func
-	t        *testing.T
-}
-
-func (r *TestMySQLDB) Close() error {
-	r.shutdown()
-
-	// Verify all connections are closed before closing DB
-	if conns := r.DB.Stats().OpenConnections; conns != 0 {
-		require.FailNow(r.t, ErrOpenConnections{
-			Database:       "mysql",
-			NumConnections: conns,
-		}.Error())
-	}
-
-	_, err := r.DB.Exec(fmt.Sprintf("drop database %s", r.name))
-	if err != nil {
-		return err
-	}
-
-	if err := r.DB.Close(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var sharedMySQLConfig *MySQLConfig
-var mySQLTestDBSetup sync.Once
-
-// CreateTestMySQLDB returns a TestMySQLDB which can be used in tests
-// as a clean mysql database. All migrations are ran on the db before.
-//
-// Callers should call close on the returned *TestMySQLDB.
-func CreateTestMySQLDB(t *testing.T) *TestMySQLDB {
-	if testing.Short() {
-		t.Skip("-short flag enabled")
-	}
-	if !docker.Enabled() {
-		t.Skip("Docker not enabled")
-	}
-
-	mySQLTestDBSetup.Do(func() {
-		var err error
-		sharedMySQLConfig, err = findOrLaunchMySQLContainer()
-		require.NoError(t, err)
-	})
-
-	dbName, err := createTemporaryDatabase(t, sharedMySQLConfig)
-	require.NoError(t, err)
-
-	dbConfig := &DatabaseConfig{
-		DatabaseName: dbName,
-		MySQL:        sharedMySQLConfig,
-	}
-
-	logger := log.NewNopLogger()
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	db, err := NewAndMigrate(ctx, logger, *dbConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Don't allow idle connections so we can verify all are closed at the end of testing
-	db.SetMaxIdleConns(0)
-
-	return &TestMySQLDB{
-		DB:       db,
-		name:     dbName,
-		shutdown: cancelFunc,
-		t:        t,
-	}
-}
-
-// We connect as root to MySQL server and create database with random name to
-// run our migrations on it later.
-func createTemporaryDatabase(t *testing.T, config *MySQLConfig) (string, error) {
-	dsn := fmt.Sprintf("%s:%s@%s/", "root", config.Password, config.Address)
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return "", err
-	}
-	defer db.Close()
-
-	maxIdx := len(t.Name()) - 1
-	if maxIdx > 20 {
-		maxIdx = 20
-	}
-
-	// Set dbName to something like `TestCreateTemporaryD-Jun-25-08:30:07`
-	dbName := fmt.Sprintf(
-		"%s %s",
-		t.Name()[:maxIdx],
-		time.Now().Local().Format(time.Stamp),
-	)
-	dbName = strings.ReplaceAll(dbName, " ", "-")
-
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("create database `%s`", dbName))
-	if err != nil {
-		return "", err
-	}
-
-	_, err = db.ExecContext(context.Background(), fmt.Sprintf("grant all on `%s`.* to '%s'@'%%'", dbName, config.User))
-	if err != nil {
-		return "", err
-	}
-
-	return dbName, nil
-}
-
-func findOrLaunchMySQLContainer() (*MySQLConfig, error) {
-	var containerName = "moov-mysql-test-container"
-	var resource *dockertest.Resource
-	var err error
-
-	config := &MySQLConfig{
-		User:     "moov",
-		Password: "secret",
-	}
-
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = pool.RunWithOptions(&dockertest.RunOptions{
-		Name:       containerName,
-		Repository: "moov/mysql-volumeless",
-		Tag:        "8.0",
-		Env: []string{
-			fmt.Sprintf("MYSQL_USER=%s", config.User),
-			fmt.Sprintf("MYSQL_PASSWORD=%s", config.Password),
-			fmt.Sprintf("MYSQL_ROOT_PASSWORD=%s", config.Password),
-		},
-	})
-
-	if err != nil && !errors.Is(err, dc.ErrContainerAlreadyExists) {
-		return nil, err
-	}
-
-	// look for running container
-	resource, found := pool.ContainerByName(containerName)
-	if !found {
-		return nil, errors.New("failed to launch (or find) MySQL container")
-	}
-
-	config.Address = fmt.Sprintf("tcp(localhost:%s)", resource.GetPort("3306/tcp"))
-
-	dbURL := fmt.Sprintf("%s:%s@%s/",
-		config.User,
-		config.Password,
-		config.Address,
-	)
-
-	err = pool.Retry(func() error {
-		db, err := sql.Open("mysql", dbURL)
-		if err != nil {
-			return err
-		}
-		defer db.Close()
-		return db.Ping()
-	})
-	if err != nil {
-		resource.Close()
-		return nil, err
-	}
-
-	return config, nil
 }
 
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code

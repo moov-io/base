@@ -9,7 +9,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/moov-io/base/docker"
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
@@ -77,19 +76,6 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	if !UniqueViolation(err) {
 		t.Error("should have matched unique violation")
 	}
-}
-
-func TestCreateTemporaryDatabase(t *testing.T) {
-	if !docker.Enabled() {
-		t.Skip("Docker not enabled")
-	}
-
-	config, err := findOrLaunchMySQLContainer()
-	require.NoError(t, err)
-
-	name, err := createTemporaryDatabase(t, config)
-	require.NoError(t, err)
-	require.Contains(t, name, "Test")
 }
 
 func TestMySQLModes(t *testing.T) {
