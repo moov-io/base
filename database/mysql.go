@@ -59,7 +59,6 @@ var (
 )
 
 func RecordMySQLStats(db *sql.DB) error {
-
 	stats := db.Stats()
 
 	metricsMu.Lock()
