@@ -9,27 +9,22 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/moov-io/base/docker"
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMySQL__basic(t *testing.T) {
-	db := CreateTestMySQLDB(t)
-	defer db.Close()
-
-	err := db.DB.Ping()
-	require.NoError(t, err)
-
-	require.Equal(t, 0, db.DB.Stats().OpenConnections)
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
 
 	// create a phony MySQL
 	mysqlConfig := &MySQLConfig{
-		User:     "user",
-		Password: "pass",
-		Address:  "127.0.0.1:3306",
+		User:     "moov",
+		Password: "moov",
+		Address:  "tcp(127.0.0.1:3306)",
 	}
-	m, err := mysqlConnection(log.NewNopLogger(), mysqlConfig, "db")
+	m, err := mysqlConnection(log.NewNopLogger(), mysqlConfig, "moov")
 	require.NoError(t, err)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -40,36 +35,18 @@ func TestMySQL__basic(t *testing.T) {
 			conn.Close()
 		}
 	}()
-	require.Nil(t, conn)
-	require.Error(t, err)
+	require.NotNil(t, conn)
+	require.NoError(t, err)
+
+	// Inspect the global and session SQL modes
+	// See: https://dev.mysql.com/doc/refman/8.0/en/sql-mode.html#sql-mode-setting
+	sqlModes := readSQLModes(t, conn, "SELECT @@SESSION.sql_mode;")
+	require.Contains(t, sqlModes, "ALLOW_INVALID_DATES")
+	require.Contains(t, sqlModes, "STRICT_ALL_TABLES")
+
+	require.Equal(t, 1, conn.Stats().OpenConnections)
 
 	cancelFunc()
-}
-
-func TestMySQL__TLS(t *testing.T) {
-	db := CreateTestMySQLDB(t)
-	defer db.Close()
-
-	err := db.DB.Ping()
-	require.NoError(t, err)
-
-	// create a phony MySQL
-	mysqlConfig := &MySQLConfig{
-		User:               sharedMySQLConfig.User,
-		Password:           sharedMySQLConfig.Password,
-		Address:            sharedMySQLConfig.Address,
-		UseTLS:             true,
-		InsecureSkipVerify: true,
-	}
-	m, err := mysqlConnection(log.NewNopLogger(), mysqlConfig, db.name)
-	require.NoError(t, err)
-
-	conn, err := m.Connect(context.Background())
-	require.NoError(t, err)
-
-	require.NoError(t, conn.Ping())
-
-	require.NoError(t, RecordMySQLStats(conn))
 }
 
 func TestMySQLUniqueViolation(t *testing.T) {
@@ -77,30 +54,6 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	if !UniqueViolation(err) {
 		t.Error("should have matched unique violation")
 	}
-}
-
-func TestCreateTemporaryDatabase(t *testing.T) {
-	if !docker.Enabled() {
-		t.Skip("Docker not enabled")
-	}
-
-	config, err := findOrLaunchMySQLContainer()
-	require.NoError(t, err)
-
-	name, err := createTemporaryDatabase(t, config)
-	require.NoError(t, err)
-	require.Contains(t, name, "Test")
-}
-
-func TestMySQLModes(t *testing.T) {
-	db := CreateTestMySQLDB(t)
-	defer db.Close()
-
-	// Inspect the global and session SQL modes
-	// See: https://dev.mysql.com/doc/refman/8.0/en/sql-mode.html#sql-mode-setting
-	sqlModes := readSQLModes(t, db.DB, "SELECT @@SESSION.sql_mode;")
-	require.Contains(t, sqlModes, "ALLOW_INVALID_DATES")
-	require.Contains(t, sqlModes, "STRICT_ALL_TABLES")
 }
 
 func readSQLModes(t *testing.T, db *sql.DB, query string) string {
