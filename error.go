@@ -50,7 +50,7 @@ func (e *ErrorList) Add(err error) {
 
 // Err returns the first error (or nil).
 func (e ErrorList) Err() error {
-	if e == nil || len(e) == 0 {
+	if len(e) == 0 {
 		return nil
 	}
 	return e[0]
@@ -90,7 +90,7 @@ func (e ErrorList) Print(w io.Writer) {
 
 // Empty no errors to return
 func (e ErrorList) Empty() bool {
-	return e == nil || len(e) == 0
+	return len(e) == 0
 }
 
 // MarshalJSON marshals error list
