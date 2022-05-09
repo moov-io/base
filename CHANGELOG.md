@@ -1,3 +1,15 @@
+## v0.29.0 (Released 2022-05-09)
+
+REMOVALS
+
+- database: remove test containers based on dockertest (aka `database.CreateTestMySQLDB`)
+
+BUILD
+
+- fix(deps): update module github.com/stretchr/testify to v1.7.1
+- fix(deps): update module github.com/spf13/viper to v1.11.0
+- fix(deps): update module github.com/golang-migrate/migrate/v4 to v4.15.2
+
 ## v0.28.1 (Released 2022-03-07)
 
 ADDITIONS
