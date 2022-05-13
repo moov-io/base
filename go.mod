@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/markbates/pkger v0.17.1
 	github.com/mattn/go-sqlite3 v1.14.13
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/rickar/cal/v2 v2.1.4
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
