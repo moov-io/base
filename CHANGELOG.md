@@ -1,3 +1,22 @@
+## v0.29.3 (Released 2022-05-19)
+
+IMPROVEMENTS
+
+- k8s: update to check more paths
+
+BUILD
+
+- build: update codeql action
+- fix(deps): update module github.com/go-kit/log to v0.2.1
+- fix: mysql/Dockerfile to reduce vulnerabilities
+
+## v0.29.2 (Released 2022-05-19)
+
+BUILD
+
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.13
+- fix(deps): update module github.com/prometheus/client_golang to v1.12.2
+
 ## v0.29.0 (Released 2022-05-09)
 
 REMOVALS
