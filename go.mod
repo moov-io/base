@@ -15,6 +15,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.13
 	github.com/prometheus/client_golang v1.12.2
 	github.com/rickar/cal/v2 v2.1.4
-	github.com/spf13/viper v1.11.0
+	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.1
 )
