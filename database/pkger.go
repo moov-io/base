@@ -29,7 +29,7 @@ func NewPkgerSource(database string) (source.Driver, error) {
 
 	pmem.MkdirAll(MIGRATIONS_DIR, 0755)
 
-	pkger.Walk(MIGRATIONS_DIR, func(path string, info os.FileInfo, err error) error {
+	err = pkger.Walk(MIGRATIONS_DIR, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -83,6 +83,9 @@ func NewPkgerSource(database string) (source.Driver, error) {
 
 		return nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("walking the migrations directory: %w", err)
+	}
 
 	drv, err := mpkger.WithInstance(pmem, MIGRATIONS_DIR)
 	if err != nil {
