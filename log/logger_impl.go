@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/go-kit/log"
@@ -20,6 +21,13 @@ func NewNopLogger() Logger {
 
 func NewJSONLogger() Logger {
 	return NewLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stderr)))
+}
+
+func NewTestLogger() Logger {
+	if testing.Verbose() {
+		return NewDefaultLogger()
+	}
+	return NewNopLogger()
 }
 
 func NewBufferLogger() (*strings.Builder, Logger) {
