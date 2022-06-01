@@ -156,6 +156,45 @@ func TestTime__ruby(t *testing.T) {
 	}
 }
 
+func TestTime__IsBusinessDay(t *testing.T) {
+	tests := []struct {
+		Date     time.Time
+		Expected bool
+	}{
+		// new years day
+		{time.Date(2018, time.January, 1, 1, 0, 0, 0, est), false},
+		// Wednesday Canary test
+		{time.Date(2018, time.January, 3, 1, 0, 0, 0, est), true},
+		// saturday
+		{time.Date(2018, time.January, 6, 1, 0, 0, 0, est), false},
+		// sunday
+		{time.Date(2018, time.January, 7, 1, 0, 0, 0, est), false},
+		// Martin Luther King, JR. Day (Monday)
+		{time.Date(2018, time.January, 15, 1, 0, 0, 0, est), false},
+		// Memorial Day
+		{time.Date(2018, time.May, 28, 1, 0, 0, 0, est), false},
+		// Independence Day
+		{time.Date(2018, time.July, 4, 1, 0, 0, 0, est), false},
+		// Labor Day
+		{time.Date(2018, time.September, 3, 1, 0, 0, 0, est), false},
+		// Thanksgiving Day (Thursday)
+		{time.Date(2018, time.November, 22, 1, 0, 0, 0, est), false},
+		// Christmas Day (Sunday)
+		{time.Date(2022, time.December, 25, 1, 0, 0, 0, est), false},
+	}
+	for _, test := range tests {
+		actual := NewTime(test.Date).IsBusinessDay()
+		if actual != test.Expected {
+			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+		}
+
+		actual = NewTime(test.Date).IsBusinessDay()
+		if actual != test.Expected {
+			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+		}
+	}
+}
+
 func TestTime__IsBankingDay(t *testing.T) {
 	tests := []struct {
 		Date     time.Time
@@ -181,7 +220,7 @@ func TestTime__IsBankingDay(t *testing.T) {
 		{time.Date(2018, time.September, 3, 1, 0, 0, 0, est), false},
 		// Columbus Day
 		{time.Date(2018, time.October, 8, 1, 0, 0, 0, est), false},
-		// Vesterans' Day Observed on the monday
+		// Veterans Day Observed on the monday
 		{time.Date(2018, time.November, 12, 1, 0, 0, 0, est), false},
 		// Thanksgiving Day
 		{time.Date(2018, time.November, 22, 1, 0, 0, 0, est), false},
