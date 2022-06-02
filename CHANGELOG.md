@@ -1,3 +1,18 @@
+## v0.30.0 (Released 2022-06-02)
+
+ADDITIONS
+
+- feat: add IsBusinessDay to Time
+- log: add a helper for stdout logging during verbose test runs
+
+IMPROVEMENTS
+
+- do not ignore error when walk dir in pkger
+
+BUILD
+
+- fix(deps): update module github.com/spf13/viper to v1.12.0
+
 ## v0.29.3 (Released 2022-05-19)
 
 IMPROVEMENTS
