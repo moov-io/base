@@ -107,6 +107,13 @@ func (t Time) IsHoliday() bool {
 	return actual || observed
 }
 
+// IsBusinessDay is defined as Mondays through Fridays except federal holidays.
+// Source: https://www.federalreserve.gov/Pubs/regcc/regcc.htm
+func (t Time) IsBusinessDay() bool {
+	actual, _, _ := t.cal.IsHoliday(t.Time)
+	return !t.IsWeekend() && !actual
+}
+
 // IsBankingDay checks the rules around holidays (i.e. weekends) to determine if the given day is a banking day.
 func (t Time) IsBankingDay() bool {
 	// if date is not a weekend and not a holiday it is banking day.
