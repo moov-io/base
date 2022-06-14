@@ -315,6 +315,8 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{time.Date(2018, time.January, 12, 1, 0, 0, 0, est), time.Date(2018, time.January, 17, 1, 0, 0, 0, est), 2},
 		// Friday add two days over a sunday public holiday (moved to monday) needs to be following wednesday
 		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2021, time.July, 7, 1, 0, 0, 0, est), 2},
+		// Friday add one day over a sunday public holiday (moved to monday) needs to be following tuesday
+		{time.Date(2022, time.June, 17, 1, 0, 0, 0, est), time.Date(2022, time.June, 21, 1, 0, 0, 0, est), 1},
 		// Negative input
 		{unchangeable, unchangeable, 0},
 		{unchangeable, unchangeable, -1},

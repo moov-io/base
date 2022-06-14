@@ -43,9 +43,7 @@ func Now(location *time.Location) Time {
 	calendar := &cal.Calendar{
 		Name: "moov-io/base",
 	}
-	holidays := us.Holidays
-	holidays = append(holidays, us.Juneteenth) // TODO: revert to just us.Holidays after https://github.com/rickar/cal/pull/93
-	calendar.AddHoliday(holidays...)           // TODO(adam): check for more?
+	calendar.AddHoliday(us.Holidays...) // TODO(adam): check for more?
 	// calendar.Observed = cal.ObservedMonday // TODO(adam):
 	return Time{
 		cal:  calendar,
