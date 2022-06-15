@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -61,7 +62,35 @@ func (l *logger) Set(key string, value Valuer) Logger {
 }
 
 // With returns a new Logger with the contexts added to its own.
-func (l *logger) With(ctxs ...Context) Logger {
+func (l *logger) With(ctxs ...Context) (out Logger) {
+	defer func() {
+		if r := recover(); r != nil {
+			var file string
+			var line int
+			var ok bool
+
+			// Search the call stack for the first non-Go file
+			for i := 1; i < 10; i++ {
+				_, file, line, ok = runtime.Caller(i)
+				if !ok || !strings.Contains(file, "/src/runtime/") {
+					break
+				}
+			}
+
+			if ok {
+				l.writer.Log(
+					"level", "error",
+					"file", file,
+					"line", fmt.Sprintf("%d", line),
+					"msg", fmt.Sprintf("recovered from %T - %v", r, r),
+				)
+			}
+
+			out = l // make the caller whole
+			return
+		}
+	}()
+
 	// Estimation assuming that for each ctxs has at least 1 value.
 	combined := make(map[string]Valuer, len(l.ctx)+len(ctxs))
 
