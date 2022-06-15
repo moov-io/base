@@ -1,3 +1,9 @@
+## v0.31.1 (Released 2022-06-15)
+
+IMPROVEMENTS
+
+- fix: recover from panics during logging, log those if we can
+
 ## v0.31.0 (Released 2022-06-15)
 
 ADDITIONS
