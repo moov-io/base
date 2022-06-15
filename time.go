@@ -134,6 +134,21 @@ func (t Time) IsBankingDay() bool {
 	return true
 }
 
+// AddBusinessDay takes an integer for the number of valid business days to add and returns a Time.
+// Negative values and large values (over 500 days) will not modify the Time.
+func (t Time) AddBusinessDay(d int) Time {
+	if d < 1 || d > 500 {
+		return t
+	}
+
+	t.Time = t.Time.AddDate(0, 0, 1)
+	if t.IsBusinessDay() {
+		return t.AddBusinessDay(d - 1)
+	}
+
+	return t.AddBusinessDay(d)
+}
+
 // AddBankingDay takes an integer for the number of valid banking days to add and returns a Time.
 // Negative values and large values (over 500 days) will not modify the Time.
 func (t Time) AddBankingDay(d int) Time {
