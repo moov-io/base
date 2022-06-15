@@ -1,3 +1,17 @@
+## v0.31.0 (Released 2022-06-15)
+
+ADDITIONS
+
+- feat: add AddBusinessDay to Time (#235)
+
+IMPROVEMENTS
+
+- time: update test cases to make sure Juneteenth holiday is handled appropriately (#234)
+
+BUILD
+
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.5 (#234)
+
 ## v0.30.0 (Released 2022-06-02)
 
 ADDITIONS
