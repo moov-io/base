@@ -27,10 +27,10 @@ const (
 // For holidays falling on Sunday, all Federal Reserve Banks and Branches will be closed the following Monday.
 // ACH and FedWire payments are not processed on weekends or the following US holidays.
 //
-// Holiday Schedule: https://www.frbservices.org/holidayschedules/
+// Holiday Schedule: https://www.frbservices.org/about/holiday-schedules
 //
 // All logic is based on ET(Eastern) time as defined by the Federal Reserve
-// https://www.frbservices.org/operations/fedwire/fedwire_hours.html
+// https://www.frbservices.org/resources/resource-centers/same-day-ach/fedach-processing-schedule.html
 type Time struct {
 	time.Time
 
