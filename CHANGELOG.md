@@ -1,3 +1,13 @@
+## v0.32.0 (Released 2022-07-06)
+
+ADDITIONS
+
+- database: add `MySQLDataTooLong` helper for detecting "data too long" errors (Code: 1406)
+
+BUILD
+
+- fix(deps): update module github.com/stretchr/testify to v1.8.0
+
 ## v0.31.1 (Released 2022-06-15)
 
 IMPROVEMENTS
