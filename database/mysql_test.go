@@ -56,6 +56,13 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	}
 }
 
+func TestMySQLDataTooLong(t *testing.T) {
+	err := errors.New("Error 1406: Data too long")
+	if !MySQLDataTooLong(err) {
+		t.Error("should have matched")
+	}
+}
+
 func readSQLModes(t *testing.T, db *sql.DB, query string) string {
 	stmt, err := db.Prepare(query)
 	require.NoError(t, err)

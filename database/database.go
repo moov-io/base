@@ -67,6 +67,10 @@ func UniqueViolation(err error) bool {
 	return MySQLUniqueViolation(err) || SQLiteUniqueViolation(err)
 }
 
+func DataTooLong(err error) bool {
+	return MySQLDataTooLong(err)
+}
+
 func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
 	if connections.MaxOpen > 0 {
 		logger.Logf("setting SQL max open connections to %s", connections.MaxOpen)
