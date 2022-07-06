@@ -47,6 +47,7 @@ var (
 	// mySQLErrDuplicateKey is the error code for duplicate entries
 	// https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_dup_entry
 	mySQLErrDuplicateKey uint16 = 1062
+	mysqlErrDataTooLong  uint16 = 1406
 
 	maxActiveMySQLConnections = func() int {
 		if v := os.Getenv("MYSQL_MAX_CONNECTIONS"); v != "" {
@@ -195,6 +196,17 @@ func MySQLUniqueViolation(err error) bool {
 	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d: Duplicate entry", mySQLErrDuplicateKey))
 	if e, ok := err.(*gomysql.MySQLError); ok {
 		return match || e.Number == mySQLErrDuplicateKey
+	}
+	return match
+}
+
+// MySQLDataTooLong returns true when the provided error matches the MySQL code
+// for data too long for column (when trying to insert a value that is greater than
+// the defined max size of the column).
+func MySQLDataTooLong(err error) bool {
+	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d: Data too long", mysqlErrDataTooLong))
+	if e, ok := err.(*gomysql.MySQLError); ok {
+		return match || e.Number == mysqlErrDataTooLong
 	}
 	return match
 }
