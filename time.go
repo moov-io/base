@@ -54,13 +54,10 @@ func Now(location *time.Location) Time {
 // NewTime wraps a time.Time value in Moov's base.Time struct.
 // If you need the underlying time.Time value call .Time:
 //
-// The time zone will be changed to DefaultLocation.
-//
-// now := Now()
-// fmt.Println(start.Sub(now.Time))
+// The time zone will be changed to UTC.
 func NewTime(t time.Time) Time {
 	tt := Now(time.UTC)
-	tt.Time = t.UTC() // overwrite underlying Time
+	tt.Time = t // overwrite underlying Time
 	return tt
 }
 

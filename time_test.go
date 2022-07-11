@@ -330,6 +330,8 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.July, 5, 1, 0, 0, 0, est), 500},
 		// Find one year in the future
 		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 29, 1, 0, 0, 0, est), 365 - 14 - (52 * 2)},
+		// Late evening conversions should still fall on a late evening
+		{time.Date(2022, time.July, 6, 20, 1, 9, 0, est), time.Date(2022, time.July, 8, 20, 1, 9, 0, est), 2},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
@@ -345,16 +347,18 @@ func TestTime_AddBankingDay(t *testing.T) {
 }
 
 func TestTime__Conversions(t *testing.T) {
+	eastern, _ := time.LoadLocation("America/New_York")
+
 	// create dates that are on a different day earlier than a holiday in different time zone
 	pacific, _ := time.LoadLocation("America/Los_Angeles")
-	when := NewTime(time.Date(2018, time.December, 24, 23, 0, 0, 0, pacific))
+	when := NewTime(time.Date(2018, time.December, 24, 23, 0, 0, 0, pacific)).In(eastern)
 	if when.Day() != 25 {
 		t.Errorf("%v but expected to fall on Christmas", t)
 	}
 
 	// create dates that are on a different day later than a holiday in different time zone
 	madrid, _ := time.LoadLocation("Europe/Madrid")
-	when = NewTime(time.Date(2018, time.December, 26, 0, 30, 0, 0, madrid))
+	when = NewTime(time.Date(2018, time.December, 26, 0, 30, 0, 0, madrid)).In(eastern)
 	if when.Day() != 25 {
 		t.Errorf("%v but expected to fall on Christmas", t)
 	}
