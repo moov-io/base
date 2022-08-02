@@ -6,12 +6,14 @@ package base
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestID(t *testing.T) {
 	for i := 0; i < 1000; i++ {
-		if v := ID(); v == "" {
-			t.Error("got empty ID")
-		}
+		id := ID()
+		require.NotEmpty(t, id)
+		require.Len(t, id, 40)
 	}
 }
