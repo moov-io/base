@@ -10,7 +10,6 @@ package database
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +18,7 @@ import (
 )
 
 func Test_NewAndMigration_SQLite(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sqlite-test")
+	dir, err := os.MkdirTemp("", "sqlite-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 

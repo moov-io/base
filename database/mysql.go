@@ -11,7 +11,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -143,7 +142,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 			if mysqlConfig.TLSCAFile != "" {
 				logger.Logf("reading and adding MySQL CA file from %s", mysqlConfig.TLSCAFile)
 				rootCertPool := x509.NewCertPool()
-				certPem, err := ioutil.ReadFile(mysqlConfig.TLSCAFile)
+				certPem, err := os.ReadFile(mysqlConfig.TLSCAFile)
 				if err != nil {
 					return nil, err
 				}

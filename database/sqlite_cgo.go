@@ -11,7 +11,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -122,7 +121,7 @@ func (r *TestSQLiteDB) Close() error {
 //
 // Callers should call close on the returned *TestSQLiteDB.
 func CreateTestSQLiteDB(t *testing.T) *TestSQLiteDB {
-	dir, err := ioutil.TempDir("", "sqlite-test")
+	dir, err := os.MkdirTemp("", "sqlite-test")
 	if err != nil {
 		t.Fatalf("sqlite test: %v", err)
 	}
