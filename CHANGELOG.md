@@ -1,3 +1,17 @@
+## v0.34.0 (Released 2022-08-11)
+
+IMPROVEMENTS
+
+- Add Int64OrNil method for logging
+- docs: describe liveness/readiness probes and metrics endpoints
+- test: ensure ID() length
+
+BUILD
+
+- build: update deprecated io/ioutil functions
+- chore(deps): update module go to 1.19
+- fix(deps): update module github.com/prometheus/client_golang to v1.13.0
+
 ## v0.33.0 (Released 2022-07-11)
 
 BREAKING CHANGES
