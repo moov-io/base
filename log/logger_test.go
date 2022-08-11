@@ -43,6 +43,7 @@ func Test_Log(t *testing.T) {
 func Test_LogWriteValue(t *testing.T) {
 	uuid := uuid.New()
 	barStr := "bar"
+	number := int64(100)
 	zeroTime := time.Unix(0, 0).UTC()
 
 	tests := []struct {
@@ -75,6 +76,16 @@ func Test_LogWriteValue(t *testing.T) {
 			key:      "foo",
 			val:      lib.Int64(100),
 			expected: "foo=100",
+		},
+		{
+			key:      "foo",
+			val:      lib.Int64OrNil(&number),
+			expected: "foo=100",
+		},
+		{
+			key:      "foo",
+			val:      lib.Int64OrNil(nil),
+			expected: "foo=null",
 		},
 		{
 			key:      "foo",
