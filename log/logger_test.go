@@ -43,6 +43,7 @@ func Test_Log(t *testing.T) {
 func Test_LogWriteValue(t *testing.T) {
 	uuid := uuid.New()
 	barStr := "bar"
+	number := int64(100)
 	zeroTime := time.Unix(0, 0).UTC()
 
 	tests := []struct {
