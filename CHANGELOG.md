@@ -1,3 +1,10 @@
+## v0.34.1 (Released 2022-08-30)
+
+BUILD
+
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.15
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.6
+
 ## v0.34.0 (Released 2022-08-11)
 
 IMPROVEMENTS
