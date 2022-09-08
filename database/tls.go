@@ -13,7 +13,7 @@ const SQL_CLIENT_TLS_PRIVATE_KEY = "SQL_CLIENT_TLS_PRIVATE_KEY"
 
 func LoadTLSClientCertFromFile(logger log.Logger, certFile, keyFile string) (*tls.Certificate, error) {
 	if certFile == "" || keyFile == "" {
-		return nil, logger.Error().Logf("cert path or key path not provided").Err()
+		return nil, logger.LogErrorf("cert path or key path not provided").Err()
 	}
 
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)

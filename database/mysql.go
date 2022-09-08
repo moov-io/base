@@ -174,7 +174,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 					}
 				}
 
-				tlsConfig.Certificates = []tls.Certificate{clientCert}
+				tlsConfig.Certificates = []tls.Certificate{&clientCert}
 			}
 
 			const TLS_CONFIG_NAME = "custom"
