@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/moov-io/base/database"
@@ -13,8 +14,8 @@ func Test_LoadClientCertsFromConfig(t *testing.T) {
 	config := &database.MySQLConfig{
 		TLSClientCerts: []database.TLSClientCertConfig{
 			{
-				CertFilePath: "testdata/client_cert.pem",
-				KeyFilePath:  "testdata/client_cert_private_key.pem",
+				CertFilePath: filepath.Join("testdata", "client_cert.pem"),
+				KeyFilePath:  filepath.Join("testdata", "client_cert_private_key.pem"),
 			},
 		},
 	}
