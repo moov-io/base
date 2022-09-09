@@ -17,17 +17,23 @@ type DatabaseConfig struct {
 }
 
 type MySQLConfig struct {
-	Address      string
-	User         string
-	Password     string
-	Connections  ConnectionsConfig
-	UseTLS       bool
-	TLSCAFile    string
-	VerifyCAFile bool
+	Address        string
+	User           string
+	Password       string
+	Connections    ConnectionsConfig
+	UseTLS         bool
+	TLSCAFile      string
+	VerifyCAFile   bool
+	TLSClientCerts []TLSClientCertConfig
 
 	// InsecureSkipVerify is a dangerous option which should be used with extreme caution.
 	// This setting disables multiple security checks performed with TLS connections.
 	InsecureSkipVerify bool
+}
+
+type TLSClientCertConfig struct {
+	CertFilePath string
+	KeyFilePath  string
 }
 
 func (m *MySQLConfig) MarshalJSON() ([]byte, error) {

@@ -1,7 +1,6 @@
 package database_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/moov-io/base/database"
@@ -9,103 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_LoadClientCertFromEnv(t *testing.T) {
+func Test_LoadClientCertsFromConfig(t *testing.T) {
 
-	//gitleaks:allow
-	certPem := []byte(`-----BEGIN CERTIFICATE-----
-MIIFtTCCA52gAwIBAgIJAOAS1qcUCPKlMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV
-BAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBX
-aWRnaXRzIFB0eSBMdGQwHhcNMTcwODIzMTYzMTEzWhcNMTgwODIzMTYzMTEzWjBF
-MQswCQYDVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50
-ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIIC
-CgKCAgEAz3+ET7iCPjKY2X14FNSY3HfjMXWpWNfUcEcKXyWmeAB9RhIYGRpGe8/n
-hbr/XR8bsG159400GRaHOzMerLL/yeHWDyBR/2Qv9GlfdgBP96pW/yXCN9eWGEvm
-7vnNeevtk+JUzrjxrEoszqmpx1mg+JivIp0ZlAFb7s354hmcdRYhSyoX40kod0/a
-ff5dLZ9pXY4+nOI+cEKsKFsGcx+J5nNow4e+DouiRuUdrlRCe7neuaFQ9pbYZlLF
-FqeA/VReRJZYVbzSSHAuGa/xXjxsDALKDN5U7D8sk8bVGfrLQ/Fi7tLhcrxXnLV7
-kbzZ4tCUl/rV0TnPu4NXfwmN+Tpa4IFzlODpCt3gz47q8B6JDJAxD2PgevdhvBHv
-m6+rUVht6usF0XXcVHVimIFDkl67HawRm6Mva0w840kklixtwjqgLHNhjWTYFog7
-7FiWrDHgZHRXbcfVWdE8Q4HBMt5RPVik/ebwNqu4x7EmtIRks8iLLfOzOkvmtcNR
-YWHSv0mBTRA0xG4MOra6PPhUBYQNibNx+mFUvU7BUA4Tt3nXM+9Ohb6Dd9NFoq5H
-VkDJSLUFBqsFanI3xL2v5gL7jpoBYLCK5b6S5K85/OrGEXzjiDGwaS42c/EO1tgQ
-Iqd9BEV8GBZoVDgyoipCyewmqIr/JIsKA53L4M1p84nQ4kDyuHECAwEAAaOBpzCB
-pDAdBgNVHQ4EFgQUoqCr9XdAqM9ArDZE0mCQUm1WpYcwdQYDVR0jBG4wbIAUoqCr
-9XdAqM9ArDZE0mCQUm1WpYehSaRHMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpT
-b21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGSCCQDg
-EtanFAjypTAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4ICAQC/tiv8fOP3
-UFmywVn1q19kCXYDXBeznUU2IoSezJNqYkcnmiGRY8ip3Y3DZeq/D39kRgv93cBx
-JIkvHBNd9tTzUvK9Jxmn/EoWk1/Vb72A69G1rjbcDfXVrEim3IvuuQ8nwAqNY/rM
-Dv7T5ZKkQ4+FXpiDzOMbzkAIuJVNesoh76ZGks72GgY0RZa0IAwhDP3S4EfY1Kru
-3yGZdERveJ1AZIKkuv9W0fvtbOMQwXavTsV6fkzNHF+IGPAbDS6usEBL1nAR2HMS
-iG4ptgjkLfGTNLfGUEB08KlMrRNrsN94FlgKI1gEQFQn4YrcNMMHl+54cbEwuw6F
-Z+1N+JualDdu2KYkmHlW1YfN4G/t/+KUcBlX571b1dDPo3jMSJNY5ym3gv9J1jcV
-m3ZRFqjTfROXFe9ku6E02u0BlWR4Ar46gnJ7w3pJvMpIR3glwIdQTkV9WgY9UHk2
-yWGB43sT7cZErnYbUJ34pRm8eIFlZqaEumYRDL3qhpxndRwnD7IQBotPhvS5ygVF
-JjC1eHnJ90go9eUk1M4fFre11KJtr1HpE2We5EnJTYNKrtDDxOUvNtxARPcX0xh/
-O0QGubHvSUGA8tnFfzLzqw9gwlnekcTiIOio3L+tnArDPJdu3SShba5pvue+GFv4
-1RFRwxrIXlOHkSMVwDrsRZaGlO1+NTLEnQ==
------END CERTIFICATE-----`) //gitleaks:allow
+	config := &database.MySQLConfig{
+		TLSClientCerts: []database.TLSClientCertConfig{
+			{
+				CertFilePath: "testdata/client_cert.pem",
+				KeyFilePath:  "testdata/client_cert_private_key.pem",
+			},
+		},
+	}
 
-	//gitleaks:allow
-	keyPem := []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
------END RSA PRIVATE KEY-----`) //gitleaks:allow
-
-	os.Setenv(database.SQL_CLIENT_TLS_CERT, string(certPem))
-	os.Setenv(database.SQL_CLIENT_TLS_PRIVATE_KEY, string(keyPem))
-
-	require.Equal(t, string(certPem), os.Getenv(database.SQL_CLIENT_TLS_CERT))
-
-	clientCert, err := database.LoadTLSClientCertFromEnv(log.NewNopLogger())
+	clientCerts, err := database.LoadTLSClientCertsFromConfig(log.NewNopLogger(), config)
 	require.Nil(t, err)
 
-	require.Len(t, clientCert.Certificate, 1)
+	require.Len(t, clientCerts, 1)
+	require.Len(t, clientCerts[0].Certificate, 1)
 }

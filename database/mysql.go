@@ -158,9 +158,9 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 				}
 				tlsConfig.RootCAs = rootCertPool
 
-				clientCert, err := LoadTLSClientCertFromEnv(logger)
+				clientCerts, err := LoadTLSClientCertsFromConfig(logger, mysqlConfig)
 				if err != nil {
-					return nil, errors.New("failed to load client certificate")
+					return nil, errors.New("failed to load client certificate(s)")
 				}
 
 				if mysqlConfig.VerifyCAFile {
@@ -174,7 +174,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 					}
 				}
 
-				tlsConfig.Certificates = []tls.Certificate{clientCert}
+				tlsConfig.Certificates = clientCerts
 			}
 
 			const TLS_CONFIG_NAME = "custom"
