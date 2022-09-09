@@ -1,0 +1,6 @@
+title = "Gitleaks config"
+
+[rules.allowlist]
+paths = [
+  '''(.*)(testdata)(.*)(pem)''',
+]
