@@ -1,3 +1,14 @@
+## v0.35.0 (Released 2022-09-12)
+
+IMPROVEMENTS
+
+- Added TLS client certs to TLS config for database connection
+- TLS client certs can be included via configuration
+
+BUILD
+
+- fix(deps): update module github.com/spf13/viper to v1.13.0
+
 ## v0.34.1 (Released 2022-08-30)
 
 BUILD
