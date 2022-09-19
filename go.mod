@@ -10,10 +10,11 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.5.4
+	github.com/madflojo/testcerts v1.0.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/prometheus/client_golang v1.13.0
-	github.com/rickar/cal/v2 v2.1.6
+	github.com/rickar/cal/v2 v2.1.7
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0
 )
@@ -29,7 +30,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/madflojo/testcerts v1.0.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
