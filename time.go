@@ -104,6 +104,11 @@ func (t Time) IsHoliday() bool {
 	return actual || observed
 }
 
+func (t Time) GetHoliday() *cal.Holiday {
+	_, _, holiday := t.cal.IsHoliday(t.Time)
+	return holiday
+}
+
 // IsBusinessDay is defined as Mondays through Fridays except federal holidays.
 // Source: https://www.federalreserve.gov/Pubs/regcc/regcc.htm
 func (t Time) IsBusinessDay() bool {

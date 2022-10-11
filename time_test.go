@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -385,4 +387,15 @@ func TestTime__SundayHoliday(t *testing.T) {
 	if wd := ts.Weekday(); wd != time.Tuesday {
 		t.Errorf("expected Tuesday, got %s", wd)
 	}
+}
+
+func TestTime__GetHoliday(t *testing.T) {
+	eastern, _ := time.LoadLocation("America/New_York")
+
+	when := NewTime(time.Date(2022, time.December, 25, 10, 30, 0, 0, eastern))
+	require.True(t, when.IsHoliday())
+
+	holiday := when.GetHoliday()
+	require.NotNil(t, holiday)
+	require.Equal(t, "Christmas Day", holiday.Name)
 }
