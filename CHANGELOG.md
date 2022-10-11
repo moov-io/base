@@ -1,3 +1,14 @@
+## v0.36.0 (Released 2022-10-11)
+
+IMPROVEMENTS
+
+- build: add GetHoliday() onto Time
+
+BUILD
+
+- build: require Go +1.19 in Actions
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.7
+
 ## v0.35.0 (Released 2022-09-12)
 
 IMPROVEMENTS
