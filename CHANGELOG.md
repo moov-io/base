@@ -1,3 +1,17 @@
+## v0.36.1 (Released 2022-10-24)
+
+BUILD
+
+- fix(deps): update module github.com/fsnotify/fsnotify to v1.6.0
+- fix(deps): update module github.com/gobuffalo/here to v0.6.7
+- fix(deps): update module github.com/matttproud/golang_protobuf_extensions to v1.0.2
+- fix(deps): update module github.com/prometheus/client_model to v0.3.0
+- fix(deps): update module github.com/spf13/afero to v1.9.2
+- fix(deps): update module github.com/stretchr/testify to v1.8.1
+- fix(deps): update module go.uber.org/atomic to v1.10.0
+- fix(deps): update module golang.org/x/sys to v0.1.0
+- fix(deps): update module golang.org/x/text to v0.4.0
+
 ## v0.36.0 (Released 2022-10-11)
 
 IMPROVEMENTS
