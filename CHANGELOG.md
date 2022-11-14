@@ -1,3 +1,13 @@
+## v0.36.2 (Released 2022-11-14)
+
+BUILD
+
+- fix(deps): update module github.com/hashicorp/golang-lru to v0.6.0
+- fix(deps): update module github.com/mattn/go-sqlite3 to v1.14.16
+- fix(deps): update module github.com/prometheus/client_golang to v1.14.0
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.8
+- fix(deps): update module github.com/spf13/viper to v1.14.0
+
 ## v0.36.1 (Released 2022-10-24)
 
 BUILD
