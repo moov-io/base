@@ -14,7 +14,7 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/prometheus/client_golang v1.14.0
-	github.com/rickar/cal/v2 v2.1.7
+	github.com/rickar/cal/v2 v2.1.8
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 )
