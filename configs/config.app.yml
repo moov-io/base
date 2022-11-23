@@ -2,4 +2,5 @@ Config:
   App: "app"
   Values:
     - "app"
+    - "test2"
   Zero: ""

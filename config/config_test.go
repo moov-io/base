@@ -40,8 +40,10 @@ func Test_Load(t *testing.T) {
 	require.Equal(t, "app", cfg.Config.App)
 	require.Equal(t, "keep secret!", cfg.Config.Secret)
 
-	require.Len(t, cfg.Config.Values, 1)
+	// This test documents some unexpected behavior where slices are merged and not overwritten.
+	require.Len(t, cfg.Config.Values, 2)
 	require.Equal(t, "secret", cfg.Config.Values[0])
+	require.Equal(t, "test2", cfg.Config.Values[1])
 
 	require.Equal(t, "", cfg.Config.Zero)
 
