@@ -56,6 +56,13 @@ func TestMySQLUniqueViolation(t *testing.T) {
 	}
 }
 
+func TestMySQLUniqueViolation_WithStateValue(t *testing.T) {
+	err := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": Error 1062 (23000): Duplicate entry '282f6ffcd9ba5b029afbf2b739ee826e22d9df3b' for key 'PRIMARY'`)
+	if !UniqueViolation(err) {
+		t.Error("should have matched unique violation")
+	}
+}
+
 func TestMySQLDataTooLong(t *testing.T) {
 	err := errors.New("Error 1406: Data too long")
 	if !MySQLDataTooLong(err) {

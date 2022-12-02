@@ -199,7 +199,7 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 // MySQLUniqueViolation returns true when the provided error matches the MySQL code
 // for duplicate entries (violating a unique table constraint).
 func MySQLUniqueViolation(err error) bool {
-	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d: Duplicate entry", mySQLErrDuplicateKey))
+	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d", mySQLErrDuplicateKey))
 	if e, ok := err.(*gomysql.MySQLError); ok {
 		return match || e.Number == mySQLErrDuplicateKey
 	}
