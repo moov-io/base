@@ -1,10 +1,15 @@
+## v0.36.4 (Released 2022-12-05)
+
+BUILD
+
+- fix(deps): update module github.com/go-sql-driver/mysql to v1.7.0
+
 ## v0.36.3 (Released 2022-12-02)
 
 IMPROVEMENTS
 
 - Fix MySQLUniqueViolation check to look for error dupe code more broadly
 - Fix MySQLDataTooLong check to look for error data length code more broadly
-
 
 ## v0.36.2 (Released 2022-11-14)
 
