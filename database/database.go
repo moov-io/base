@@ -27,14 +27,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 		}
 
 		return ApplyConnectionsConfig(db, &config.MySQL.Connections, logger), nil
-	} else if config.SQLite != nil {
-		db, err := sqliteConnection(logger, config.SQLite.Path)
-		if err != nil {
-			return nil, err
-		}
-		return db.Connect(ctx)
 	}
-
 	return nil, fmt.Errorf("database config not defined")
 }
 
@@ -64,7 +57,7 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 // UniqueViolation returns true when the provided error matches a database error
 // for duplicate entries (violating a unique table constraint).
 func UniqueViolation(err error) bool {
-	return MySQLUniqueViolation(err) || SQLiteUniqueViolation(err)
+	return MySQLUniqueViolation(err)
 }
 
 func DataTooLong(err error) bool {
