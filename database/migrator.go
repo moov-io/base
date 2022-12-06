@@ -12,7 +12,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
-	migsqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source"
 
 	"github.com/moov-io/base/log"
@@ -74,27 +73,10 @@ func GetDriver(db *sql.DB, config DatabaseConfig) (source.Driver, database.Drive
 		}
 
 		return src, drv, nil
-	} else if config.SQLite != nil {
-		src, err := NewPkgerSource("sqlite")
-		if err != nil {
-			return nil, nil, err
-		}
-
-		drv, err := SQLite3Driver(db)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return src, drv, nil
 	}
-
 	return nil, nil, fmt.Errorf("database config not defined")
 }
 
 func MySQLDriver(db *sql.DB) (database.Driver, error) {
 	return migmysql.WithInstance(db, &migmysql.Config{})
-}
-
-func SQLite3Driver(db *sql.DB) (database.Driver, error) {
-	return migsqlite3.WithInstance(db, &migsqlite3.Config{})
 }

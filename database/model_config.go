@@ -12,7 +12,6 @@ import (
 
 type DatabaseConfig struct {
 	MySQL        *MySQLConfig
-	SQLite       *SQLiteConfig
 	DatabaseName string
 }
 
@@ -57,10 +56,6 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 		InsecureSkipVerify: m.InsecureSkipVerify,
 		VerifyCAFile:       m.VerifyCAFile,
 	})
-}
-
-type SQLiteConfig struct {
-	Path string
 }
 
 type ConnectionsConfig struct {
