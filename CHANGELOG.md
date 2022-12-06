@@ -1,3 +1,9 @@
+## v0.37.0 (Released 2022-12-06)
+
+BREAKING CHANGES
+
+- database: remove SQLite as a database option
+
 ## v0.36.4 (Released 2022-12-05)
 
 BUILD
