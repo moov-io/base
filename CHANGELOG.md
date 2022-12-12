@@ -1,3 +1,10 @@
+## v0.38.0 (Released 2022-12-12)
+
+ADDITIONS
+
+- admin: add constructor for Admin server that doesn't panic, add timeout setters
+- randx: add new package
+
 ## v0.37.0 (Released 2022-12-06)
 
 BREAKING CHANGES
