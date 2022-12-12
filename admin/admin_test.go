@@ -14,7 +14,9 @@ import (
 )
 
 func TestAdmin__pprof(t *testing.T) {
-	svc := NewServer(":13983") // hopefully nothing locally has this
+	svc, err := New(Opts{Addr: ":13983"}) // hopefully nothing locally has this
+	require.NoError(t, err)
+
 	go svc.Listen()
 	defer svc.Shutdown()
 
@@ -40,7 +42,9 @@ func TestAdmin__pprof(t *testing.T) {
 }
 
 func TestAdmin__AddHandler(t *testing.T) {
-	svc := NewServer(":13984")
+	svc, err := New(Opts{Addr: ":13984"})
+	require.NoError(t, err)
+
 	go svc.Listen()
 	defer svc.Shutdown()
 
@@ -74,7 +78,9 @@ func TestAdmin__AddHandler(t *testing.T) {
 }
 
 func TestAdmin__fullAddress(t *testing.T) {
-	svc := NewServer("127.0.0.1:13985")
+	svc, err := New(Opts{Addr: "127.0.0.1:13985"})
+	require.NoError(t, err)
+
 	go svc.Listen()
 	defer svc.Shutdown()
 
@@ -89,7 +95,9 @@ func TestAdmin__fullAddress(t *testing.T) {
 }
 
 func TestAdmin__AddVersionHandler(t *testing.T) {
-	svc := NewServer(":0")
+	svc, err := New(Opts{Addr: ":0"})
+	require.NoError(t, err)
+
 	go svc.Listen()
 	defer svc.Shutdown()
 
@@ -127,7 +135,8 @@ func TestAdmin__Listen(t *testing.T) {
 }
 
 func TestAdmin__BindAddr(t *testing.T) {
-	svc := NewServer(":0")
+	svc, err := New(Opts{Addr: ":0"})
+	require.NoError(t, err)
 
 	svc.AddHandler("/test/ping", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -151,7 +160,9 @@ func TestAdmin__BindAddr(t *testing.T) {
 }
 
 func TestServer_Subrouter(t *testing.T) {
-	svc := NewServer(":0")
+	svc, err := New(Opts{Addr: ":0"})
+	require.NoError(t, err)
+
 	subrouter := svc.Subrouter("/sub")
 	subrouter.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

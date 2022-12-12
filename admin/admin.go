@@ -22,17 +22,28 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// NewServer returns an admin Server instance that handles Prometheus metrics
-// and pprof requests.
+type Opts struct {
+	Addr    string
+	Timeout time.Duration
+}
+
+// New returns an admin.Server instance that handles Prometheus metrics and pprof requests.
 // Callers can use ':0' to bind onto a random port and call BindAddr() for the address.
-func NewServer(addr string) *Server {
+func New(opts Opts) (*Server, error) {
 	timeout, _ := time.ParseDuration("45s")
+	if opts.Timeout >= 0*time.Second {
+		timeout = opts.Timeout
+	}
 
 	var listener net.Listener
-	if addr == ":0" {
-		listener, _ = net.Listen("tcp", "127.0.0.1:0")
+	var err error
+	if opts.Addr == "" || opts.Addr == ":0" {
+		listener, err = net.Listen("tcp", "127.0.0.1:0")
 	} else {
-		listener, _ = net.Listen("tcp", addr)
+		listener, err = net.Listen("tcp", opts.Addr)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("listening on %s failed: %v", opts.Addr, err)
 	}
 
 	router := handler()
@@ -50,6 +61,18 @@ func NewServer(addr string) *Server {
 
 	svc.AddHandler("/live", svc.livenessHandler())
 	svc.AddHandler("/ready", svc.readinessHandler())
+	return svc, nil
+}
+
+// NewServer has been replaced by New.
+// Deprecated: Callers should use New instead to avoid panics when the port is already.
+func NewServer(addr string) *Server {
+	svc, err := New(Opts{
+		Addr: addr,
+	})
+	if err != nil {
+		panic(fmt.Errorf("runtime error occurred when binding admin server: %v", err))
+	}
 	return svc
 }
 
@@ -70,6 +93,27 @@ func (s *Server) BindAddr() string {
 		return ""
 	}
 	return s.listener.Addr().String()
+}
+
+func (s *Server) SetReadTimeout(timeout time.Duration) {
+	if s == nil || s.svc == nil {
+		return
+	}
+	s.svc.ReadTimeout = timeout
+}
+
+func (s *Server) SetWriteTimeout(timeout time.Duration) {
+	if s == nil || s.svc == nil {
+		return
+	}
+	s.svc.WriteTimeout = timeout
+}
+
+func (s *Server) SetIdleTimeout(timeout time.Duration) {
+	if s == nil || s.svc == nil {
+		return
+	}
+	s.svc.IdleTimeout = timeout
 }
 
 // Listen brings up the admin HTTP server. This call blocks until the server is Shutdown or panics.
