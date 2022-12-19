@@ -5,20 +5,12 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/moov-io/base/idempotent"
+	"github.com/moov-io/base/log"
 
 	"github.com/go-kit/kit/metrics"
-
-	"github.com/moov-io/base/log"
-)
-
-var (
-	// ErrNoUserID is returned when no x-user-id header was found
-	ErrNoUserID = errors.New("no X-User-Id header provided")
 )
 
 // ResponseWriter implements Go's standard library http.ResponseWriter to complete HTTP requests
@@ -79,37 +71,4 @@ func Wrap(logger log.Logger, m metrics.Histogram, w http.ResponseWriter, r *http
 		metric:         m,
 		log:            logger,
 	}
-}
-
-// EnsureHeaders wraps the http.ResponseWriter but also checks Moov specific headers.
-//
-// X-User-Id is required, and requests without one will be completed with a 403 forbidden.
-// No lookup is done to ensure the value exists and is valid for a Moov user.
-//
-// X-Request-Id is optional, but if used we will emit a log line with that request fulfillment timing
-// and the status code.
-//
-// X-Idempotency-Key is optional, but recommended to ensure requests only execute once. Clients are
-// assumed to resend requests many times with the same key. We just need to reply back "already done".
-func EnsureHeaders(logger log.Logger, m metrics.Histogram, rec idempotent.Recorder, w http.ResponseWriter, r *http.Request) (*ResponseWriter, error) {
-	writer := Wrap(logger, m, w, r)
-	return writer, writer.ensureHeaders(rec)
-}
-
-// ensureHeaders verifies the headers which Moov apps all cares about.
-func (w *ResponseWriter) ensureHeaders(rec idempotent.Recorder) error {
-	if userID := GetUserID(w.request); userID == "" {
-		if !w.headersWritten {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusForbidden)
-		}
-		return ErrNoUserID
-	}
-	if rec != nil {
-		if _, seen := idempotent.FromRequest(w.request, rec); seen {
-			idempotent.SeenBefore(w)
-			return idempotent.ErrSeenBefore
-		}
-	}
-	return nil
 }
