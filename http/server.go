@@ -128,8 +128,8 @@ func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, err err
 		skip = 0
 		return skip, count, exists, err
 	}
-	// Cap skip at 10000
-	skip = int(math.Min(float64(skip), 10000))
+	// Cap skip at MaxInt32
+	skip = int(math.Min(float64(skip), math.MaxInt32))
 	skip = int(math.Max(0, float64(skip)))
 
 	count, err = strconv.Atoi(countVal)

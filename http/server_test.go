@@ -7,6 +7,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -243,10 +244,10 @@ func TestGetCountMaxWhenCountProvidedLargerThanMax(t *testing.T) {
 }
 
 func TestGetSkipMaxWhenSkipProvidedLargerThanMax(t *testing.T) {
-	r := httptest.NewRequest("GET", "/ping?skip=10050", nil)
+	r := httptest.NewRequest("GET", "/ping?skip=2147483648", nil)
 	skip, count, exists, err := GetSkipAndCount(r)
-	if skip != 10000 {
-		t.Errorf("skip should be 10000. got : %d", skip)
+	if skip != math.MaxInt32 {
+		t.Errorf("skip should be %d. got : %d", math.MaxInt32, skip)
 	}
 	if count != 20 {
 		t.Errorf("count should be 20. got : %d", count)
@@ -255,7 +256,7 @@ func TestGetSkipMaxWhenSkipProvidedLargerThanMax(t *testing.T) {
 		t.Errorf("exists should be true. got : %t", exists)
 	}
 	if err != nil {
-		t.Error("errors should be nil")
+		t.Error("error should be nil")
 	}
 }
 

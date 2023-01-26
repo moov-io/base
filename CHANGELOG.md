@@ -1,3 +1,9 @@
+## v0.38.1 (Released 2023-01-26)
+
+ADDITIONS
+
+- Increase maximum 'skip' value in GetSkipAndCount(r *http.Request) to math.MaxInt32
+
 ## v0.38.0 (Released 2022-12-12)
 
 ADDITIONS
