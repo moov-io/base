@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 )
 
 func truncate(s string) string {
@@ -227,12 +228,12 @@ func TestGetSkipAndCountWhenOnlySkipProvidedReturnsDefaultCount(t *testing.T) {
 }
 
 func TestGetCountMaxWhenCountProvidedLargerThanMax(t *testing.T) {
-	r := httptest.NewRequest("GET", "/ping?count=201", nil)
+	r := httptest.NewRequest("GET", "/ping?count=10001", nil)
 	skip, count, exists, err := GetSkipAndCount(r)
 	if skip != 0 {
 		t.Errorf("skip should be 0. got : %d", skip)
 	}
-	if count != 200 {
+	if count != 10000 {
 		t.Errorf("count should be 200. got : %d", count)
 	}
 	if exists != true {
@@ -326,4 +327,13 @@ func TestGetSkipAndCountReturns0IfNegativeValuesPassed(t *testing.T) {
 	if err != nil {
 		t.Error("errors should be nil")
 	}
+}
+
+func TestLimitedSkipCount(t *testing.T) {
+	r := httptest.NewRequest("GET", "/list?skip=540&count=200", nil)
+	skip, count, exists, err := LimitedSkipCount(r, 250, 100)
+	require.NoError(t, err)
+	require.True(t, exists)
+	require.Equal(t, 250, skip)
+	require.Equal(t, 100, count)
 }

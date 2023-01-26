@@ -116,31 +116,44 @@ func GetUserID(r *http.Request) string {
 }
 
 // GetSkipAndCount returns the skip and count pagination values from the query parameters
-// skip is the number of records to pass over before starting a search
-// count is the number of records to retrieve in the search
-// exists indicates if skip or count was passed into the request URL
+// - skip is the number of records to pass over before starting a search (max math.MaxInt32)
+// - count is the number of records to retrieve in the search  (max 10,000)
+// - exists indicates if skip or count was passed into the request URL
 func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, err error) {
+	return readSkipCount(r, math.MaxInt32, 10000)
+}
+
+// LimitedSkipCount returns the skip and count pagination values from the request's query parameters
+// See GetSkipAndCount for descriptions of each parameter
+func LimitedSkipCount(r *http.Request, skipLimit, countLimit int) (skip int, count int, exists bool, err error) {
+	return readSkipCount(r, skipLimit, countLimit)
+}
+
+func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int, exists bool, err error) {
 	skipVal := r.URL.Query().Get("skip")
 	countVal := r.URL.Query().Get("count")
 	exists = len(skipVal) > 0 || len(countVal) > 0
+
+	// Parse skip
 	skip, err = strconv.Atoi(skipVal)
 	if err != nil && len(skipVal) > 0 {
 		skip = 0
 		return skip, count, exists, err
 	}
-	// Cap skip at MaxInt32
-	skip = int(math.Min(float64(skip), math.MaxInt32))
+	// Limit skip
+	skip = int(math.Min(float64(skip), float64(skipMax)))
 	skip = int(math.Max(0, float64(skip)))
 
+	// Parse count
 	count, err = strconv.Atoi(countVal)
 	if err != nil && len(countVal) > 0 {
 		count = 0
 		return skip, count, exists, err
 	}
-	// Cap count at 200
-	count = int(math.Min(float64(count), 200))
-	count = int(math.Max(0, float64(count)))
 
+	// Limit count
+	count = int(math.Min(float64(count), float64(countMax)))
+	count = int(math.Max(0, float64(count)))
 	if count == 0 {
 		count = 20
 	}
