@@ -1,3 +1,9 @@
+## v0.39.0 (Released 2023-01-26)
+
+ADDITIONS
+
+- http: add LimitedSkipCount helper
+
 ## v0.38.2 (Released 2023-01-26)
 
 IMPROVEMENTS
