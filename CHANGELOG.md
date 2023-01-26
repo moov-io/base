@@ -1,8 +1,19 @@
-## v0.38.1 (Released 2023-01-26)
+## v0.38.2 (Released 2023-01-26)
 
-ADDITIONS
+IMPROVEMENTS
 
 - Increase maximum 'skip' value in GetSkipAndCount(r *http.Request) to math.MaxInt32
+
+BUILD
+
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.10
+- fix(deps): update module github.com/spf13/viper to v1.15.0
+
+## v0.38.1 (Released 2022-12-19)
+
+IMPROVEMENTS
+
+- idempotent: remove outdated package
 
 ## v0.38.0 (Released 2022-12-12)
 
