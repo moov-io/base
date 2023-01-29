@@ -786,6 +786,8 @@ github.com/linuxkit/virtsock v0.0.0-20201010232012-f8cee7dfc7a3/go.mod h1:3r6x7q
 github.com/lyft/protoc-gen-star v0.5.3/go.mod h1:V0xaHgaf5oCCqmcxYcWiDfTiKsZsRc87/1qhoTACD8w=
 github.com/madflojo/testcerts v1.0.1 h1:xmbYLD84jwPwNw1VV6D7Y3/65CBeQrrYLTfPhQlliwg=
 github.com/madflojo/testcerts v1.0.1/go.mod h1:T5PJM4oV+jpa92XtqylOuiQvI27e5UwS2i/DqSwV+bo=
+github.com/madflojo/testcerts v1.0.2 h1:6gG7m0CikwsjI1+kaeR9jWUjVpy3gLcahxrUtePtaSQ=
+github.com/madflojo/testcerts v1.0.2/go.mod h1:G+ucVds7Pj79qA9/ue9FygnXiBCm622IdzKWna621io=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
