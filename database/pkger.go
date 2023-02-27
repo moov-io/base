@@ -48,7 +48,7 @@ func NewPkgerSource(database string) (source.Driver, error) {
 			return fmt.Errorf("must end in .sql")
 		}
 
-		run := false
+		var run bool
 		switch splits[slen-2] {
 		case "up":
 			run = true
