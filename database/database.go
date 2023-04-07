@@ -27,7 +27,11 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 		}
 
 		return ApplyConnectionsConfig(db, &config.MySQL.Connections, logger), nil
+
+	} else if config.Spanner != nil {
+		return spannerConnection(logger, *config.Spanner, config.DatabaseName)
 	}
+
 	return nil, fmt.Errorf("database config not defined")
 }
 

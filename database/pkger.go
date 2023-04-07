@@ -14,7 +14,7 @@ import (
 
 const MIGRATIONS_DIR = "/migrations/"
 
-func NewPkgerSource(database string) (source.Driver, error) {
+func NewPkgerSource(database string, allowGeneric bool) (source.Driver, error) {
 	database = strings.ToLower(database)
 
 	hereInfo, err := pkger.Current()
@@ -51,9 +51,9 @@ func NewPkgerSource(database string) (source.Driver, error) {
 		var run bool
 		switch splits[slen-2] {
 		case "up":
-			run = true
+			run = true && allowGeneric
 		case "down":
-			run = true
+			run = true && allowGeneric
 		case database:
 			run = true
 		default:
