@@ -12,7 +12,7 @@ import (
 )
 
 func spannerConnection(logger log.Logger, cfg SpannerConfig, databaseName string) (*sql.DB, error) {
-	db, err := sql.Open("spanner", fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Instance, cfg.Project, databaseName))
+	db, err := sql.Open("spanner", fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, databaseName))
 	if err != nil {
 		return nil, err
 	}
