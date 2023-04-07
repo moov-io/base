@@ -12,7 +12,13 @@ import (
 
 type DatabaseConfig struct {
 	MySQL        *MySQLConfig
+	Spanner      *SpannerConfig
 	DatabaseName string
+}
+
+type SpannerConfig struct {
+	Project  string
+	Instance string
 }
 
 type MySQLConfig struct {

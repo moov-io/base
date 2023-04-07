@@ -19,5 +19,14 @@ services:
     tmpfs: # Run this mysql in memory as its used for testing
       - /var/lib/mysql
 
+  spanner:
+    image: gcr.io/cloud-spanner-emulator/emulator
+    restart: always
+    ports:
+      - "9010:9010"
+      - "9020:9020"
+    networks:
+      - intranet
+
 networks:
   intranet:

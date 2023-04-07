@@ -20,18 +20,14 @@ import (
 var migrationMutex sync.Mutex
 
 func RunMigrations(logger log.Logger, config DatabaseConfig) error {
-	db, err := New(context.Background(), logger, config)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
 	logger.Info().Log("Running Migrations")
 
-	source, driver, err := GetDriver(db, config)
+	source, driver, err := GetDriver(logger, config)
 	if err != nil {
 		return err
 	}
+
+	defer driver.Close()
 
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
@@ -60,12 +56,18 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	return nil
 }
 
-func GetDriver(db *sql.DB, config DatabaseConfig) (source.Driver, database.Driver, error) {
+func GetDriver(logger log.Logger, config DatabaseConfig) (source.Driver, database.Driver, error) {
 	if config.MySQL != nil {
-		src, err := NewPkgerSource("mysql")
+		src, err := NewPkgerSource("mysql", true)
 		if err != nil {
 			return nil, nil, err
 		}
+
+		db, err := New(context.Background(), logger, config)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer db.Close()
 
 		drv, err := MySQLDriver(db)
 		if err != nil {
@@ -73,10 +75,28 @@ func GetDriver(db *sql.DB, config DatabaseConfig) (source.Driver, database.Drive
 		}
 
 		return src, drv, nil
+
+	} else if config.Spanner != nil {
+		src, err := NewPkgerSource("spanner", false)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		drv, err := SpannerDriver(config)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return src, drv, nil
 	}
+
 	return nil, nil, fmt.Errorf("database config not defined")
 }
 
 func MySQLDriver(db *sql.DB) (database.Driver, error) {
 	return migmysql.WithInstance(db, &migmysql.Config{})
+}
+
+func SpannerDriver(config DatabaseConfig) (database.Driver, error) {
+	return SpannerMigrationDriver(*config.Spanner, config.DatabaseName)
 }
