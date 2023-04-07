@@ -58,4 +58,5 @@ func Test_MigrateAndRun(t *testing.T) {
 	rows, err := db.Query("SELECT * FROM MigrationTest")
 	require.NoError(t, err)
 	defer rows.Close()
+	require.NoError(t, rows.Err())
 }
