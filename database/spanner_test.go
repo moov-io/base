@@ -11,6 +11,9 @@ import (
 )
 
 func Test_OpenConnection(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
 
 	// Switches the spanner driver into using the emulator and bypassing the auth checks.
 	testdb.SetSpannerEmulator(nil)
@@ -29,6 +32,9 @@ func Test_OpenConnection(t *testing.T) {
 }
 
 func Test_Migration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
 
 	// Switches the spanner driver into using the emulator and bypassing the auth checks.
 	testdb.SetSpannerEmulator(nil)
@@ -41,6 +47,9 @@ func Test_Migration(t *testing.T) {
 }
 
 func Test_MigrateAndRun(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
 
 	// Switches the spanner driver into using the emulator and bypassing the auth checks.
 	testdb.SetSpannerEmulator(nil)
