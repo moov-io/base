@@ -1,3 +1,15 @@
+## v0.40.0 (Released 2023-04-07)
+
+ADDITIONS
+
+- Adding in spanner support for databases
+
+BUILD
+
+- build: update github.com/stretchr/testify to v1.8.2
+- fix(deps): update module github.com/madflojo/testcerts to v1.1.0
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.13
+
 ## v0.39.0 (Released 2023-01-26)
 
 ADDITIONS
