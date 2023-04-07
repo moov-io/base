@@ -823,6 +823,8 @@ github.com/lyft/protoc-gen-star v0.5.3/go.mod h1:V0xaHgaf5oCCqmcxYcWiDfTiKsZsRc8
 github.com/lyft/protoc-gen-star v0.6.0/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuzJYeZuUPFPNwA=
 github.com/madflojo/testcerts v1.0.2 h1:6gG7m0CikwsjI1+kaeR9jWUjVpy3gLcahxrUtePtaSQ=
 github.com/madflojo/testcerts v1.0.2/go.mod h1:G+ucVds7Pj79qA9/ue9FygnXiBCm622IdzKWna621io=
+github.com/madflojo/testcerts v1.1.0 h1:kopRnZB2jH1yKhC2d27+GVQLDy/fL9/65UrkpJkF4GA=
+github.com/madflojo/testcerts v1.1.0/go.mod h1:G+ucVds7Pj79qA9/ue9FygnXiBCm622IdzKWna621io=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
