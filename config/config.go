@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/moov-io/base/log"
 
 	"github.com/markbates/pkger"
@@ -54,7 +55,7 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 		return logger.LogErrorf("unable to load the defaults: %w", err).Err()
 	}
 
-	if err := deflt.UnmarshalExact(config); err != nil {
+	if err := deflt.UnmarshalExact(config, initDecoderConfig); err != nil {
 		return logger.LogErrorf("unable to unmarshal the defaults: %w", err).Err()
 	}
 
@@ -71,16 +72,28 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 		logger.Info().Logf("loading config file")
 
 		overrides := viper.New()
+
 		overrides.SetConfigFile(file)
 
 		if err := overrides.ReadInConfig(); err != nil {
 			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
 		}
 
-		if err := overrides.UnmarshalExact(config); err != nil {
+		if err := overrides.UnmarshalExact(config, mergeDecoderConfig); err != nil {
 			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
 		}
 	}
 
 	return nil
+}
+
+func initDecoderConfig(cfg *mapstructure.DecoderConfig) {
+	cfg.ErrorUnset = true
+	cfg.ErrorUnused = true
+	cfg.ZeroFields = true
+}
+
+func mergeDecoderConfig(cfg *mapstructure.DecoderConfig) {
+	cfg.ErrorUnused = true
+	cfg.ZeroFields = true
 }
