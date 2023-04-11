@@ -1,3 +1,15 @@
+## v0.40.2 (Released 2023-04-07)
+
+IMPROVEMENTS
+
+- config: overwrite slices instead of merging
+
+## v0.40.1 (Released 2023-04-07)
+
+IMPROVEMENTS
+
+- database: fixed issues with spanner migrations and comments
+
 ## v0.40.0 (Released 2023-04-07)
 
 ADDITIONS
