@@ -88,7 +88,6 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 }
 
 func initDecoderConfig(cfg *mapstructure.DecoderConfig) {
-	cfg.ErrorUnset = true
 	cfg.ErrorUnused = true
 	cfg.ZeroFields = true
 }
