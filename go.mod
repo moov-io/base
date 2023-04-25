@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/spanner v1.45.1
 	github.com/go-kit/kit v0.12.0
 	github.com/go-kit/log v0.2.1
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/googleapis/go-sql-spanner v1.0.1
