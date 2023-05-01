@@ -37,7 +37,6 @@ func SpannerMigrationDriver(cfg SpannerConfig, databaseName string) (database.Dr
 func SpannerUniqueViolation(err error) bool {
 	match := strings.Contains(err.Error(), "Failed to insert row with primary key")
 
-	// if err is of type spanner.Err
 	var apiErr *apierror.APIError
 	if errors.As(err, &apiErr) {
 		return match || spanner.ErrCode(apiErr) == codes.AlreadyExists
