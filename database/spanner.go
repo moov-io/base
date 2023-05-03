@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -32,5 +33,6 @@ func SpannerMigrationDriver(cfg SpannerConfig, databaseName string) (database.Dr
 // Refer to https://cloud.google.com/spanner/docs/error-codes for Spanner error definitions,
 // and https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto for error codes
 func SpannerUniqueViolation(err error) bool {
-	return spanner.ErrCode(err) == codes.AlreadyExists
+	match := strings.Contains(err.Error(), "Failed to insert row with primary key")
+	return match || spanner.ErrCode(err) == codes.AlreadyExists
 }
