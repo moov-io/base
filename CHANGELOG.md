@@ -1,3 +1,11 @@
+## v0.41.0 (Released 2023-05-04)
+
+ADDITIONS
+
+- database: add `SpannerUniqueViolation` helper for mapping Spanner DB duplicate error
+- database: adjusted `UniqueViolation` helper to check for either MySQL or Spanner errors
+
+
 ## v0.40.2 (Released 2023-04-07)
 
 IMPROVEMENTS
