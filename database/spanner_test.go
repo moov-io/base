@@ -2,12 +2,18 @@ package database_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+
+	"cloud.google.com/go/spanner"
+	"github.com/googleapis/gax-go/v2/apierror"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/moov-io/base/database"
 	"github.com/moov-io/base/database/testdb"
 	"github.com/moov-io/base/log"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_OpenConnection(t *testing.T) {
@@ -68,4 +74,27 @@ func Test_MigrateAndRun(t *testing.T) {
 	require.NoError(t, err)
 	defer rows.Close()
 	require.NoError(t, rows.Err())
+}
+
+func TestSpannerUniqueViolation(t *testing.T) {
+	errMsg := "Failed to insert row with primary key ({pk#primary_key:\"282f6ffcd9ba5b029afbf2b739ee826e22d9df3b\"}) due to previously existing row"
+	// Test backwards-compatible parsing of spanner.Error (soon to be deprecated) from Spanner client
+	statusErr := status.New(codes.AlreadyExists, errMsg).Err()
+	oldSpannerErr := spanner.ToSpannerError(statusErr)
+	if !database.SpannerUniqueViolation(oldSpannerErr) {
+		t.Error("should have matched unique violation")
+	}
+
+	// Test new apirerror.APIError response from Spanner client
+	newSpannerErr, parseErr := apierror.FromError(statusErr)
+	require.True(t, parseErr)
+	if !database.SpannerUniqueViolation(newSpannerErr) {
+		t.Error("should have matched unique violation")
+	}
+
+	// Test wrapped spanner error
+	wrappedErr := fmt.Errorf("wrapped err: %w", statusErr)
+	if !database.SpannerUniqueViolation(wrappedErr) {
+		t.Error("should have matched unique violation")
+	}
 }
