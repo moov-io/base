@@ -5,6 +5,11 @@ ADDITIONS
 - database: add `SpannerUniqueViolation` helper for mapping Spanner DB duplicate error
 - database: adjusted `UniqueViolation` helper to check for either MySQL or Spanner errors
 
+BUILD
+
+- fix(deps): update module cloud.google.com/go/spanner to v1.45.1
+- fix(deps): update module github.com/go-sql-driver/mysql to v1.7.1
+- fix(deps): update module github.com/prometheus/client_golang to v1.15.1
 
 ## v0.40.2 (Released 2023-04-07)
 
