@@ -11,6 +11,8 @@ import (
 	"cloud.google.com/go/spanner/admin/instance/apiv1/instancepb"
 	"github.com/moov-io/base"
 	"github.com/moov-io/base/database"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Must be called if using the docker spanner emulator
@@ -23,13 +25,17 @@ func SetSpannerEmulator(hostOverride *string) {
 	os.Setenv("SPANNER_EMULATOR_HOST", host)
 }
 
-func NewSpannerDatabase(databaseName string) (database.DatabaseConfig, error) {
-	cfg := database.DatabaseConfig{
-		DatabaseName: databaseName,
-		Spanner: &database.SpannerConfig{
+func NewSpannerDatabase(databaseName string, spannerCfg *database.SpannerConfig) (database.DatabaseConfig, error) {
+	if spannerCfg == nil {
+		spannerCfg = &database.SpannerConfig{
 			Project:  "proj" + base.ID()[0:26],
 			Instance: "test",
-		},
+		}
+	}
+
+	cfg := database.DatabaseConfig{
+		DatabaseName: databaseName,
+		Spanner:      spannerCfg,
 	}
 
 	if err := createInstance(cfg.Spanner); err != nil {
@@ -61,6 +67,9 @@ func createInstance(cfg *database.SpannerConfig) error {
 		},
 	})
 	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			return nil
+		}
 		return fmt.Errorf("could not create instance %s: %v", fmt.Sprintf("projects/%s/instances/%s", cfg.Project, cfg.Instance), err)
 	}
 
@@ -85,6 +94,9 @@ func createDatabase(cfg database.DatabaseConfig) error {
 		CreateStatement: fmt.Sprintf("CREATE DATABASE `%s`", cfg.DatabaseName),
 	})
 	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			return nil
+		}
 		return err
 	}
 
