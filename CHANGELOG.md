@@ -1,3 +1,10 @@
+## v0.42.0 (Released 2023-05-04)
+
+IMPROVEMENTS
+
+- database: idempotently creates the spanner databases.
+- database: allows for specific creation in addition to random spanner database creation
+
 ## v0.41.0 (Released 2023-05-04)
 
 ADDITIONS
