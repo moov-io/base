@@ -55,7 +55,7 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 		return logger.LogErrorf("unable to load the defaults: %w", err).Err()
 	}
 
-	if err := deflt.UnmarshalExact(config, initDecoderConfig); err != nil {
+	if err := deflt.UnmarshalExact(config, overwriteConfig); err != nil {
 		return logger.LogErrorf("unable to unmarshal the defaults: %w", err).Err()
 	}
 
@@ -79,7 +79,7 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
 		}
 
-		if err := overrides.UnmarshalExact(config, mergeDecoderConfig); err != nil {
+		if err := overrides.UnmarshalExact(config, overwriteConfig); err != nil {
 			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
 		}
 	}
@@ -87,12 +87,7 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 	return nil
 }
 
-func initDecoderConfig(cfg *mapstructure.DecoderConfig) {
-	cfg.ErrorUnused = true
-	cfg.ZeroFields = true
-}
-
-func mergeDecoderConfig(cfg *mapstructure.DecoderConfig) {
+func overwriteConfig(cfg *mapstructure.DecoderConfig) {
 	cfg.ErrorUnused = true
 	cfg.ZeroFields = true
 }
