@@ -45,11 +45,34 @@ func Test_Migration(t *testing.T) {
 	// Switches the spanner driver into using the emulator and bypassing the auth checks.
 	testdb.SetSpannerEmulator(nil)
 
-	cfg, err := testdb.NewSpannerDatabase("mydb")
+	cfg, err := testdb.NewSpannerDatabase("mydb", nil)
 	require.NoError(t, err)
 
 	err = database.RunMigrations(log.NewDefaultLogger(), cfg)
 	require.NoError(t, err)
+}
+
+func Test_IdempotentCreate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	// Switches the spanner driver into using the emulator and bypassing the auth checks.
+	testdb.SetSpannerEmulator(nil)
+
+	spanner := &database.SpannerConfig{
+		Project:  "basetest",
+		Instance: "idempotent",
+	}
+
+	cfg1, err := testdb.NewSpannerDatabase("mydb", spanner)
+	require.NoError(t, err)
+
+	cfg2, err := testdb.NewSpannerDatabase("mydb", cfg1.Spanner)
+	require.NoError(t, err)
+
+	require.Equal(t, cfg1.Spanner, spanner)
+	require.Equal(t, cfg1, cfg2)
 }
 
 func Test_MigrateAndRun(t *testing.T) {
@@ -60,7 +83,7 @@ func Test_MigrateAndRun(t *testing.T) {
 	// Switches the spanner driver into using the emulator and bypassing the auth checks.
 	testdb.SetSpannerEmulator(nil)
 
-	cfg, err := testdb.NewSpannerDatabase("mydb")
+	cfg, err := testdb.NewSpannerDatabase("mydb", nil)
 	require.NoError(t, err)
 
 	err = database.RunMigrations(log.NewDefaultLogger(), cfg)
