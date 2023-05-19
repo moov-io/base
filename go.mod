@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.15.1
 	github.com/rickar/cal/v2 v2.1.13
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	google.golang.org/grpc v1.55.0
 )
 
