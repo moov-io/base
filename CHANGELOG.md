@@ -1,3 +1,16 @@
+## v0.43.0 (Released 2023-05-22)
+
+IMPROVEMENTS
+
+- config: clarify the naming of the mapstructure.DecoderConfig
+- feat: detect mysql deadlock err
+
+BUILD
+
+- fix(deps): update module cloud.google.com/go/spanner to v1.46.0
+- fix(deps): update module github.com/googleapis/gax-go/v2 to v2.9.0
+- fix(deps): update module github.com/stretchr/testify to v1.8.3
+
 ## v0.42.0 (Released 2023-05-04)
 
 IMPROVEMENTS
