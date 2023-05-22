@@ -33,6 +33,9 @@ func SpannerMigrationDriver(cfg SpannerConfig, databaseName string) (database.Dr
 // Refer to https://cloud.google.com/spanner/docs/error-codes for Spanner error definitions,
 // and https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto for error codes
 func SpannerUniqueViolation(err error) bool {
+	if err == nil {
+		return false
+	}
 	return spanner.ErrCode(err) == codes.AlreadyExists ||
 		strings.Contains(err.Error(), "AlreadyExists")
 }
