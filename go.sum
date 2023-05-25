@@ -672,6 +672,8 @@ github.com/googleapis/gax-go/v2 v2.8.0 h1:UBtEZqx1bjXtOQ5BVTkuYghXrr3N4V123VKJK6
 github.com/googleapis/gax-go/v2 v2.8.0/go.mod h1:4orTrqY6hXxxaUL4LHIPl6lGo8vAE38/qKbhSAKP6QI=
 github.com/googleapis/gax-go/v2 v2.9.0 h1:ie5/2yPjucjZW6fEGjLhS5+PhEg6owWMrFB5d7TFFhw=
 github.com/googleapis/gax-go/v2 v2.9.0/go.mod h1:qf/E3rjAvrwLsAnQW+IClIu+z03yUf4KOoO82NfZ+QY=
+github.com/googleapis/gax-go/v2 v2.9.1 h1:DpTpJqzZ3NvX9zqjhIuI1oVzYZMvboZe+3LoeEIJjHM=
+github.com/googleapis/gax-go/v2 v2.9.1/go.mod h1:4FG3gMrVZlyMp5itSYKMU9z/lBE7+SbnUOvzH2HqbEY=
 github.com/googleapis/gnostic v0.4.1/go.mod h1:LRhVm6pbyptWbWbuZ38d1eyptfvIytN3ir6b65WBswg=
 github.com/googleapis/gnostic v0.5.1/go.mod h1:6U4PtQXGIEt/Z3h5MAT7FNofLnw9vXk2cUuW7uA/OeU=
 github.com/googleapis/gnostic v0.5.5/go.mod h1:7+EbHbldMins07ALC74bsA81Ovc97DwqyJO1AENw9kA=
