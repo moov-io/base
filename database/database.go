@@ -70,22 +70,22 @@ func DataTooLong(err error) bool {
 
 func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
 	if connections.MaxOpen > 0 {
-		logger.Logf("setting SQL max open connections to %s", connections.MaxOpen)
+		logger.Logf("setting SQL max open connections to %d", connections.MaxOpen)
 		db.SetMaxOpenConns(connections.MaxOpen)
 	}
 
 	if connections.MaxIdle > 0 {
-		logger.Logf("setting SQL max idle connections to %s", connections.MaxIdle)
+		logger.Logf("setting SQL max idle connections to %d", connections.MaxIdle)
 		db.SetMaxIdleConns(connections.MaxIdle)
 	}
 
 	if connections.MaxLifetime > 0 {
-		logger.Logf("setting SQL max lifetime to %s", connections.MaxLifetime)
+		logger.Logf("setting SQL max lifetime to %v", connections.MaxLifetime)
 		db.SetConnMaxLifetime(connections.MaxLifetime)
 	}
 
 	if connections.MaxIdleTime > 0 {
-		logger.Logf("setting SQL max idle time to %s", connections.MaxIdleTime)
+		logger.Logf("setting SQL max idle time to %v", connections.MaxIdleTime)
 		db.SetConnMaxIdleTime(connections.MaxIdleTime)
 	}
 
