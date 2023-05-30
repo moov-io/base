@@ -1,3 +1,7 @@
+.PHONY: setup
+setup:
+	docker-compose up -d --force-recreate --remove-orphans
+
 .PHONY: check
 check:
 ifeq ($(OS),Windows_NT)
