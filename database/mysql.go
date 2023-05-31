@@ -101,9 +101,9 @@ func (my *mysql) Connect(ctx context.Context) (*sql.DB, error) {
 	db.SetMaxOpenConns(maxActiveMySQLConnections)
 
 	// Check out DB is up and working
-	// if err := db.Ping(); err != nil {
-	// 	return nil, err
-	// }
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
 
 	// Setup metrics after the database is setup
 	go func(db *sql.DB) {
