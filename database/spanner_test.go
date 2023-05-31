@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/moov-io/base"
 	"github.com/moov-io/base/database"
 	"github.com/moov-io/base/database/testdb"
 	"github.com/moov-io/base/log"
@@ -97,6 +98,22 @@ func Test_MigrateAndRun(t *testing.T) {
 	require.NoError(t, err)
 	defer rows.Close()
 	require.NoError(t, rows.Err())
+}
+
+func Test_Embedded_Migration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	// Switches the spanner driver into using the emulator and bypassing the auth checks.
+	testdb.SetSpannerEmulator(nil)
+
+	cfg, err := testdb.NewSpannerDatabase("mydb", nil)
+	require.NoError(t, err)
+
+	db, err := database.NewAndMigrate(context.Background(), log.NewDefaultLogger(), cfg, database.WithEmbeddedMigrations(base.SpannerMigrations))
+	require.NoError(t, err)
+	defer db.Close()
 }
 
 func TestSpannerUniqueViolation(t *testing.T) {

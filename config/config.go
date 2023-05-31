@@ -1,6 +1,9 @@
 package config
 
 import (
+	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -29,6 +32,19 @@ func (s *Service) Load(config interface{}) error {
 		return err
 	}
 
+	return s.MergeEnvironments(config)
+}
+
+func (s *Service) LoadFromFS(config interface{}, fs fs.FS) error {
+	if err := s.LoadEmbeddedFile("configs/config.default.yml", config, fs); err != nil {
+		return err
+	}
+
+	return s.MergeEnvironments(config)
+}
+
+func (s *Service) MergeEnvironments(config interface{}) error {
+
 	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, config); err != nil {
 		return err
 	}
@@ -49,14 +65,38 @@ func (s *Service) LoadFile(file string, config interface{}) error {
 		return logger.LogErrorf("pkger unable to load %s: %w", file, err).Err()
 	}
 
+	if err := configFromReader(config, f); err != nil {
+		return logger.LogError(err).Err()
+	}
+
+	return nil
+}
+
+func (s *Service) LoadEmbeddedFile(file string, config interface{}, fs fs.FS) error {
+	logger := s.logger.Set("file", log.String(file))
+	logger.Info().Logf("loading config file")
+
+	f, err := fs.Open(file)
+	if err != nil {
+		return logger.LogErrorf("go:embed FS unable to load %s: %w", file, err).Err()
+	}
+
+	if err := configFromReader(config, f); err != nil {
+		return logger.LogError(err).Err()
+	}
+
+	return nil
+}
+
+func configFromReader(config interface{}, f io.Reader) error {
 	deflt := viper.New()
 	deflt.SetConfigType("yaml")
 	if err := deflt.ReadConfig(f); err != nil {
-		return logger.LogErrorf("unable to load the defaults: %w", err).Err()
+		return fmt.Errorf("unable to load the defaults: %w", err)
 	}
 
 	if err := deflt.UnmarshalExact(config, overwriteConfig); err != nil {
-		return logger.LogErrorf("unable to unmarshal the defaults: %w", err).Err()
+		return fmt.Errorf("unable to unmarshal the defaults: %w", err)
 	}
 
 	return nil

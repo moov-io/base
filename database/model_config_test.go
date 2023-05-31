@@ -1,22 +1,23 @@
 // Copyright 2020 The Moov Authors
 // Use of this source code is governed by an Apache License
 // license that can be found in the LICENSE file.
-package database
+package database_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"testing"
 
+	"github.com/moov-io/base/database"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMySQLConfig(t *testing.T) {
-	cfg := &MySQLConfig{
+	cfg := &database.MySQLConfig{
 		Address:  "tcp(localhost:3306)",
 		User:     "app",
 		Password: "secret",
-		Connections: ConnectionsConfig{
+		Connections: database.ConnectionsConfig{
 			MaxOpen: 100,
 		},
 	}
