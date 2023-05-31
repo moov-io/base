@@ -1,3 +1,10 @@
+## v0.44.0 (Released 2023-05-31)
+
+ADDITIONS
+
+- config: allows specifying a `embed.FS` to pull the default configuration from
+- database: allow specifying a `embed.FS` to pull migrations from
+
 ## v0.43.0 (Released 2023-05-22)
 
 IMPROVEMENTS
