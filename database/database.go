@@ -35,7 +35,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 	return nil, fmt.Errorf("database config not defined")
 }
 
-func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB, error) {
+func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig, opts ...MigrateOption) (*sql.DB, error) {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
@@ -45,7 +45,7 @@ func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig
 	}
 
 	// run migrations first
-	if err := RunMigrations(logger, config); err != nil {
+	if err := RunMigrations(logger, config, opts...); err != nil {
 		return nil, err
 	}
 

@@ -7,37 +7,51 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"sync"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	"github.com/moov-io/base/log"
 )
 
 var migrationMutex sync.Mutex
 
-func RunMigrations(logger log.Logger, config DatabaseConfig) error {
+func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOption) error {
 	logger.Info().Log("Running Migrations")
 
-	source, driver, err := GetDriver(logger, config)
+	// apply all of our optional arguments
+	o := &migrateOptions{}
+	for _, opt := range opts {
+		if err := opt(o); err != nil {
+			return err
+		}
+	}
+
+	source, driver, err := getDriver(logger, config, o)
 	if err != nil {
 		return err
 	}
-
 	defer driver.Close()
 
 	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
-		"filtering-pkger",
+		source.name,
 		source,
 		config.DatabaseName,
 		driver,
 	)
 	if err != nil {
 		return logger.Fatal().LogErrorf("Error running migration: %w", err).Err()
+	}
+
+	if o.timeout != nil {
+		m.LockTimeout = *o.timeout
 	}
 
 	err = m.Up()
@@ -56,41 +70,63 @@ func RunMigrations(logger log.Logger, config DatabaseConfig) error {
 	return nil
 }
 
+// Deprecated: Here to not break compatibility since it was once public.
 func GetDriver(logger log.Logger, config DatabaseConfig) (source.Driver, database.Driver, error) {
+	return getDriver(logger, config, &migrateOptions{})
+}
+
+func getDriver(logger log.Logger, config DatabaseConfig, opts *migrateOptions) (*SourceDriver, database.Driver, error) {
+	var err error
+
 	if config.MySQL != nil {
-		src, err := NewPkgerSource("mysql", true)
-		if err != nil {
-			return nil, nil, err
+		if opts.source == nil {
+			src, err := NewPkgerSource("mysql", true)
+			if err != nil {
+				return nil, nil, err
+			}
+			opts.source = &SourceDriver{
+				name:   "pkger-mysql",
+				Driver: src,
+			}
 		}
 
-		db, err := New(context.Background(), logger, config)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer db.Close()
+		if opts.driver == nil {
+			db, err := New(context.Background(), logger, config)
+			if err != nil {
+				return nil, nil, err
+			}
 
-		drv, err := MySQLDriver(db)
-		if err != nil {
-			return nil, nil, err
+			opts.driver, err = MySQLDriver(db)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
-
-		return src, drv, nil
 
 	} else if config.Spanner != nil {
-		src, err := NewPkgerSource("spanner", false)
-		if err != nil {
-			return nil, nil, err
+		if opts.source == nil {
+			src, err := NewPkgerSource("spanner", false)
+			if err != nil {
+				return nil, nil, err
+			}
+			opts.source = &SourceDriver{
+				name:   "pkger-spanner",
+				Driver: src,
+			}
 		}
 
-		drv, err := SpannerDriver(config)
-		if err != nil {
-			return nil, nil, err
+		if opts.driver == nil {
+			opts.driver, err = SpannerDriver(config)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
-
-		return src, drv, nil
 	}
 
-	return nil, nil, fmt.Errorf("database config not defined")
+	if opts.source == nil || opts.driver == nil {
+		return nil, nil, fmt.Errorf("database config not defined")
+	}
+
+	return opts.source, opts.driver, nil
 }
 
 func MySQLDriver(db *sql.DB) (database.Driver, error) {
@@ -99,4 +135,39 @@ func MySQLDriver(db *sql.DB) (database.Driver, error) {
 
 func SpannerDriver(config DatabaseConfig) (database.Driver, error) {
 	return SpannerMigrationDriver(*config.Spanner, config.DatabaseName)
+}
+
+type MigrateOption func(o *migrateOptions) error
+
+type SourceDriver struct {
+	name string
+	source.Driver
+}
+
+type migrateOptions struct {
+	source *SourceDriver
+	driver database.Driver
+
+	timeout *time.Duration
+}
+
+func WithEmbeddedMigrations(f fs.FS) MigrateOption {
+	return func(o *migrateOptions) error {
+		src, err := iofs.New(f, "migrations")
+		if err != nil {
+			return err
+		}
+		o.source = &SourceDriver{
+			name:   "embedded",
+			Driver: src,
+		}
+		return nil
+	}
+}
+
+func WithTimeout(dur time.Duration) MigrateOption {
+	return func(o *migrateOptions) error {
+		o.timeout = &dur
+		return nil
+	}
 }
