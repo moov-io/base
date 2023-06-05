@@ -25,8 +25,8 @@ func TestK8SInside(t *testing.T) {
 	}
 
 	// Pretend
-	os.Setenv("KUBERNETES_SERVICE_ACCOUNT_FILEPATH", fd.Name())
-	defer os.Setenv("KUBERNETES_SERVICE_ACCOUNT_FILEPATH", "")
+	t.Setenv("KUBERNETES_SERVICE_ACCOUNT_FILEPATH", fd.Name())
+
 	if !Inside() {
 		t.Error("we should be pretending to be in a Kubernetes cluster")
 	}

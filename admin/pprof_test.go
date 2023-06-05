@@ -5,7 +5,6 @@ package admin
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
 
@@ -20,7 +19,8 @@ func TestAdmin__profileEnabled(t *testing.T) {
 		"jsadlsaj": false,
 	}
 	for value, enabled := range cases {
-		os.Setenv("PPROF_TESTING_VALUE", fmt.Sprintf("%v", enabled))
+		t.Setenv("PPROF_TESTING_VALUE", fmt.Sprintf("%v", enabled))
+
 		if v := profileEnabled("TESTING_VALUE"); v != enabled {
 			t.Errorf("value=%q, got=%v, expected=%v", value, v, enabled)
 		}

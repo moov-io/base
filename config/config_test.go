@@ -24,8 +24,8 @@ type ConfigModel struct {
 }
 
 func Test_Load(t *testing.T) {
-	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
-	os.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
+	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
+	t.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
 	t.Cleanup(func() {
 		os.Unsetenv(config.APP_CONFIG)
 		os.Unsetenv(config.APP_CONFIG_SECRETS)
@@ -55,7 +55,7 @@ func Test_Load(t *testing.T) {
 	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
 
 	// Verify attempting to load additional fields via env vars errors out
-	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.extra.yml"))
+	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.extra.yml"))
 	cfg = &GlobalConfigModel{}
 	err = service.Load(cfg)
 	require.NotNil(t, err)
@@ -63,8 +63,8 @@ func Test_Load(t *testing.T) {
 }
 
 func Test_Embedded_Load(t *testing.T) {
-	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
-	os.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
+	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
+	t.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
 	t.Cleanup(func() {
 		os.Unsetenv(config.APP_CONFIG)
 		os.Unsetenv(config.APP_CONFIG_SECRETS)
@@ -94,7 +94,7 @@ func Test_Embedded_Load(t *testing.T) {
 	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
 
 	// Verify attempting to load additional fields via env vars errors out
-	os.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.extra.yml"))
+	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.extra.yml"))
 	cfg = &GlobalConfigModel{}
 	err = service.Load(cfg)
 	require.NotNil(t, err)
