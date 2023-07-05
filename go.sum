@@ -217,6 +217,8 @@ github.com/googleapis/gax-go/v2 v2.11.0 h1:9V9PWXEsWnPpQhu/PeQIkS4eGzMlTLGgt80cU
 github.com/googleapis/gax-go/v2 v2.11.0/go.mod h1:DxmR61SGKkGLa2xigwuZIQpkCI2S5iydzRfb3peWZJI=
 github.com/googleapis/go-sql-spanner v1.0.1 h1:H/J7OdQ4t1b0csFIs851ZJvWzBgJv6VgDjh7GiWTGYk=
 github.com/googleapis/go-sql-spanner v1.0.1/go.mod h1:sIVRd/J51r+K2swzkYLS8PJ+Cfb/Jv3xn4OW5HjW0C0=
+github.com/googleapis/go-sql-spanner v1.1.0 h1:e/cTooj2B8pXONShPhBKUKPb2mYCK553MXyrlLSYHjQ=
+github.com/googleapis/go-sql-spanner v1.1.0/go.mod h1:YjicgQozpGNrnVUizzOkpkgWQVaiwp1gijrMiqRaPPY=
 github.com/googleapis/google-cloud-go-testing v0.0.0-20200911160855-bcd43fbb19e8/go.mod h1:dvDLG8qkwmyD9a/MJJN3XJcT3xFxOKAvTZGvuZmac9g=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
