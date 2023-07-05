@@ -1,3 +1,11 @@
+
+## v0.45.0 (Released 2023-07-05)
+
+ADDITIONS
+
+- log: Added the ability to specify the format for log messages via `MOOV_LOG_FORMAT` with values of `nop`, `json`, or `logfmt`
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.1.0
+
 ## v0.44.0 (Released 2023-05-31)
 
 ADDITIONS
