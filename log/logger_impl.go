@@ -13,11 +13,24 @@ import (
 )
 
 func NewDefaultLogger() Logger {
-	return NewLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr)))
+	switch strings.ToLower(os.Getenv("MOOV_LOG_FORMAT")) {
+	case "json":
+		return NewJSONLogger()
+	case "nop", "noop":
+		return NewNopLogger()
+	case "logfmt":
+		return NewLogFmtLogger()
+	default:
+		return NewLogFmtLogger()
+	}
 }
 
 func NewNopLogger() Logger {
 	return NewLogger(log.NewNopLogger())
+}
+
+func NewLogFmtLogger() Logger {
+	return NewLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr)))
 }
 
 func NewJSONLogger() Logger {
