@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -44,11 +45,39 @@ func NewTestLogger() Logger {
 	return NewNopLogger()
 }
 
-func NewBufferLogger() (*strings.Builder, Logger) {
-	buffer := strings.Builder{}
-	writer := log.NewLogfmtLogger(log.NewSyncWriter(&buffer))
+func NewBufferLogger() (*BufferedLogger, Logger) {
+	buffer := &BufferedLogger{
+		buf: &strings.Builder{},
+	}
+	writer := log.NewLogfmtLogger(log.NewSyncWriter(buffer))
 	log := NewLogger(writer)
-	return &buffer, log
+	return buffer, log
+}
+
+type BufferedLogger struct {
+	mu  sync.RWMutex
+	buf *strings.Builder
+}
+
+func (bl *BufferedLogger) Write(p []byte) (n int, err error) {
+	bl.mu.Lock()
+	defer bl.mu.Unlock()
+
+	return bl.buf.Write(p)
+}
+
+func (bl *BufferedLogger) Reset() {
+	bl.mu.Lock()
+	defer bl.mu.Unlock()
+
+	bl.buf.Reset()
+}
+
+func (bl *BufferedLogger) String() string {
+	bl.mu.RLock()
+	defer bl.mu.RUnlock()
+
+	return bl.buf.String()
 }
 
 func NewLogger(writer log.Logger) Logger {

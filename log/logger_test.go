@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -297,7 +298,27 @@ func Test_Caller(t *testing.T) {
 	a.Regexp(regexp.MustCompile(`caller_0=(.*?)(\/log\/logger_test\.go)`), buffer.String())
 }
 
-func Setup(t *testing.T) (*assert.Assertions, *strings.Builder, lib.Logger) {
+func Test_BufferedLogger_Concurrent(t *testing.T) {
+	_, buffer, log := Setup(t)
+
+	var wg sync.WaitGroup
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go func(idx int) {
+			defer wg.Done()
+
+			if idx%3 == 0 {
+				t.Log(buffer.String()) // read
+			} else {
+				log.Info().Logf("idx %d", idx)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+func Setup(t *testing.T) (*assert.Assertions, *lib.BufferedLogger, lib.Logger) {
 	a := assert.New(t)
 	buffer, log := lib.NewBufferLogger()
 	return a, buffer, log
