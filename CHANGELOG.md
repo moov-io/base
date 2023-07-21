@@ -1,3 +1,14 @@
+## v0.45.1 (Released 2023-07-21)
+
+IMPROVEMENTS
+
+- log: make NewBufferLogger() safe to read/write across goroutines
+
+BUILD
+
+- build: use latest stable Go release
+- fix(deps): update module github.com/googleapis/gax-go/v2 to v2.12.0
+- fix(deps): update module google.golang.org/grpc to v1.56.2
 
 ## v0.45.0 (Released 2023-07-05)
 
