@@ -1,3 +1,12 @@
+## v0.46.0 (Released 2023-08-21)
+
+BUILD
+
+- admin: remove `NewServer`
+- chore(deps): update mysql docker tag to v8.1
+- fix(deps): update module cloud.google.com/go/spanner to v1.48.0
+- fix(deps): update module google.golang.org/grpc to v1.57.0
+
 ## v0.45.1 (Released 2023-07-21)
 
 IMPROVEMENTS
