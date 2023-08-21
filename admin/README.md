@@ -18,7 +18,12 @@ var logger log.Logger
 
 // in main.go or cmd/server/main.go
 
-adminServer := admin.NewServer(*adminAddr)
+adminServer, err := admin.New(Opts{
+	Addr: ":9090",
+})
+if err != nil {
+    // handle error
+}
 go func() {
 	logger.Log("admin", fmt.Sprintf("listening on %s", adminServer.BindAddr()))
 	if err := adminServer.Listen(); err != nil {

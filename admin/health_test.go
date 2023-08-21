@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealth_healthCheck(t *testing.T) {
@@ -44,7 +46,10 @@ func TestHealth_processChecks(t *testing.T) {
 }
 
 func TestHealth__LiveHTTP(t *testing.T) {
-	svc := NewServer(":13993") // hopefully nothing locally has this
+	svc, err := New(Opts{
+		Addr: ":13993",
+	}) // hopefully nothing locally has this
+	require.NoError(t, err)
 	go svc.Listen()
 	defer svc.Shutdown()
 
@@ -101,7 +106,10 @@ func TestHealth__LiveHTTP(t *testing.T) {
 }
 
 func TestHealth__ReadyHTTP(t *testing.T) {
-	svc := NewServer(":13994") // hopefully nothing locally has this
+	svc, err := New(Opts{
+		Addr: ":13994",
+	}) // hopefully nothing locally has this
+	require.NoError(t, err)
 	go svc.Listen()
 	defer svc.Shutdown()
 

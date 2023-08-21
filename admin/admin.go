@@ -138,13 +138,16 @@ func (s *Server) AddVersionHandler(version string) {
 // The returned subrouter can use middleware without impacting
 // the parent router. For example:
 //
-//	svr := NewServer(":8080")
+//	svr, err := New(Opts{
+//		Addr: ":9090",
+//	})
+//
 //	subRouter := svr.Subrouter("/prefix")
 //	subRouter.Use(someMiddleware)
 //	subRouter.HandleFunc("/resource", ResourceHandler)
 //
 // Here, requests for "/prefix/resource" would go through someMiddleware while
-// the liveliness and readiness routes added to the parent router by NewServer()
+// the liveliness and readiness routes added to the parent router by New()
 // would not.
 func (s *Server) Subrouter(pathPrefix string) *mux.Router {
 	return s.router.PathPrefix(pathPrefix).Subrouter()
