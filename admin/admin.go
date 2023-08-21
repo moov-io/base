@@ -64,18 +64,6 @@ func New(opts Opts) (*Server, error) {
 	return svc, nil
 }
 
-// NewServer has been replaced by New.
-// Deprecated: Callers should use New instead to avoid panics when the port is already.
-func NewServer(addr string) *Server {
-	svc, err := New(Opts{
-		Addr: addr,
-	})
-	if err != nil {
-		panic(fmt.Errorf("runtime error occurred when binding admin server: %v", err))
-	}
-	return svc
-}
-
 // Server represents a holder around a net/http Server which
 // is used for admin endpoints. (i.e. metrics, healthcheck)
 type Server struct {

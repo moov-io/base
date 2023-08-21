@@ -17,7 +17,7 @@ func Between(lower, upper int) (int64, error) {
 // Must is a helper that wraps a call to Between and panics if the error is non-nil.
 func Must(n int64, err error) int64 {
 	if err != nil {
-		panic(err)
+		panic(err) //nolint:forbidigo
 	}
 	return n
 }
