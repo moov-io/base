@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	cloud.google.com/go/spanner v1.49.0
-	github.com/go-kit/kit v0.12.0
+	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.16.2
