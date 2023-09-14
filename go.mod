@@ -19,7 +19,7 @@ require (
 	github.com/rickar/cal/v2 v2.1.13
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/grpc v1.58.0
+	google.golang.org/grpc v1.58.1
 )
 
 require (
