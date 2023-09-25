@@ -164,10 +164,8 @@ func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int,
 // GetSortByAndOrder returns the sortBy and order values from the query parameters
 // - sortBy is the name of the field to sort by
 // - order is the direction for sortBy (ascending or descending)
-// - exists indicates if sortBy or order was passed into the request URL
-func GetSortByAndOrder(r *http.Request) (sortBy string, order string, exists bool) {
-	sortBy = r.URL.Query().Get("sortBy")
+func GetSortByAndOrder(r *http.Request) (sortBy string, order string) {
+	sortBy = r.URL.Query().Get("sort-by")
 	order = r.URL.Query().Get("order")
-	exists = len(sortBy) > 0 || len(order) > 0
-	return sortBy, order, exists
+	return sortBy, order
 }
