@@ -165,7 +165,7 @@ func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int,
 // - sortBy is the name of the field to sort by
 // - order is the direction for sortBy (ascending or descending)
 func GetSortByAndOrder(r *http.Request) (sortBy string, order string) {
-	sortBy = r.URL.Query().Get("sort-by")
+	sortBy = r.URL.Query().Get("sortBy")
 	order = r.URL.Query().Get("order")
 	return sortBy, order
 }

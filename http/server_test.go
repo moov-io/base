@@ -339,7 +339,7 @@ func TestLimitedSkipCount(t *testing.T) {
 }
 
 func TestGetSortByAndOrder(t *testing.T) {
-	r := httptest.NewRequest("GET", "/list?sort-by=created-on&order=ascending", nil)
+	r := httptest.NewRequest("GET", "/list?sortBy=created-on&order=ascending", nil)
 	sortBy, order := GetSortByAndOrder(r)
 	require.Equal(t, "created-on", sortBy)
 	require.Equal(t, "ascending", order)
