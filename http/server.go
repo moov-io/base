@@ -6,6 +6,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -161,11 +162,57 @@ func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int,
 	return skip, count, exists, nil
 }
 
-// GetSortByAndOrder returns the sortBy and order values from the query parameters
-// - sortBy is the name of the field to sort by
-// - order is the direction for sortBy (ascending or descending)
-func GetSortByAndOrder(r *http.Request) (sortBy string, order string) {
-	sortBy = r.URL.Query().Get("sortBy")
-	order = r.URL.Query().Get("order")
-	return sortBy, order
+type Direction string
+
+const (
+	Ascending  Direction = "ASC"
+	Descending Direction = "DESC"
+)
+
+type OrderBy struct {
+	Name      string
+	Direction Direction
+}
+
+// GetOrderBy returns the field names and direction to order the response by
+func GetOrderBy(r *http.Request) ([]OrderBy, error) {
+	orderByParam := r.URL.Query().Get("orderBy")
+	if orderByParam == "" {
+		return []OrderBy{}, nil
+	}
+
+	paramSplit := strings.Split(orderByParam, ",")
+	var orderBys []OrderBy
+	for _, split := range paramSplit {
+		orderBy := strings.Split(split, ":")
+		if len(orderBy) != 2 {
+			return nil, fmt.Errorf("invalid orderBy: %s", orderBy)
+		}
+
+		name := strings.TrimSpace(orderBy[0])
+		if name == "" {
+			return nil, errors.New("missing orderBy name")
+		}
+
+		directionStr := strings.TrimSpace(orderBy[1])
+		if directionStr == "" {
+			return nil, errors.New("missing orderBy direction")
+		}
+		directionStr = strings.ToLower(directionStr)
+
+		var direction Direction
+		if strings.HasPrefix(directionStr, "asc") {
+			direction = Ascending
+		} else if strings.HasPrefix(directionStr, "desc") {
+			direction = Descending
+		} else {
+			return nil, fmt.Errorf("invalid orderBy direction: %s", direction)
+		}
+
+		orderBys = append(orderBys, OrderBy{
+			Name:      name,
+			Direction: direction,
+		})
+	}
+	return orderBys, nil
 }

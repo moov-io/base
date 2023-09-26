@@ -338,9 +338,137 @@ func TestLimitedSkipCount(t *testing.T) {
 	require.Equal(t, 100, count)
 }
 
-func TestGetSortByAndOrder(t *testing.T) {
-	r := httptest.NewRequest("GET", "/list?sortBy=created-on&order=ascending", nil)
-	sortBy, order := GetSortByAndOrder(r)
-	require.Equal(t, "created-on", sortBy)
-	require.Equal(t, "ascending", order)
+func TestGetOrderBy(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected []OrderBy
+		wantErr  bool
+	}{
+		{
+			name:     "valid - missing",
+			path:     "/list",
+			expected: []OrderBy{},
+			wantErr:  false,
+		},
+		{
+			name:     "valid - empty",
+			path:     "/list?orderBy=",
+			expected: []OrderBy{},
+			wantErr:  false,
+		},
+		{
+			name: "valid - single",
+			path: "/list?orderBy=createdOn:ascending",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Ascending,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid - multiple",
+			path: "/list?orderBy=createdOn:ascending,updatedOn:descending",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Ascending,
+				},
+				{
+					Name:      "updatedOn",
+					Direction: Descending,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid - short name asc",
+			path: "/list?orderBy=createdOn:asc",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Ascending,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid - short name desc",
+			path: "/list?orderBy=createdOn:desc",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Descending,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid - mixed cases ascending",
+			path: "/list?orderBy=createdOn:AsCeNdInG",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Ascending,
+				},
+			},
+		},
+		{
+			name: "valid - mixed cases descending",
+			path: "/list?orderBy=createdOn:DeScEnDiNg",
+			expected: []OrderBy{
+				{
+					Name:      "createdOn",
+					Direction: Descending,
+				},
+			},
+		},
+		{
+			name:     "invalid - missing colon",
+			path:     "/list?orderBy=createdOndescending",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid - missing name",
+			path:     "/list?orderBy=:ascending",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid - missing direction",
+			path:     "/list?orderBy=createdOn:",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid - empty name",
+			path:     "/list?orderBy=%20%20:ascending",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid - empty direction",
+			path:     "/list?orderBy=createdOn:%20%20",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid - invalid direction",
+			path:     "/list?orderBy=createdOn:invalid",
+			expected: nil,
+			wantErr:  true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := httptest.NewRequest("GET", test.path, nil)
+			orderBy, err := GetOrderBy(r)
+			require.Equal(t, test.wantErr, err != nil)
+			require.Equal(t, test.expected, orderBy)
+		})
+	}
 }
