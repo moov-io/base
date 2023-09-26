@@ -1,3 +1,9 @@
+## v0.47.0 (Released 2023-09-26)
+
+ADDITIONS
+
+- http: Add GetOrderBy(r *http.Request) to get 'orderBy' vars from request
+
 ## v0.46.0 (Released 2023-08-21)
 
 BUILD
