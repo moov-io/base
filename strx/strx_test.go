@@ -6,6 +6,8 @@ package strx
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestOr(t *testing.T) {
@@ -24,21 +26,17 @@ func TestOr(t *testing.T) {
 }
 
 func TestYes(t *testing.T) {
-	if !Yes("yes") {
-		t.Error("expected true")
-	}
-	if Yes("no") {
-		t.Error("expected no")
-	}
+	// accepted values
+	require.True(t, Yes("yes"))
+	require.True(t, Yes(" true "))
 
-	if !Yes("  true") {
-		t.Error("expected true")
-	}
-	if Yes("false") {
-		t.Error("expected no")
-	}
+	// common, but unsupported
+	require.False(t, Yes("on"))
+	require.False(t, Yes("y"))
+	require.False(t, Yes("no"))
 
-	if Yes("") {
-		t.Error("expected no")
-	}
+	// explicit no values
+	require.False(t, Yes("no"))
+	require.False(t, Yes("false"))
+	require.False(t, Yes(""))
 }
