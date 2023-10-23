@@ -12,7 +12,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0
 	github.com/googleapis/go-sql-spanner v1.1.1
 	github.com/gorilla/mux v1.8.0
-	github.com/madflojo/testcerts v1.1.0
+	github.com/madflojo/testcerts v1.1.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.17.0
