@@ -94,7 +94,7 @@ func ByteBase64(b []byte) Valuer {
 }
 
 func Stringer(s fmt.Stringer) Valuer {
-	if reflect.ValueOf(s).Kind() == reflect.Pointer && reflect.ValueOf(s).IsNil() {
+	if v := reflect.ValueOf(s); v.Kind() == reflect.Pointer && v.IsNil() {
 		return &any{nil}
 	}
 
