@@ -3,6 +3,7 @@ package log
 import (
 	"encoding/base64"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -93,6 +94,10 @@ func ByteBase64(b []byte) Valuer {
 }
 
 func Stringer(s fmt.Stringer) Valuer {
+	if v := reflect.ValueOf(s); v.Kind() == reflect.Pointer && v.IsNil() {
+		return &any{nil}
+	}
+
 	return &any{s.String()}
 }
 

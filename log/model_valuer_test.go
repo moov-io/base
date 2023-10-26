@@ -52,4 +52,14 @@ func TestValuer_Stringer(t *testing.T) {
 	}).Log("log with .String() key/value pair")
 
 	require.Contains(t, out.String(), `mode=PRODUCTION`)
+
+	out, logger = log.NewBufferLogger()
+
+	var n *Mode
+
+	logger.With(log.Fields{
+		"mode": log.Stringer(n),
+	}).Log("log with nil .String() key/value pair")
+
+	require.Contains(t, out.String(), `mode=null`)
 }
