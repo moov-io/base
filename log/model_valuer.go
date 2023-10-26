@@ -93,6 +93,9 @@ func ByteBase64(b []byte) Valuer {
 }
 
 func Stringer(s fmt.Stringer) Valuer {
+	if s == nil {
+		return &any{nil}
+	}
 	return &any{s.String()}
 }
 
