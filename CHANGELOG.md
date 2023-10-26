@@ -2,7 +2,7 @@
 
 IMPROVEMENTS
 
-- log: prevent nil pointer dereference when calling `log.Stringer(nil)`
+fix(logger): prevent nil pointer dereference when calling `log.Stringer(nil)`
 
 ## v0.47.0 (Released 2023-09-26)
 
