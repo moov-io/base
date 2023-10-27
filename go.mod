@@ -8,7 +8,7 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/googleapis/gax-go/v2 v2.12.0
 	github.com/googleapis/go-sql-spanner v1.1.1
 	github.com/gorilla/mux v1.8.0
