@@ -1,3 +1,9 @@
+## v0.47.1 (Released 2023-10-26)
+
+IMPROVEMENTS
+
+fix(logger): prevent nil pointer dereference when calling `log.Stringer(nil)`
+
 ## v0.47.0 (Released 2023-09-26)
 
 ADDITIONS
