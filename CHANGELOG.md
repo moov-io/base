@@ -2,13 +2,26 @@
 
 IMPROVEMENTS
 
-fix(logger): prevent nil pointer dereference when calling `log.Stringer(nil)`
+- fix(logger): prevent nil pointer dereference when calling `log.Stringer(nil)`
+
+BUILD
+
+- fix(deps): update module github.com/madflojo/testcerts to v1.1.1
+- fix(deps): update module cloud.google.com/go/spanner to v1.51.0
+- fix(deps): update module google.golang.org/grpc to v1.59.0
 
 ## v0.47.0 (Released 2023-09-26)
 
 ADDITIONS
 
 - http: Add GetOrderBy(r *http.Request) to get 'orderBy' vars from request
+
+BUILD
+
+- fix(deps): update module cloud.google.com/go/spanner to v1.49.0
+- fix(deps): update module github.com/go-kit/kit to v0.13.0
+- fix(deps): update module github.com/google/uuid to v1.3.1
+- fix(deps): update module google.golang.org/grpc to v1.58.1
 
 ## v0.46.0 (Released 2023-08-21)
 
