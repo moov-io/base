@@ -18,6 +18,8 @@ import (
 )
 
 func Test_SQL_Connect(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -25,6 +27,8 @@ func Test_SQL_Connect(t *testing.T) {
 }
 
 func Test_SQL_Prepare(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -72,6 +76,8 @@ func Test_SQL_Prepare(t *testing.T) {
 }
 
 func Test_SQL_Exec(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -99,6 +105,8 @@ func Test_SQL_Exec(t *testing.T) {
 }
 
 func Test_SQL_Query(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -126,6 +134,8 @@ func Test_SQL_Query(t *testing.T) {
 }
 
 func Test_SQL_Query_Tx(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -155,6 +165,8 @@ func Test_SQL_Query_Tx(t *testing.T) {
 }
 
 func Test_SQL_Query_Tx_Row(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, logBuilder := ConnectTestDB(t)
@@ -191,6 +203,8 @@ func Test_SQL_Query_Tx_Row(t *testing.T) {
 }
 
 func Test_SQL_Query_Tx_RowCtx(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, _ := ConnectTestDB(t)
@@ -214,6 +228,8 @@ func Test_SQL_Query_Tx_RowCtx(t *testing.T) {
 }
 
 func Test_SQL_Create(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	db, err := sql.ObserveDB(&gosql.DB{}, log.NewNopLogger(), "test1")
@@ -222,12 +238,16 @@ func Test_SQL_Create(t *testing.T) {
 }
 
 func Test_SQL_Monitor(t *testing.T) {
+	skipIfDisabled(t)
+
 	a := assert.New(t)
 
 	a.NoError(sql.MeasureStats(&gosql.DB{}, "test1"))
 }
 
 func Test_SQL_Monitor_Query(t *testing.T) {
+	skipIfDisabled(t)
+
 	done := sql.MeasureQuery(LazyNopLogger, time.Minute.Milliseconds(), "1", "tx", "select * from test", 0)
 	done()
 
@@ -269,6 +289,8 @@ func LazyNopLogger() log.Logger {
 
 func ConnectTestDB(t *testing.T) (*sql.DB, *log.BufferedLogger) {
 	t.Helper()
+	skipIfDisabled(t)
+
 	open := func() (*gosql.DB, error) {
 		db, err := gosql.Open("mysql", "moov:moov@tcp(localhost:3306)/")
 		if err != nil {
@@ -324,6 +346,8 @@ func ConnectTestDB(t *testing.T) (*sql.DB, *log.BufferedLogger) {
 
 func AddRecord(t *testing.T, db *sql.DB) string {
 	t.Helper()
+	skipIfDisabled(t)
+
 	// Add a record
 	id := uuid.NewString()
 	sql := "INSERT INTO moov.test(id, value) VALUES (?, ?)"
@@ -345,4 +369,12 @@ func Test_CleanQuery(t *testing.T) {
 	cleaned := sql.CleanQuery(query)
 
 	assert.Equal(t, `SELECT * FROM sometable WHERE sometable.field = ?`, cleaned)
+}
+
+func skipIfDisabled(t *testing.T) {
+	t.Helper()
+
+	if testing.Short() {
+		t.Skip("-short flag provided")
+	}
 }
