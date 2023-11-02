@@ -9,7 +9,7 @@ ifeq ($(OS),Windows_NT)
 else
 	@wget -O lint-project.sh https://raw.githubusercontent.com/moov-io/infra/master/go/lint-project.sh
 	@chmod +x ./lint-project.sh
-	GOCYCLO_LIMIT=26 COVER_THRESHOLD=50.0 GOLANGCI_LINTERS=gosec ./lint-project.sh
+	COVER_THRESHOLD=80.0 GOLANGCI_LINTERS=gosec ./lint-project.sh
 endif
 
 .PHONY: clean
