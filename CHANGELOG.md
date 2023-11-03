@@ -1,3 +1,16 @@
+## v0.48.0 (Released 2023-11-03)
+
+ADDITIONS
+
+- feat: add `build` package to log runtime information
+- feat: add `sql` package to instrument SQL statements
+- feat: add `telemetry` package to instrument OpenTracing in applications
+
+BUILD
+
+- chore(deps): update mysql docker tag to v8.2
+- fix(deps): update module github.com/google/uuid to v1.4.0
+
 ## v0.47.1 (Released 2023-10-26)
 
 IMPROVEMENTS
