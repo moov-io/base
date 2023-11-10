@@ -101,6 +101,13 @@ func (t Time) Equal(other Time) bool {
 
 func (t Time) IsHoliday() bool {
 	actual, observed, _ := t.cal.IsHoliday(t.Time)
+
+	// The Federal Reserve does not observe the following holidays on the preceding Friday
+	switch {
+	case t.Time.Year() == 2023 && t.Time.Month() == time.November && t.Time.Day() == 10:
+		return false
+	}
+
 	return actual || observed
 }
 
