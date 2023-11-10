@@ -187,7 +187,7 @@ func TestTime__IsBusinessDay(t *testing.T) {
 	for _, test := range tests {
 		actual := NewTime(test.Date).IsBusinessDay()
 		if actual != test.Expected {
-			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+			t.Fatalf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
 		}
 
 		actual = NewTime(test.Date).IsBusinessDay()
@@ -234,7 +234,7 @@ func TestTime__IsBankingDay(t *testing.T) {
 	for _, test := range tests {
 		actual := NewTime(test.Date).IsBankingDay()
 		if actual != test.Expected {
-			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+			t.Fatalf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
 		}
 
 		actual = NewTime(test.Date).IsBankingDay()
@@ -259,7 +259,7 @@ func TestTime__IsWeekend(t *testing.T) {
 	for _, test := range tests {
 		actual := NewTime(test.Date).IsWeekend()
 		if actual != test.Expected {
-			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+			t.Fatalf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
 		}
 
 		actual = NewTime(test.Date).IsWeekend()
@@ -338,9 +338,9 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{unchangeable, unchangeable, 501},
 		{unchangeable, unchangeable, 600},
 		// Input at the max
-		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.July, 5, 1, 0, 0, 0, est), 500},
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2023, time.June, 30, 1, 0, 0, 0, est), 500},
 		// Find one year in the future
-		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 29, 1, 0, 0, 0, est), 365 - 14 - (52 * 2)},
+		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 27, 1, 0, 0, 0, est), 365 - 14 - (52 * 2)},
 		// Late evening conversions should still fall on a late evening
 		{time.Date(2022, time.July, 6, 20, 1, 9, 0, est), time.Date(2022, time.July, 8, 20, 1, 9, 0, est), 2},
 		// Thursday -> Friday before Nov 2023 Veteran's Day
@@ -349,7 +349,7 @@ func TestTime_AddBankingDay(t *testing.T) {
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
 		if !actual.Equal(NewTime(test.Future)) {
-			t.Errorf("Adding %d days: expected %s, got %s", test.Days, NewTime(test.Future), actual)
+			t.Fatalf("Adding %d days: expected %s, got %s", test.Days, NewTime(test.Future), actual)
 		}
 
 		actual = NewTime(test.Date).AddBankingDay(test.Days)
@@ -374,6 +374,27 @@ func TestTime__Conversions(t *testing.T) {
 	when = NewTime(time.Date(2018, time.December, 26, 0, 30, 0, 0, madrid)).In(eastern)
 	if when.Day() != 25 {
 		t.Errorf("%v but expected to fall on Christmas", t)
+	}
+}
+
+func TestTime__FridayHoliday(t *testing.T) {
+	tests := []struct {
+		Date     time.Time
+		Expected bool
+	}{
+		// Friday
+		{time.Date(2026, time.December, 25, 9, 30, 0, 0, est), true},
+	}
+	for _, test := range tests {
+		actual := NewTime(test.Date).IsHoliday()
+		if actual != test.Expected {
+			t.Fatalf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+		}
+
+		actual = NewTime(test.Date).IsHoliday()
+		if actual != test.Expected {
+			t.Errorf("Date %s: expected %t, got %t", test.Date, test.Expected, actual)
+		}
 	}
 }
 

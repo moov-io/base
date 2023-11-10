@@ -103,14 +103,7 @@ func (t Time) IsHoliday() bool {
 	actual, observed, _ := t.cal.IsHoliday(t.Time)
 
 	// The Federal Reserve does not observe the following holidays on the preceding Friday
-	switch {
-	case t.Time.Year() == 2023 && t.Time.Month() == time.November && t.Time.Day() == 10:
-		return false
-	case t.Time.Year() == 2026 && t.Time.Month() == time.July && t.Time.Day() == 3:
-		return false
-	case t.Time.Year() == 2027 && t.Time.Month() == time.June && t.Time.Day() == 18:
-		return false
-	case t.Time.Year() == 2027 && t.Time.Month() == time.December && t.Time.Day() == 24:
+	if (!actual && observed) && t.Time.Weekday() == time.Friday {
 		return false
 	}
 
