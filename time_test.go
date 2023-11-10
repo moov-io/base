@@ -228,6 +228,8 @@ func TestTime__IsBankingDay(t *testing.T) {
 		{time.Date(2018, time.November, 22, 1, 0, 0, 0, est), false},
 		// Christmas Day
 		{time.Date(2018, time.December, 25, 1, 0, 0, 0, est), false},
+		// Friday before Nov 2023 Veteran's Day
+		{time.Date(2023, time.November, 10, 1, 0, 0, 0, est), true},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).IsBankingDay()
@@ -304,6 +306,26 @@ func TestTime_AddBusinessDay(t *testing.T) {
 	}
 }
 
+func TestTime_GetHoliday(t *testing.T) {
+	now := time.Date(2023, time.November, 10, 1, 0, 0, 0, est)
+	holiday := NewTime(now).GetHoliday()
+	require.NotNil(t, holiday)
+
+	t.Logf("holiday: %#v", holiday)
+	t.Logf(" type: %#v", holiday.Type)
+	t.Logf(" observed: %#v", holiday.Observed)
+	for i := range holiday.Observed {
+		o := holiday.Observed[i]
+		t.Logf("   day: %s  offset: %v", o.Day, o.Offset)
+	}
+
+	require.Equal(t, "Veterans Day", holiday.Name)
+
+	actual, observed := holiday.Calc(2023)
+	t.Logf("actual: %#v", actual)
+	t.Logf("observed: %#v", observed)
+}
+
 func TestTime_AddBankingDay(t *testing.T) {
 	unchangeable := time.Date(2021, time.July, 15, 1, 0, 0, 0, est)
 	tests := []struct {
@@ -334,6 +356,8 @@ func TestTime_AddBankingDay(t *testing.T) {
 		{time.Date(2021, time.July, 2, 1, 0, 0, 0, est), time.Date(2022, time.June, 29, 1, 0, 0, 0, est), 365 - 14 - (52 * 2)},
 		// Late evening conversions should still fall on a late evening
 		{time.Date(2022, time.July, 6, 20, 1, 9, 0, est), time.Date(2022, time.July, 8, 20, 1, 9, 0, est), 2},
+		// Thursday -> Friday before Nov 2023 Veteran's Day
+		{time.Date(2023, time.November, 9, 1, 0, 0, 0, est), time.Date(2023, time.November, 10, 1, 0, 0, 0, est), 1},
 	}
 	for _, test := range tests {
 		actual := NewTime(test.Date).AddBankingDay(test.Days)
