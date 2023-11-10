@@ -1,3 +1,13 @@
+## v0.48.2 (Released 2023-11-10)
+
+IMPROVEMENTS
+
+- time: use generic logic for Friday-observed banking days
+
+BUILD
+
+- fix(deps): update module github.com/gorilla/mux to v1.8.1
+
 ## v0.48.1 (Released 2023-11-10)
 
 IMPROVEMENTS
