@@ -310,20 +310,7 @@ func TestTime_GetHoliday(t *testing.T) {
 	now := time.Date(2023, time.November, 10, 1, 0, 0, 0, est)
 	holiday := NewTime(now).GetHoliday()
 	require.NotNil(t, holiday)
-
-	t.Logf("holiday: %#v", holiday)
-	t.Logf(" type: %#v", holiday.Type)
-	t.Logf(" observed: %#v", holiday.Observed)
-	for i := range holiday.Observed {
-		o := holiday.Observed[i]
-		t.Logf("   day: %s  offset: %v", o.Day, o.Offset)
-	}
-
 	require.Equal(t, "Veterans Day", holiday.Name)
-
-	actual, observed := holiday.Calc(2023)
-	t.Logf("actual: %#v", actual)
-	t.Logf("observed: %#v", observed)
 }
 
 func TestTime_AddBankingDay(t *testing.T) {
@@ -390,6 +377,29 @@ func TestTime__Conversions(t *testing.T) {
 	}
 }
 
+func TestTime__SaturdayHoliday(t *testing.T) {
+	est, _ := time.LoadLocation("America/New_York")
+	cases := []time.Time{
+		// The following are Saturday holidays where the Fed is open on Friday
+		time.Date(2023, time.November, 10, 10, 0, 0, 0, est),
+		time.Date(2026, time.July, 3, 10, 0, 0, 0, est),
+		time.Date(2027, time.June, 18, 10, 0, 0, 0, est),
+		time.Date(2027, time.December, 24, 10, 0, 0, 0, est),
+	}
+	for idx := range cases {
+		actual := NewTime(cases[idx]).IsBankingDay()
+		if !actual {
+			t.Fatalf("expected %s to be a banking day", cases[idx])
+		}
+
+		actual = NewTime(cases[idx]).IsBankingDay()
+		if !actual {
+			t.Fatalf("expected %s to be a banking day", cases[idx])
+		}
+	}
+
+}
+
 func TestTime__SundayHoliday(t *testing.T) {
 	// "if any holiday falls on a Sunday, the next following Monday is a standard
 	// Federal Reserve Bank holiday. ... process the file on the first business
@@ -411,6 +421,12 @@ func TestTime__SundayHoliday(t *testing.T) {
 	if wd := ts.Weekday(); wd != time.Tuesday {
 		t.Errorf("expected Tuesday, got %s", wd)
 	}
+
+	// July 4 2027 (Sunday) is observed on Monday
+	ts = NewTime(time.Date(2027, time.July, 2, 10, 0, 0, 0, eastern))
+	require.True(t, ts.IsBankingDay())
+	ts = ts.AddBankingDay(1)
+	require.Equal(t, "2027-07-06T10:00:00-04:00", ts.Format(time.RFC3339))
 }
 
 func TestTime__GetHoliday(t *testing.T) {

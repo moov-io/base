@@ -106,6 +106,12 @@ func (t Time) IsHoliday() bool {
 	switch {
 	case t.Time.Year() == 2023 && t.Time.Month() == time.November && t.Time.Day() == 10:
 		return false
+	case t.Time.Year() == 2026 && t.Time.Month() == time.July && t.Time.Day() == 3:
+		return false
+	case t.Time.Year() == 2027 && t.Time.Month() == time.June && t.Time.Day() == 18:
+		return false
+	case t.Time.Year() == 2027 && t.Time.Month() == time.December && t.Time.Day() == 24:
+		return false
 	}
 
 	return actual || observed
