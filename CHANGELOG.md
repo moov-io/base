@@ -1,3 +1,10 @@
+## v0.48.1 (Released 2023-11-10)
+
+IMPROVEMENTS
+
+- fix: Veteran's day is not observed today
+- test: check future Saturday holidays
+
 ## v0.48.0 (Released 2023-11-03)
 
 ADDITIONS
