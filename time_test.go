@@ -382,6 +382,9 @@ func TestTime__FridayHoliday(t *testing.T) {
 		Date     time.Time
 		Expected bool
 	}{
+		{time.Date(2026, time.December, 24, 9, 30, 0, 0, est), false},
+		{time.Date(2026, time.December, 28, 9, 30, 0, 0, est), false},
+
 		// Friday
 		{time.Date(2026, time.December, 25, 9, 30, 0, 0, est), true},
 	}
@@ -459,4 +462,23 @@ func TestTime__GetHoliday(t *testing.T) {
 	holiday := when.GetHoliday()
 	require.NotNil(t, holiday)
 	require.Equal(t, "Christmas Day", holiday.Name)
+}
+
+func TestTime__YearlyHolidays(t *testing.T) {
+	est, _ := time.LoadLocation("America/New_York")
+	cases := []struct {
+		when    time.Time
+		holiday bool
+	}{
+		{time.Date(2023, time.December, 25, 12, 0, 0, 0, est), true},
+		{time.Date(2023, time.December, 26, 12, 0, 0, 0, est), false},
+		{time.Date(2024, time.January, 1, 12, 0, 0, 0, est), true},
+		{time.Date(2024, time.January, 2, 12, 0, 0, 0, est), false},
+	}
+	for i := range cases {
+		description := fmt.Sprintf("%s holiday=%v", cases[i].when.Format(time.RFC3339), cases[i].holiday)
+
+		require.Equal(t, cases[i].holiday, NewTime(cases[i].when).IsHoliday(), description)
+		require.NotEqual(t, cases[i].holiday, NewTime(cases[i].when).IsBankingDay(), description)
+	}
 }
