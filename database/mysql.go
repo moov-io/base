@@ -149,6 +149,9 @@ func mysqlConnection(logger log.Logger, mysqlConfig *MySQLConfig, databaseName s
 				}
 
 				block, _ := pem.Decode(certPem)
+				if block == nil {
+					return nil, fmt.Errorf("problem reading %s for PEM data", mysqlConfig.TLSCAFile)
+				}
 				_, err = x509.ParseCertificate(block.Bytes)
 				if err != nil {
 					return nil, err

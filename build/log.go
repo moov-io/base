@@ -9,8 +9,9 @@ import (
 
 func Log(logger log.Logger) {
 	info, ok := debug.ReadBuildInfo()
-	if !ok {
+	if info == nil || !ok {
 		logger.Error().Log("unable to read build info, pleasure ensure go module support")
+		return
 	}
 
 	logger = logger.With(log.Fields{
