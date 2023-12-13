@@ -9,6 +9,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseError_Error(t *testing.T) {
@@ -115,6 +117,18 @@ func TestErrorList_Empty(t *testing.T) {
 	var buf bytes.Buffer
 	errorList.Print(&buf)
 	buf.Reset()
+}
+
+func TestErrorList__EmptyThenNot(t *testing.T) {
+	var el ErrorList
+	require.NoError(t, el.Err())
+	require.Equal(t, "<nil>", el.Error())
+	require.True(t, el.Empty())
+
+	el.Add(errors.New("bad thing"))
+	require.Error(t, el.Err())
+	require.Equal(t, "bad thing", el.Error())
+	require.False(t, el.Empty())
 }
 
 func TestErrorList_MarshalJSON(t *testing.T) {
