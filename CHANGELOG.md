@@ -1,3 +1,18 @@
+## v0.48.3 (Released 2023-12-13)
+
+IMPROVEMENTS
+
+- chore: add better logging around running migrations
+- chore: check for some rare null pointers
+- test: checking ErrorList conditions
+- test: verify upcoming holidays calculate correctly
+
+BUILD
+
+- fix(deps): update google.golang.org/grpc to v1.60.0
+- fix(deps): update module cloud.google.com/go/spanner to v1.53.1
+- fix(deps): update opentelemetry-go monorepo to v1.20.0
+
 ## v0.48.2 (Released 2023-11-10)
 
 IMPROVEMENTS
