@@ -54,18 +54,36 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOpti
 		m.LockTimeout = *o.timeout
 	}
 
+	currentVersion, dirty, err := m.Version()
+	if err != nil {
+		if err != migrate.ErrNilVersion {
+			return logger.Fatal().LogErrorf("Error getting current DB version: %w", err).Err()
+		}
+		// set sane values
+		currentVersion = 0
+		dirty = false
+	}
 	err = m.Up()
 	migrationMutex.Unlock()
 
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		logger.Info().Log("Database already at version")
+		logger.Info().Logf("Database already at version %d (dirty: %b)", currentVersion, dirty)
 	default:
-		return logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
+		return logger.Fatal().LogErrorf("Error running migrations (current: %d, dirty: %b): %w", currentVersion, dirty, err).Err()
 	}
 
-	logger.Info().Log("Migrations complete")
+	newVersion, newDirty, err := m.Version()
+	if err != nil {
+		if err != migrate.ErrNilVersion {
+			return logger.Fatal().LogErrorf("Error getting new DB version: %w", err).Err()
+		}
+		// set sane values
+		newVersion = 0
+		newDirty = false
+	}
+	logger.Info().Logf("Migrations complete: %d (%b) -> %d (%b)", currentVersion, dirty, newVersion, newDirty)
 
 	return nil
 }
