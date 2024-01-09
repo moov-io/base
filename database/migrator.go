@@ -83,7 +83,8 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOpti
 		newVersion = 0
 		newDirty = false
 	}
-	logger.Info().Logf("Migrations complete: %d (%b) -> %d (%b)", currentVersion, dirty, newVersion, newDirty)
+
+	logger.Info().Logf("Migrations complete: previous: %d (dirty:%v) -> current: %d (dirty:%v)", currentVersion, dirty, newVersion, newDirty)
 
 	return nil
 }
