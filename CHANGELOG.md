@@ -1,3 +1,17 @@
+## v0.48.4 (Released 2024-01-09)
+
+IMPROVEMENTS
+
+- fix: proper printf verbs
+
+BUILD
+
+- build(deps): bump golang.org/x/crypto from 0.16.0 to 0.17.0
+- fix(deps): update module github.com/golang-migrate/migrate/v4 to v4.17.0
+- fix(deps): update module github.com/prometheus/client_golang to v1.18.0
+- fix(deps): update module github.com/spf13/viper to v1.18.2
+- fix(deps): update module google.golang.org/grpc to v1.60.1
+
 ## v0.48.3 (Released 2023-12-13)
 
 IMPROVEMENTS
