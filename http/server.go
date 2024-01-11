@@ -156,7 +156,7 @@ func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int,
 	count = int(math.Min(float64(count), float64(countMax)))
 	count = int(math.Max(0, float64(count)))
 	if count == 0 {
-		count = 20
+		count = 200
 	}
 
 	return skip, count, exists, nil
