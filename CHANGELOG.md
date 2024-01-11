@@ -1,3 +1,13 @@
+## v0.48.5 (Released 2024-01-11)
+
+IMPROVEMENTS
+
+- http: Update default count value to 200
+
+BUILD
+
+- fix(deps): update module cloud.google.com/go/spanner to v1.55.0
+
 ## v0.48.4 (Released 2024-01-09)
 
 IMPROVEMENTS
