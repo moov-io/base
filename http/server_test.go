@@ -182,8 +182,8 @@ func TestGetSkipAndCountReturnsDefaultsWhenNotProvided(t *testing.T) {
 	if skip != 0 {
 		t.Errorf("skip should be 0. got : %d", skip)
 	}
-	if count != 20 {
-		t.Errorf("count should be 20. got : %d", count)
+	if count != 200 {
+		t.Errorf("count should be 200. got : %d", count)
 	}
 	if exists != false {
 		t.Errorf("exists should be false. got : %t", exists)
@@ -216,8 +216,8 @@ func TestGetSkipAndCountWhenOnlySkipProvidedReturnsDefaultCount(t *testing.T) {
 	if skip != 10 {
 		t.Errorf("skip should be 10. got : %d", skip)
 	}
-	if count != 20 {
-		t.Errorf("count should be 20. got : %d", count)
+	if count != 200 {
+		t.Errorf("count should be 200. got : %d", count)
 	}
 	if exists != true {
 		t.Errorf("exists should be true. got : %t", exists)
@@ -250,8 +250,8 @@ func TestGetSkipMaxWhenSkipProvidedLargerThanMax(t *testing.T) {
 	if skip != math.MaxInt32 {
 		t.Errorf("skip should be %d. got : %d", math.MaxInt32, skip)
 	}
-	if count != 20 {
-		t.Errorf("count should be 20. got : %d", count)
+	if count != 200 {
+		t.Errorf("count should be 200. got : %d", count)
 	}
 	if exists != true {
 		t.Errorf("exists should be true. got : %t", exists)
@@ -318,8 +318,8 @@ func TestGetSkipAndCountReturns0IfNegativeValuesPassed(t *testing.T) {
 	if skip != 0 {
 		t.Errorf("skip should be 0. got : %d", skip)
 	}
-	if count != 20 {
-		t.Errorf("count should be 20. got : %d", count)
+	if count != 200 {
+		t.Errorf("count should be 200. got : %d", count)
 	}
 	if exists != true {
 		t.Errorf("exists should be true. got : %t", exists)
