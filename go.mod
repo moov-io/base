@@ -10,7 +10,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.0
-	github.com/googleapis/go-sql-spanner v1.2.0
+	github.com/googleapis/go-sql-spanner v1.2.1
 	github.com/gorilla/mux v1.8.1
 	github.com/madflojo/testcerts v1.1.1
 	github.com/markbates/pkger v0.17.1
