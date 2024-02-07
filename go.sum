@@ -122,6 +122,8 @@ github.com/googleapis/go-sql-spanner v1.1.1 h1:Z5kRckvrSNokM/x21BBy23kg9b0e9ikkd
 github.com/googleapis/go-sql-spanner v1.1.1/go.mod h1:e12AKZmltQH/2XGqR/2SAPWPKshc5+WF4W7OGD9YcAw=
 github.com/googleapis/go-sql-spanner v1.2.0 h1:TEOylhdo+5KoknrgCUVpTGlTv56eHQIttw/hBVnxiZM=
 github.com/googleapis/go-sql-spanner v1.2.0/go.mod h1:EO01M66RcAXdgxLKipnNwjEQKO1mEBsp42YsWRB3EFU=
+github.com/googleapis/go-sql-spanner v1.2.1 h1:YX7RrtPfFKn5enizPTRoULuBjDA+3Zv02OW2pBBeTGI=
+github.com/googleapis/go-sql-spanner v1.2.1/go.mod h1:EO01M66RcAXdgxLKipnNwjEQKO1mEBsp42YsWRB3EFU=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1 h1:6UKoz5ujsI55KNpsJH3UwCq3T8kKbZwNZBNPuTTje8U=
