@@ -470,10 +470,33 @@ func TestTime__YearlyHolidays(t *testing.T) {
 		when    time.Time
 		holiday bool
 	}{
+		// Christmas 2023 and observed day
 		{time.Date(2023, time.December, 25, 12, 0, 0, 0, est), true},
 		{time.Date(2023, time.December, 26, 12, 0, 0, 0, est), false},
-		{time.Date(2024, time.January, 1, 12, 0, 0, 0, est), true},
+
+		// No holiday
 		{time.Date(2024, time.January, 2, 12, 0, 0, 0, est), false},
+
+		// Martin Luther King Jr. Day
+		{time.Date(2024, time.January, 1, 12, 0, 0, 0, est), true},
+		// President's Day
+		{time.Date(2024, time.February, 19, 10, 0, 0, 0, est), true},
+		// Feb 29th
+		{time.Date(2024, time.February, 29, 10, 0, 0, 0, est), false},
+		// Memorial Day
+		{time.Date(2024, time.May, 27, 10, 0, 0, 0, est), true},
+		// Independence Day
+		{time.Date(2024, time.July, 4, 10, 0, 0, 0, est), true},
+		// Labor Day
+		{time.Date(2024, time.September, 2, 10, 0, 0, 0, est), true},
+		// Columbus Day
+		{time.Date(2024, time.October, 14, 10, 0, 0, 0, est), true},
+		// Veterans Day
+		{time.Date(2024, time.November, 11, 10, 0, 0, 0, est), true},
+		// Thanksgiving Day
+		{time.Date(2024, time.November, 28, 10, 0, 0, 0, est), true},
+		// Christmas Day
+		{time.Date(2024, time.December, 25, 10, 0, 0, 0, est), true},
 	}
 	for i := range cases {
 		description := fmt.Sprintf("%s holiday=%v", cases[i].when.Format(time.RFC3339), cases[i].holiday)
