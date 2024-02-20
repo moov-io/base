@@ -3,7 +3,7 @@ module github.com/moov-io/base
 go 1.19
 
 require (
-	cloud.google.com/go/spanner v1.56.0
+	cloud.google.com/go/spanner v1.57.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.7.1
@@ -32,7 +32,7 @@ require (
 	cloud.google.com/go v0.112.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.1.5 // indirect
+	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/longrunning v0.5.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
