@@ -177,3 +177,43 @@ func (t Time) IsWeekend() bool {
 	day := t.Time.Weekday()
 	return day == time.Saturday || day == time.Sunday
 }
+
+// AddBankingTime increments t by the hours, minutes, and seconds provided
+// but keeps the final time within 9am to 5pm in t's Location.
+func (t Time) AddBankingTime(hours, minutes, seconds int) Time {
+	duration := time.Duration(hours) * time.Hour
+	duration += time.Duration(minutes) * time.Minute
+	duration += time.Duration(seconds) * time.Second
+
+	return addBankingDuration(t, duration)
+}
+
+func addBankingDuration(start Time, duration time.Duration) Time {
+	// If we're past the current day's banking hours advance forward one day
+	if start.Hour() >= 17 && (start.Minute() > 0 || start.Second() > 0) {
+		start = start.AddBankingDay(1)
+	}
+
+	// Start the day at 9am or later, but not past 5pm
+	if start.Hour() < 9 || start.Hour() >= 17 {
+		start.Time = time.Date(start.Year(), start.Month(), start.Day(), 9, start.Minute(), start.Second(), 0, start.Location())
+	}
+
+	// Add banking hours as we can
+	for duration > 0 {
+		if start.IsBankingDay() {
+			// Calculate the time remaining in the banking day
+			endOfDay := time.Date(start.Year(), start.Month(), start.Day(), 17, 0, 0, 0, start.Location())
+			remainingToday := endOfDay.Sub(start.Time)
+			if duration < remainingToday {
+				start.Time = start.Time.Add(duration)
+				return start
+			}
+			duration -= remainingToday
+		}
+		// Move to the next banking day starting at 9 AM
+		start = start.AddBankingDay(1)
+		start.Time = time.Date(start.Year(), start.Month(), start.Day(), 9, 0, 0, 0, start.Location())
+	}
+	return start
+}

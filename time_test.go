@@ -505,3 +505,71 @@ func TestTime__YearlyHolidays(t *testing.T) {
 		require.NotEqual(t, cases[i].holiday, NewTime(cases[i].when).IsBankingDay(), description)
 	}
 }
+
+func TestTime_AddBankingTime(t *testing.T) {
+	loc, _ := time.LoadLocation("America/New_York")
+	cases := []struct {
+		input                   time.Time
+		hours, minutes, seconds int
+		expected                time.Time
+	}{
+		{
+			// Normal day -> later that day
+			input: time.Date(2024, time.April, 30, 10, 30, 0, 0, loc),
+			hours: 2, minutes: 25, seconds: 18,
+			expected: time.Date(2024, time.April, 30, 12, 55, 18, 0, loc),
+		},
+		{
+			// Before 9am on banking day, adding less than what gets us to 9am,
+			// should still be +2hrs after 9am
+			input: time.Date(2024, time.April, 30, 2, 30, 0, 0, loc),
+			hours: 2, minutes: 25, seconds: 18,
+			expected: time.Date(2024, time.April, 30, 11, 55, 18, 0, loc),
+		},
+		{
+			// Overlaps to next day
+			input: time.Date(2024, time.April, 30, 10, 30, 0, 0, loc),
+			hours: 7, minutes: 25, seconds: 18,
+			expected: time.Date(2024, time.May, 1, 9, 55, 18, 0, loc),
+		},
+		{
+			// After 5pm on banking day, advanced to next day
+			input: time.Date(2024, time.June, 30, 17, 30, 0, 0, loc),
+			hours: 7, minutes: 25, seconds: 18,
+			expected: time.Date(2024, time.July, 1, 16, 55, 18, 0, loc),
+		},
+		{
+			// After 5pm on bankng day, advance 2+ banking days
+			input: time.Date(2024, time.June, 30, 17, 30, 0, 0, loc),
+			hours: 8, minutes: 25, seconds: 18,
+			expected: time.Date(2024, time.July, 2, 9, 55, 18, 0, loc),
+		},
+		{
+			// Negative, do nothing
+			input: time.Date(2024, time.April, 30, 10, 30, 0, 0, loc),
+			hours: -7, minutes: -25, seconds: -18,
+			expected: time.Date(2024, time.April, 30, 10, 30, 0, 0, loc),
+		},
+		{
+			// Thursday July 4th is a holiday, so move to Friday
+			input: time.Date(2024, time.July, 3, 15, 30, 0, 0, loc),
+			hours: 4, minutes: 12, seconds: 18,
+			expected: time.Date(2024, time.July, 5, 11, 42, 18, 0, loc),
+		},
+		{
+			// Monday May 27th is a holiday, so Thursday -> Tuesday
+			input: time.Date(2024, time.May, 23, 14, 30, 0, 0, loc),
+			hours: 11, minutes: 12, seconds: 18,
+			expected: time.Date(2024, time.May, 28, 9, 42, 18, 0, loc),
+		},
+	}
+	for idx, tc := range cases {
+		t.Run(fmt.Sprintf("case_%d", idx), func(t *testing.T) {
+			desc := fmt.Sprintf("start=%v  hours=%v minutes=%v seconds=%v\n",
+				tc.input.Format(time.RFC3339),
+				tc.hours, tc.minutes, tc.seconds)
+			got := NewTime(tc.input).AddBankingTime(tc.hours, tc.minutes, tc.seconds)
+			require.Equal(t, tc.expected.Format(time.RFC3339), got.Format(time.RFC3339), desc)
+		})
+	}
+}
