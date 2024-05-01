@@ -43,7 +43,3 @@ jobs:
       env:
         CGO_ENABLED: "0"
         GOTEST_FLAGS: "-short"
-
-    - name: Upload Code Coverage
-      if: runner.os == 'Linux'
-      run: bash <(curl -s https://codecov.io/bash)
