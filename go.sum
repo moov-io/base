@@ -861,6 +861,8 @@ github.com/googleapis/gax-go/v2 v2.12.2 h1:mhN09QQW1jEWeMF74zGR81R30z4VJzjZsfkUh
 github.com/googleapis/gax-go/v2 v2.12.2/go.mod h1:61M8vcyyXR2kqKFxKrfA22jaA8JGF7Dc8App1U3H6jc=
 github.com/googleapis/gax-go/v2 v2.12.3 h1:5/zPPDvw8Q1SuXjrqrZslrqT7dL/uJT2CQii/cLCKqA=
 github.com/googleapis/gax-go/v2 v2.12.3/go.mod h1:AKloxT6GtNbaLm8QTNSidHUVsHYcBHwWRvkNFJUQcS4=
+github.com/googleapis/gax-go/v2 v2.12.4 h1:9gWcmF85Wvq4ryPFvGFaOgPIs1AQX0d0bcbGw4Z96qg=
+github.com/googleapis/gax-go/v2 v2.12.4/go.mod h1:KYEYLorsnIGDi/rPC8b5TdlB9kbKoFubselGIoBMCwI=
 github.com/googleapis/go-sql-spanner v1.2.1 h1:YX7RrtPfFKn5enizPTRoULuBjDA+3Zv02OW2pBBeTGI=
 github.com/googleapis/go-sql-spanner v1.2.1/go.mod h1:EO01M66RcAXdgxLKipnNwjEQKO1mEBsp42YsWRB3EFU=
 github.com/googleapis/go-sql-spanner v1.3.0 h1:ohyIMohJv1X2Kf/xvOjh6na6UhQKBz32GIPjKPQNA48=
