@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/moov-io/base/log"
 
 	"github.com/markbates/pkger"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -44,16 +44,17 @@ func (s *Service) LoadFromFS(config interface{}, fs fs.FS) error {
 }
 
 func (s *Service) MergeEnvironments(config interface{}) error {
+	v := viper.New()
 
-	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, config); err != nil {
+	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, v); err != nil {
 		return err
 	}
 
-	if err := LoadEnvironmentFile(s.logger, APP_CONFIG_SECRETS, config); err != nil {
+	if err := LoadEnvironmentFile(s.logger, APP_CONFIG_SECRETS, v); err != nil {
 		return err
 	}
 
-	return nil
+	return v.UnmarshalExact(config, overwriteConfig)
 }
 
 func (s *Service) LoadFile(file string, config interface{}) error {
@@ -102,7 +103,7 @@ func configFromReader(config interface{}, f io.Reader) error {
 	return nil
 }
 
-func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) error {
+func LoadEnvironmentFile(logger log.Logger, envVar string, v *viper.Viper) error {
 	if file, ok := os.LookupEnv(envVar); ok && strings.TrimSpace(file) != "" {
 
 		logger := logger.Set(envVar, log.String(file))
@@ -111,16 +112,10 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, config interface{}) e
 		logger = logger.Set("file", log.String(file))
 		logger.Info().Logf("loading config file")
 
-		overrides := viper.New()
+		v.SetConfigFile(file)
 
-		overrides.SetConfigFile(file)
-
-		if err := overrides.ReadInConfig(); err != nil {
-			return logger.LogErrorf("Failed loading the specific app config: %w", err).Err()
-		}
-
-		if err := overrides.UnmarshalExact(config, overwriteConfig); err != nil {
-			return logger.LogErrorf("Unable to unmarshal the specific app config: %w", err).Err()
+		if err := v.MergeInConfig(); err != nil {
+			return logger.LogErrorf("merging config failed: %w", err).Err()
 		}
 	}
 

@@ -1,0 +1,7 @@
+Config:
+  Widgets:
+    AAA:
+      Name: "aaa"
+      Credentials:
+        Username: "u1"
+        Password: "p1"
