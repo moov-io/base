@@ -1,3 +1,28 @@
+## v0.49.0 (Released 2024-05-09)
+
+IMPROVEMENTS
+
+- config: merge arbitrary map's together
+- feat: AddBankingTime
+- strx: simplify implementation in Go 1.22+
+
+BUILD
+
+- chore(deps): update mysql docker tag to v8.4
+- chore(deps): update dependency go to v1.22.3
+- fix(deps): update module github.com/go-sql-driver/mysql to v1.8.1
+- fix(deps): update module cloud.google.com/go/spanner to v1.61.0
+- fix(deps): update module github.com/google/uuid to v1.6.0
+- fix(deps): update module github.com/stretchr/testify to v1.9.0
+- fix(deps): update module github.com/googleapis/gax-go/v2 to v2.12.4
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.3.1
+- fix(deps): update module github.com/prometheus/client_golang to v1.19.1
+- fix(deps): update module github.com/golang-migrate/migrate/v4 to v4.17.1
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.14
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.15
+- fix(deps): update module google.golang.org/grpc to v1.63.2
+- fix(deps): update opentelemetry-go monorepo to v1.26.0
+
 ## v0.48.5 (Released 2024-01-11)
 
 IMPROVEMENTS
