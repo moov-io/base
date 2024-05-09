@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -21,15 +20,36 @@ type ConfigModel struct {
 	Secret  string
 	Values  []string
 	Zero    string
+
+	Widgets map[string]Widget
+}
+
+type Widget struct {
+	Name        string
+	Credentials Credentials
+	Nested      Nested
+}
+
+type Credentials struct {
+	Username string
+	Password string
+}
+
+type Nested struct {
+	Nested2 Nested2
+}
+
+type Nested2 struct {
+	Nested3 Nested3
+}
+
+type Nested3 struct {
+	Value string
 }
 
 func Test_Load(t *testing.T) {
 	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
 	t.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
-	t.Cleanup(func() {
-		os.Unsetenv(config.APP_CONFIG)
-		os.Unsetenv(config.APP_CONFIG_SECRETS)
-	})
 
 	cfg := &GlobalConfigModel{}
 
@@ -65,10 +85,6 @@ func Test_Load(t *testing.T) {
 func Test_Embedded_Load(t *testing.T) {
 	t.Setenv(config.APP_CONFIG, filepath.Join("..", "configs", "config.app.yml"))
 	t.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("..", "configs", "config.secrets.yml"))
-	t.Cleanup(func() {
-		os.Unsetenv(config.APP_CONFIG)
-		os.Unsetenv(config.APP_CONFIG_SECRETS)
-	})
 
 	cfg := &GlobalConfigModel{}
 
@@ -99,4 +115,23 @@ func Test_Embedded_Load(t *testing.T) {
 	err = service.Load(cfg)
 	require.NotNil(t, err)
 	require.Contains(t, err.Error(), `'Config' has invalid keys: extra`)
+}
+
+func Test_WidgetsConfig(t *testing.T) {
+	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-widgets.yml"))
+	t.Setenv(config.APP_CONFIG_SECRETS, filepath.Join("testdata", "with-widget-secrets.yml"))
+
+	cfg := &GlobalConfigModel{}
+
+	service := config.NewService(log.NewDefaultLogger())
+	err := service.LoadFromFS(cfg, base.ConfigDefaults)
+	require.Nil(t, err)
+
+	w, ok := cfg.Config.Widgets["aaa"]
+	require.True(t, ok)
+
+	require.Equal(t, "aaa", w.Name)
+	require.Equal(t, "u1", w.Credentials.Username)
+	require.Equal(t, "p2", w.Credentials.Password)
+	require.Equal(t, "v1", w.Nested.Nested2.Nested3.Value)
 }
