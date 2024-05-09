@@ -15,7 +15,7 @@ require (
 	github.com/madflojo/testcerts v1.1.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/rickar/cal/v2 v2.1.15
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
