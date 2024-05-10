@@ -1,3 +1,15 @@
+## v0.49.2 (Released 2024-05-10)
+
+IMPROVEMENTS
+
+- strx: revert Go 1.22 simplification
+
+BUILD
+
+- build: -short test on Windows
+- build: run oldstable Go, run go test on windows
+- database: fix cert paths in test
+
 ## v0.49.1 (Released 2024-05-10)
 
 BUILD
