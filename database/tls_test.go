@@ -11,8 +11,10 @@ import (
 )
 
 func Test_LoadClientCertsFromConfig(t *testing.T) {
-	certFilepath := filepath.Join("/", "tmp", "client_cert.pem")
-	keyFilepath := filepath.Join("/", "tmp", "client_cert_private_key.pem")
+	dir := t.TempDir()
+
+	certFilepath := filepath.Join(dir, "client_cert.pem")
+	keyFilepath := filepath.Join(dir, "client_cert_private_key.pem")
 
 	err := testcerts.GenerateCertsToFile(certFilepath, keyFilepath)
 	require.Nil(t, err)
