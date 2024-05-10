@@ -1,3 +1,9 @@
+## v0.49.1 (Released 2024-05-10)
+
+BUILD
+
+- meta: downgrade Go to 1.21 until Openshift supports newer Go
+
 ## v0.49.0 (Released 2024-05-09)
 
 IMPROVEMENTS
