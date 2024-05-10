@@ -1,6 +1,6 @@
 module github.com/moov-io/base
 
-go 1.22.3
+go 1.21
 
 require (
 	cloud.google.com/go/spanner v1.61.0
