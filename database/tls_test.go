@@ -11,14 +11,17 @@ import (
 )
 
 func Test_LoadClientCertsFromConfig(t *testing.T) {
-	err := testcerts.GenerateCertsToFile("/tmp/client_cert.pem", "/tmp/client_cert_private_key.pem")
+	certFilepath := filepath.Join("/", "tmp", "client_cert.pem")
+	keyFilepath := filepath.Join("/", "tmp", "client_cert_private_key.pem")
+
+	err := testcerts.GenerateCertsToFile(certFilepath, keyFilepath)
 	require.Nil(t, err)
 
 	config := &database.MySQLConfig{
 		TLSClientCerts: []database.TLSClientCertConfig{
 			{
-				CertFilePath: filepath.Join("/", "tmp", "client_cert.pem"),
-				KeyFilePath:  filepath.Join("/", "tmp", "client_cert_private_key.pem"),
+				CertFilePath: certFilepath,
+				KeyFilePath:  keyFilepath,
 			},
 		},
 	}
