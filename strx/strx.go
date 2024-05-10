@@ -5,14 +5,18 @@
 package strx
 
 import (
-	"cmp"
 	"strconv"
 	"strings"
 )
 
 // Or returns the first non-empty string
 func Or(options ...string) string {
-	return cmp.Or(options...)
+	for i := range options {
+		if v := strings.TrimSpace(options[i]); v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 // Yes returns true if the provided case-insensitive string matches 'yes' and is used to parse config values.
