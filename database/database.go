@@ -79,14 +79,15 @@ func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger l
 		db.SetMaxIdleConns(connections.MaxIdle)
 	}
 
-	if connections.MaxLifetime > 0 {
-		logger.Logf("setting SQL max lifetime to %v", connections.MaxLifetime)
-		db.SetConnMaxLifetime(connections.MaxLifetime)
-	}
-
+	// Due to a known issue https://github.com/golang/go/issues/45993#issuecomment-1427873850, maxIdleTime must be specified in order before MaxLifetime else it will not be honored
 	if connections.MaxIdleTime > 0 {
 		logger.Logf("setting SQL max idle time to %v", connections.MaxIdleTime)
 		db.SetConnMaxIdleTime(connections.MaxIdleTime)
+	}
+
+	if connections.MaxLifetime > 0 {
+		logger.Logf("setting SQL max lifetime to %v", connections.MaxLifetime)
+		db.SetConnMaxLifetime(connections.MaxLifetime)
 	}
 
 	return db
