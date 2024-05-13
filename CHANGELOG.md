@@ -1,3 +1,9 @@
+## v0.49.3 (Released 2024-05-13)
+
+IMPROVEMENTS
+
+- database: enforce ordering of sql.DB config (SetConnMaxIdleTime before SetConnMaxLifetime)
+
 ## v0.49.2 (Released 2024-05-10)
 
 IMPROVEMENTS
