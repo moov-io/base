@@ -17,7 +17,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rickar/cal/v2 v2.1.15
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.27.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.27.0
