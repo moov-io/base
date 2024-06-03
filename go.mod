@@ -10,7 +10,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.4
-	github.com/googleapis/go-sql-spanner v1.3.1
+	github.com/googleapis/go-sql-spanner v1.4.0
 	github.com/gorilla/mux v1.8.1
 	github.com/madflojo/testcerts v1.2.0
 	github.com/markbates/pkger v0.17.1
@@ -93,9 +93,9 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.180.0 // indirect
-	google.golang.org/genproto v0.0.0-20240506185236-b8a5c65736ae // indirect
+	google.golang.org/genproto v0.0.0-20240509183442-62759503f434 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240515191416-fc5f0ca64291 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
