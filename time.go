@@ -190,7 +190,7 @@ func (t Time) AddBankingTime(hours, minutes, seconds int) Time {
 
 func addBankingDuration(start Time, duration time.Duration) Time {
 	// If we're past the current day's banking hours advance forward one day
-	if start.Hour() >= 17 && (start.Minute() > 0 || start.Second() > 0) {
+	if start.Hour() >= 17 {
 		start = start.AddBankingDay(1)
 	}
 
