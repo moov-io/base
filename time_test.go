@@ -562,6 +562,12 @@ func TestTime_AddBankingTime(t *testing.T) {
 			hours: 11, minutes: 12, seconds: 18,
 			expected: time.Date(2024, time.May, 28, 9, 42, 18, 0, loc),
 		},
+		{
+			// Exactly 17:00:00 on a banking day
+			input: time.Date(2024, time.June, 6, 17, 0, 0, 0, loc),
+			hours: 2, minutes: 10, seconds: 0,
+			expected: time.Date(2024, time.June, 7, 11, 10, 0, 0, loc),
+		},
 	}
 	for idx, tc := range cases {
 		t.Run(fmt.Sprintf("case_%d", idx), func(t *testing.T) {
