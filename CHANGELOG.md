@@ -1,3 +1,18 @@
+## v0.49.4 (Released 2024-06-11)
+
+IMPROVEMENTS
+
+- time: if exactly 5pm, should go to next banking day
+
+BUILD
+
+- fix(deps): update module cloud.google.com/go/spanner to v1.63.0
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.4.0
+- fix(deps): update module github.com/madflojo/testcerts to v1.2.0
+- fix(deps): update module github.com/spf13/viper to v1.19.0
+- fix(deps): update module google.golang.org/grpc to v1.64.0
+- fix(deps): update opentelemetry-go monorepo to v1.27.0
+
 ## v0.49.3 (Released 2024-05-13)
 
 IMPROVEMENTS
