@@ -20,7 +20,7 @@ type SpannerConfig struct {
 	Project  string
 	Instance string
 
-	CleanStatements *bool
+	DisableCleanStatements bool
 }
 
 type MySQLConfig struct {

@@ -24,10 +24,7 @@ func spannerConnection(_ log.Logger, cfg SpannerConfig, databaseName string) (*s
 }
 
 func SpannerMigrationDriver(cfg SpannerConfig, databaseName string) (database.Driver, error) {
-	clean := true
-	if cfg.CleanStatements != nil {
-		clean = *cfg.CleanStatements
-	}
+	clean := !cfg.DisableCleanStatements
 
 	s := migspanner.Spanner{}
 	return s.Open(fmt.Sprintf("spanner://projects/%s/instances/%s/databases/%s?x-migrations-table=spanner_schema_migrations&x-clean-statements=%t", cfg.Project, cfg.Instance, databaseName, clean))
