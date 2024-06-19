@@ -1,3 +1,13 @@
+## v0.50.0 (Released 2024-06-19)
+
+IMPROVEMENTS
+
+- feat: allowing for the x-clean-statements during spanner migrations to be configurable
+
+BUILD
+
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.16
+
 ## v0.49.4 (Released 2024-06-11)
 
 IMPROVEMENTS
