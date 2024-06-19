@@ -14,7 +14,7 @@ import (
 	"github.com/moov-io/base/log"
 )
 
-func spannerConnection(logger log.Logger, cfg SpannerConfig, databaseName string) (*sql.DB, error) {
+func spannerConnection(_ log.Logger, cfg SpannerConfig, databaseName string) (*sql.DB, error) {
 	db, err := sql.Open("spanner", fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, databaseName))
 	if err != nil {
 		return nil, err
@@ -24,8 +24,13 @@ func spannerConnection(logger log.Logger, cfg SpannerConfig, databaseName string
 }
 
 func SpannerMigrationDriver(cfg SpannerConfig, databaseName string) (database.Driver, error) {
+	clean := true
+	if cfg.CleanStatements != nil {
+		clean = *cfg.CleanStatements
+	}
+
 	s := migspanner.Spanner{}
-	return s.Open(fmt.Sprintf("spanner://projects/%s/instances/%s/databases/%s?x-migrations-table=spanner_schema_migrations&x-clean-statements=true", cfg.Project, cfg.Instance, databaseName))
+	return s.Open(fmt.Sprintf("spanner://projects/%s/instances/%s/databases/%s?x-migrations-table=spanner_schema_migrations&x-clean-statements=%t", cfg.Project, cfg.Instance, databaseName, clean))
 }
 
 // SpannerUniqueViolation returns true when the provided error matches the Spanner code
