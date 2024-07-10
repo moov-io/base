@@ -5,6 +5,8 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/moov-io/base/log"
@@ -125,4 +127,14 @@ func LoadEnvironmentFile(logger log.Logger, envVar string, v *viper.Viper) error
 func overwriteConfig(cfg *mapstructure.DecoderConfig) {
 	cfg.ErrorUnused = true
 	cfg.ZeroFields = true
+
+	cfg.DecodeHook = func(t1 reflect.Type, t2 reflect.Type, value interface{}) (interface{}, error) {
+		decodingRegex := t2.String() == "regexp.Regexp"
+		if decodingRegex {
+			if stringValue, ok := value.(string); ok {
+				return regexp.Compile(stringValue)
+			}
+		}
+		return value, nil
+	}
 }
