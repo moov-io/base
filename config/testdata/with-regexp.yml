@@ -1,0 +1,4 @@
+Config:
+  Search:
+    Patterns:
+      - "a(b+)c"

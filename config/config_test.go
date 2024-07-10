@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/moov-io/base"
@@ -22,6 +23,8 @@ type ConfigModel struct {
 	Zero    string
 
 	Widgets map[string]Widget
+
+	Search SearchConfig
 }
 
 type Widget struct {
@@ -45,6 +48,10 @@ type Nested2 struct {
 
 type Nested3 struct {
 	Value string
+}
+
+type SearchConfig struct {
+	Patterns []*regexp.Regexp
 }
 
 func Test_Load(t *testing.T) {
@@ -134,4 +141,19 @@ func Test_WidgetsConfig(t *testing.T) {
 	require.Equal(t, "u1", w.Credentials.Username)
 	require.Equal(t, "p2", w.Credentials.Password)
 	require.Equal(t, "v1", w.Nested.Nested2.Nested3.Value)
+}
+
+func Test_ReadRegexp(t *testing.T) {
+	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-regexp.yml"))
+	t.Setenv(config.APP_CONFIG_SECRETS, "")
+
+	cfg := &GlobalConfigModel{}
+
+	service := config.NewService(log.NewDefaultLogger())
+	err := service.LoadFromFS(cfg, base.ConfigDefaults)
+	require.Nil(t, err)
+
+	patterns := cfg.Config.Search.Patterns
+	require.Len(t, patterns, 1)
+	require.Equal(t, "a(b+)c", patterns[0].String())
 }
