@@ -1,3 +1,17 @@
+## v0.51.0 (Released 2024-07-11)
+
+IMPROVEMENTS
+
+- feat: allow config to unmarshal regexes as strings
+
+BUILD
+
+- chore(deps): update mysql docker tag to v9
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.5.0
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.17
+- fix(deps): update module google.golang.org/grpc to v1.65.0
+- fix(deps): update opentelemetry-go monorepo to v1.28.0
+
 ## v0.50.0 (Released 2024-06-19)
 
 IMPROVEMENTS
