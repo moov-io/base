@@ -1,3 +1,9 @@
+## v0.51.1 (Released 2024-07-11)
+
+IMPROVEMENTS
+
+- config: include decoder fallback to parse time.Duration values
+
 ## v0.51.0 (Released 2024-07-11)
 
 IMPROVEMENTS
