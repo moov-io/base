@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/moov-io/base"
 	"github.com/moov-io/base/config"
@@ -52,6 +53,9 @@ type Nested3 struct {
 
 type SearchConfig struct {
 	Patterns []*regexp.Regexp
+
+	MaxResults int
+	Timeout    time.Duration
 }
 
 func Test_Load(t *testing.T) {
@@ -143,8 +147,8 @@ func Test_WidgetsConfig(t *testing.T) {
 	require.Equal(t, "v1", w.Nested.Nested2.Nested3.Value)
 }
 
-func Test_ReadRegexp(t *testing.T) {
-	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-regexp.yml"))
+func Test_SearchConfig(t *testing.T) {
+	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-search.yml"))
 	t.Setenv(config.APP_CONFIG_SECRETS, "")
 
 	cfg := &GlobalConfigModel{}
@@ -156,4 +160,7 @@ func Test_ReadRegexp(t *testing.T) {
 	patterns := cfg.Config.Search.Patterns
 	require.Len(t, patterns, 1)
 	require.Equal(t, "a(b+)c", patterns[0].String())
+
+	require.Equal(t, 100, cfg.Config.Search.MaxResults)
+	require.Equal(t, 30*time.Second, cfg.Config.Search.Timeout)
 }

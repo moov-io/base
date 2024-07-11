@@ -128,13 +128,15 @@ func overwriteConfig(cfg *mapstructure.DecoderConfig) {
 	cfg.ErrorUnused = true
 	cfg.ZeroFields = true
 
-	cfg.DecodeHook = func(t1 reflect.Type, t2 reflect.Type, value interface{}) (interface{}, error) {
-		decodingRegex := t2.String() == "regexp.Regexp"
-		if decodingRegex {
-			if stringValue, ok := value.(string); ok {
-				return regexp.Compile(stringValue)
-			}
+	cfg.DecodeHook = mapstructure.ComposeDecodeHookFunc(decodeRegexHook, mapstructure.StringToTimeDurationHookFunc())
+}
+
+func decodeRegexHook(t1 reflect.Type, t2 reflect.Type, value interface{}) (interface{}, error) {
+	decodingRegex := t2.String() == "regexp.Regexp"
+	if decodingRegex {
+		if stringValue, ok := value.(string); ok {
+			return regexp.Compile(stringValue)
 		}
-		return value, nil
 	}
+	return value, nil
 }

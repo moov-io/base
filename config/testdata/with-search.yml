@@ -2,3 +2,5 @@ Config:
   Search:
     Patterns:
       - "a(b+)c"
+    MaxResults: 100
+    Timeout: 30s
