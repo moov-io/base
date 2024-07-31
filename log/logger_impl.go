@@ -38,6 +38,8 @@ func NewJSONLogger() Logger {
 	return NewLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stderr)))
 }
 
+// NewTestLogger returns a default logger if the testing verbose (-v) flag is set
+// otherwise a no-op logger is returned.
 func NewTestLogger() Logger {
 	if testing.Verbose() {
 		return NewDefaultLogger()
@@ -220,8 +222,9 @@ func (l *logger) Send() {
 	l.Log("")
 }
 
+// LogError logs the error at level=error and returns the logged error.
 func (l *logger) LogError(err error) LoggedError {
-	l.Set("errored", Bool(true)).Log(err.Error())
+	l.Set("errored", Bool(true)).Error().Log(err.Error())
 	return LoggedError{err}
 }
 

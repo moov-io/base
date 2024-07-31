@@ -323,3 +323,19 @@ func Setup(t *testing.T) (*assert.Assertions, *lib.BufferedLogger, lib.Logger) {
 	buffer, log := lib.NewBufferLogger()
 	return a, buffer, log
 }
+
+func Test_Log_LogError(t *testing.T) {
+	a, buffer, log := Setup(t)
+
+	log2 := log.LogError(errors.New("bad thing"))
+	a.Equal("bad thing", log2.Err().Error())
+
+	details := log.Details()
+	level, ok := details["level"].(string)
+	a.True(ok)
+	a.Equal("info", level)
+
+	output := buffer.String()
+	a.Contains(output, `msg="bad thing"`)
+	a.Contains(output, `level=error`)
+}
