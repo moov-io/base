@@ -16,7 +16,7 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.19.1
-	github.com/rickar/cal/v2 v2.1.17
+	github.com/rickar/cal/v2 v2.1.18
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.28.0
