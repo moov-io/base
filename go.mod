@@ -3,7 +3,7 @@ module github.com/moov-io/base
 go 1.21
 
 require (
-	cloud.google.com/go/spanner v1.65.0
+	cloud.google.com/go/spanner v1.66.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.8.1
