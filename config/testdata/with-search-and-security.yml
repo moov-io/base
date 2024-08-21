@@ -1,0 +1,11 @@
+Config:
+  Search:
+    Patterns:
+      - "a(b+)c"
+    MaxResults: 100
+    Timeout: 30s
+  Security:
+    x-audience:
+      - service:cards
+    x-cluster: platform
+    x-service: roles

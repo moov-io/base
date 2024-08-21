@@ -25,7 +25,8 @@ type ConfigModel struct {
 
 	Widgets map[string]Widget
 
-	Search SearchConfig
+	Search   SearchConfig
+	Security SecurityConfig
 }
 
 type Widget struct {
@@ -56,6 +57,12 @@ type SearchConfig struct {
 
 	MaxResults int
 	Timeout    time.Duration
+}
+
+type SecurityConfig struct {
+	Audience []string `yaml:"x-audience"`
+	Cluster  string   `yaml:"x-cluster"`
+	Service  string   `yaml:"x-service"`
 }
 
 func Test_Load(t *testing.T) {
@@ -147,8 +154,8 @@ func Test_WidgetsConfig(t *testing.T) {
 	require.Equal(t, "v1", w.Nested.Nested2.Nested3.Value)
 }
 
-func Test_SearchConfig(t *testing.T) {
-	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-search.yml"))
+func Test_SearchAndSecurityConfig(t *testing.T) {
+	t.Setenv(config.APP_CONFIG, filepath.Join("testdata", "with-search-and-security.yml"))
 	t.Setenv(config.APP_CONFIG_SECRETS, "")
 
 	cfg := &GlobalConfigModel{}
@@ -157,10 +164,16 @@ func Test_SearchConfig(t *testing.T) {
 	err := service.LoadFromFS(cfg, base.ConfigDefaults)
 	require.Nil(t, err)
 
+	// Search
 	patterns := cfg.Config.Search.Patterns
 	require.Len(t, patterns, 1)
 	require.Equal(t, "a(b+)c", patterns[0].String())
 
 	require.Equal(t, 100, cfg.Config.Search.MaxResults)
 	require.Equal(t, 30*time.Second, cfg.Config.Search.Timeout)
+
+	// Security
+	require.Len(t, cfg.Config.Security.Audience, 1)
+	require.Equal(t, "platform", cfg.Config.Security.Cluster)
+	require.Equal(t, "roles", cfg.Config.Security.Service)
 }
