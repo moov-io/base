@@ -60,9 +60,9 @@ type SearchConfig struct {
 }
 
 type SecurityConfig struct {
-	Audience []string `yaml:"x-audience"`
-	Cluster  string   `yaml:"x-cluster"`
-	Service  string   `yaml:"x-service"`
+	Audience []string `mapstructure:"x-audience"`
+	Cluster  string   `mapstructure:"x-cluster"`
+	Service  string   `mapstructure:"x-service"`
 }
 
 func Test_Load(t *testing.T) {
