@@ -7,6 +7,7 @@ package base
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -200,4 +201,10 @@ func TestHas(t *testing.T) {
 	if !Has(ErrorList([]error{err}), err) {
 		t.Error("Has should return true if the error list has the test error")
 	}
+}
+
+func TestErrorList_Panic(t *testing.T) {
+	var el ErrorList
+	require.Equal(t, "<nil>", fmt.Sprintf("%v", el))
+	require.Equal(t, "<nil>", fmt.Errorf("%w", el).Error())
 }
