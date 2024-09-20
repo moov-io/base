@@ -1,3 +1,23 @@
+## v0.52.0 (Released 2024-09-20)
+
+IMPROVEMENTS
+
+- database: add RunMigrationsContext with tracing
+- test: verify ErrorList doesn't obviously panic
+- test: verify `yaml:"x-foo"` works
+
+BUILD
+
+- chore(deps): update actions/checkout action to v4
+- chore(deps): update actions/setup-go action to v5
+- chore(deps): update github/codeql-action action to v3
+- fix(deps): update module cloud.google.com/go/spanner to v1.67.0
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.7.1
+- fix(deps): update module github.com/prometheus/client_golang to v1.20.2
+- fix(deps): update module github.com/rickar/cal/v2 to v2.1.19
+- fix(deps): update module google.golang.org/grpc to v1.67.0
+- fix(deps): update opentelemetry-go monorepo to v1.29.0
+
 ## v0.51.1 (Released 2024-07-11)
 
 IMPROVEMENTS
