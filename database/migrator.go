@@ -11,18 +11,31 @@ import (
 	"sync"
 	"time"
 
+	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 
-	"github.com/moov-io/base/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var migrationMutex sync.Mutex
 
 func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOption) error {
+	return RunMigrationsContext(context.Background(), logger, config, opts...)
+}
+
+func RunMigrationsContext(ctx context.Context, logger log.Logger, config DatabaseConfig, opts ...MigrateOption) error {
+	_, span := telemetry.StartSpan(ctx, "run-migrations", trace.WithAttributes(
+		attribute.String("db.database_name", config.DatabaseName),
+	))
+	defer span.End()
+
 	logger.Info().Log("Running Migrations")
 
 	// apply all of our optional arguments
@@ -54,24 +67,26 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOpti
 		m.LockTimeout = *o.timeout
 	}
 
-	currentVersion, dirty, err := m.Version()
+	previousVersion, dirty, err := m.Version()
 	if err != nil {
 		if err != migrate.ErrNilVersion {
 			return logger.Fatal().LogErrorf("Error getting current DB version: %w", err).Err()
 		}
 		// set sane values
-		currentVersion = 0
+		previousVersion = 0
 		dirty = false
 	}
+	span.SetAttributes(attribute.Int64("db.previous_version", int64(previousVersion)))
+
 	err = m.Up()
 	migrationMutex.Unlock()
 
 	switch err {
 	case nil:
 	case migrate.ErrNoChange:
-		logger.Info().Logf("Database already at version %d (dirty: %b)", currentVersion, dirty)
+		logger.Info().Logf("Database already at version %d (dirty: %b)", previousVersion, dirty)
 	default:
-		return logger.Fatal().LogErrorf("Error running migrations (current: %d, dirty: %b): %w", currentVersion, dirty, err).Err()
+		return logger.Fatal().LogErrorf("Error running migrations (current: %d, dirty: %b): %w", previousVersion, dirty, err).Err()
 	}
 
 	newVersion, newDirty, err := m.Version()
@@ -83,8 +98,9 @@ func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOpti
 		newVersion = 0
 		newDirty = false
 	}
+	span.SetAttributes(attribute.Int64("db.new_version", int64(newVersion)))
 
-	logger.Info().Logf("Migrations complete: previous: %d (dirty:%v) -> current: %d (dirty:%v)", currentVersion, dirty, newVersion, newDirty)
+	logger.Info().Logf("Migrations complete: previous: %d (dirty:%v) -> new: %d (dirty:%v)", previousVersion, dirty, newVersion, newDirty)
 
 	return nil
 }
