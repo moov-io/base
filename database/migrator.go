@@ -86,7 +86,7 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 	case migrate.ErrNoChange:
 		logger.Info().Logf("Database already at version %d (dirty: %v)", previousVersion, dirty)
 	default:
-		return logger.Fatal().LogErrorf("Error running migrations (current: %d, dirty: %b): %w", previousVersion, dirty, err).Err()
+		return logger.Fatal().LogErrorf("Error running migrations (current: %d, dirty: %v): %w", previousVersion, dirty, err).Err()
 	}
 
 	newVersion, newDirty, err := m.Version()
