@@ -13,6 +13,7 @@ import (
 type DatabaseConfig struct {
 	MySQL        *MySQLConfig
 	Spanner      *SpannerConfig
+	Postgres     *PostgresConfig
 	DatabaseName string
 }
 
@@ -21,6 +22,12 @@ type SpannerConfig struct {
 	Instance string
 
 	DisableCleanStatements bool
+}
+
+type PostgresConfig struct {
+	Address  string
+	User     string
+	Password string
 }
 
 type MySQLConfig struct {

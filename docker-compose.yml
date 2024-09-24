@@ -28,5 +28,20 @@ services:
     networks:
       - intranet
 
+  alloydb:
+    image: google/alloydbomni
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=moov
+      - POSTGRES_USER=moov
+      - POSTGRES_PASSWORD=moov
+      - POSTGRES_DATABASE=moov
+    networks:
+      - intranet
+    tmpfs:
+      - /var/lib/postgresql/data
+
 networks:
   intranet:

@@ -30,6 +30,8 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 
 	} else if config.Spanner != nil {
 		return spannerConnection(logger, *config.Spanner, config.DatabaseName)
+	} else if config.Postgres != nil {
+		return postgresConnection(logger, *config.Postgres, config.DatabaseName)
 	}
 
 	return nil, fmt.Errorf("database config not defined")
