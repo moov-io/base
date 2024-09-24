@@ -1,3 +1,9 @@
+## v0.52.1 (Released 2024-09-24)
+
+IMPROVEMENTS
+
+- database: fix printf
+
 ## v0.52.0 (Released 2024-09-20)
 
 IMPROVEMENTS
