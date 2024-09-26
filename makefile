@@ -1,5 +1,5 @@
 .PHONY: setup
-setup:
+setup: gen-certs
 	docker compose up -d --force-recreate --remove-orphans
 
 .PHONY: check
