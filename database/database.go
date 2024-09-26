@@ -35,7 +35,7 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 		}
 		return db, nil
 	} else if config.Postgres != nil {
-		db, err := postgresConnection(logger, *config.Postgres, config.DatabaseName)
+		db, err := postgresConnection(ctx, logger, *config.Postgres, config.DatabaseName)
 		if err != nil {
 			return nil, fmt.Errorf("connecting to postgres: %w", err)
 		}

@@ -3,6 +3,7 @@ module github.com/moov-io/base
 go 1.21
 
 require (
+	cloud.google.com/go/alloydbconn v1.12.1
 	cloud.google.com/go/spanner v1.67.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
@@ -32,6 +33,7 @@ require (
 require (
 	cel.dev/expr v0.16.0 // indirect
 	cloud.google.com/go v0.115.1 // indirect
+	cloud.google.com/go/alloydb v1.12.0 // indirect
 	cloud.google.com/go/auth v0.9.3 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
