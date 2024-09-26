@@ -18,20 +18,28 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 	if config.MySQL != nil {
 		preppedDb, err := mysqlConnection(logger, config.MySQL, config.DatabaseName)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("configuring mysql connection: %v", err)
 		}
 
 		db, err := preppedDb.Connect(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("connecting to mysql: %w", err)
 		}
 
 		return ApplyConnectionsConfig(db, &config.MySQL.Connections, logger), nil
 
 	} else if config.Spanner != nil {
-		return spannerConnection(logger, *config.Spanner, config.DatabaseName)
+		db, err := spannerConnection(logger, *config.Spanner, config.DatabaseName)
+		if err != nil {
+			return nil, fmt.Errorf("connecting to spanner: %w", err)
+		}
+		return db, nil
 	} else if config.Postgres != nil {
-		return postgresConnection(logger, *config.Postgres, config.DatabaseName)
+		db, err := postgresConnection(logger, *config.Postgres, config.DatabaseName)
+		if err != nil {
+			return nil, fmt.Errorf("connecting to postgres: %w", err)
+		}
+		return db, nil
 	}
 
 	return nil, fmt.Errorf("database config not defined")
