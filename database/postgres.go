@@ -34,7 +34,13 @@ func postgresConnection(logger log.Logger, config PostgresConfig, databaseName s
 
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		return nil, fmt.Errorf("connecting to alloydb: %w", err)
+		return nil, fmt.Errorf("opening database: %w", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("connecting to database: %w", err)
 	}
 
 	return db, nil

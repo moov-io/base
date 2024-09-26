@@ -33,8 +33,6 @@ func TestPostgres_Basic(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, db)
 	defer db.Close()
-
-	require.NoError(t, db.Ping())
 }
 
 func Test_Postgres_Embedded_Migration(t *testing.T) {
