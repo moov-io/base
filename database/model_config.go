@@ -25,9 +25,13 @@ type SpannerConfig struct {
 }
 
 type PostgresConfig struct {
-	Address  string
-	User     string
-	Password string
+	Address           string
+	User              string
+	Password          string
+	UseTLS            bool
+	TLSCAFile         string
+	TLSClientKeyFile  string
+	TLSClientCertFile string
 }
 
 type MySQLConfig struct {

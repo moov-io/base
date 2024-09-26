@@ -19,9 +19,13 @@ func TestPostgres_Basic(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "moov",
 		Postgres: &database.PostgresConfig{
-			Address:  "localhost:5432",
-			User:     "moov",
-			Password: "moov",
+			Address:           "localhost:5432",
+			User:              "moov",
+			Password:          "moov",
+			UseTLS:            true,
+			TLSCAFile:         "../testcerts/root.crt",
+			TLSClientCertFile: "../testcerts/client.crt",
+			TLSClientKeyFile:  "../testcerts/client.key",
 		},
 	}
 
