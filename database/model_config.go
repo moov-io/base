@@ -25,16 +25,22 @@ type SpannerConfig struct {
 }
 
 type PostgresConfig struct {
-	Address             string
-	User                string
-	Password            string
-	UseTLS              bool
-	TLSCAFile           string
-	TLSClientKeyFile    string
-	TLSClientCertFile   string
-	UseAlloyDBConnector bool
-	AlloyDBInstanceURI  string
-	UseAlloyDBIAM       bool
+	Address  string
+	User     string
+	Password string
+	TLS      *PostgresTLSConfig
+	Alloy    *PostgresAlloyConfig
+}
+
+type PostgresTLSConfig struct {
+	CACertFile     string
+	ClientKeyFile  string
+	ClientCertFile string
+}
+
+type PostgresAlloyConfig struct {
+	InstanceURI string
+	UseIAM      bool
 }
 
 type MySQLConfig struct {

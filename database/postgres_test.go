@@ -39,13 +39,14 @@ func TestPostgres_TLS(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "moov",
 		Postgres: &database.PostgresConfig{
-			Address:           "localhost:5432",
-			User:              "moov",
-			Password:          "moov",
-			UseTLS:            true,
-			TLSCAFile:         "../testcerts/root.crt",
-			TLSClientCertFile: "../testcerts/client.crt",
-			TLSClientKeyFile:  "../testcerts/client.key",
+			Address:  "localhost:5432",
+			User:     "moov",
+			Password: "moov",
+			TLS: &database.PostgresTLSConfig{
+				CACertFile:     "../testcerts/root.crt",
+				ClientCertFile: "../testcerts/client.crt",
+				ClientKeyFile:  "../testcerts/client.key",
+			},
 		},
 	}
 

@@ -22,7 +22,7 @@ const (
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
 	var connStr string
-	if config.UseAlloyDBConnector {
+	if config.Alloy != nil {
 		c, err := getAlloyDBConnectorConnStr(ctx, config, databaseName)
 		if err != nil {
 			return nil, fmt.Errorf("creating alloydb connection: %w", err)
@@ -55,20 +55,20 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 
 	params := ""
 
-	if config.UseTLS {
+	if config.TLS != nil {
 		params += "sslmode=verify-full"
 
-		if config.TLSCAFile == "" {
+		if config.TLS.CACertFile == "" {
 			return "", fmt.Errorf("missing TLS CA file")
 		}
-		params += "&sslrootcert=" + config.TLSCAFile
+		params += "&sslrootcert=" + config.TLS.CACertFile
 
-		if config.TLSClientCertFile != "" {
-			params += "&sslcert=" + config.TLSClientCertFile
+		if config.TLS.ClientCertFile != "" {
+			params += "&sslcert=" + config.TLS.ClientCertFile
 		}
 
-		if config.TLSClientKeyFile != "" {
-			params += "&sslkey=" + config.TLSClientKeyFile
+		if config.TLS.ClientKeyFile != "" {
+			params += "&sslkey=" + config.TLS.ClientKeyFile
 		}
 	}
 
@@ -77,10 +77,14 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 }
 
 func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, databaseName string) (string, error) {
+	if config.Alloy == nil {
+		return "", fmt.Errorf("missing alloy config")
+	}
+
 	var dialer *alloydbconn.Dialer
 	var dsn string
 
-	if config.UseAlloyDBIAM {
+	if config.Alloy.UseIAM {
 		d, err := alloydbconn.NewDialer(ctx, alloydbconn.WithIAMAuthN())
 		if err != nil {
 			return "", fmt.Errorf("creating alloydb dialer: %v", err)
@@ -114,7 +118,7 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 	}
 
 	connConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
-		return dialer.Dial(ctx, config.AlloyDBInstanceURI)
+		return dialer.Dial(ctx, config.Alloy.InstanceURI)
 	}
 
 	connStr := stdlib.RegisterConnConfig(connConfig)

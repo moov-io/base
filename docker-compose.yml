@@ -38,7 +38,6 @@ services:
       - POSTGRES_DB=moov
       - POSTGRES_USER=moov
       - POSTGRES_PASSWORD=moov
-      - POSTGRES_DATABASE=moov
     networks:
       - intranet
     volumes:
