@@ -19,6 +19,26 @@ func TestPostgres_Basic(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "moov",
 		Postgres: &database.PostgresConfig{
+			Address:  "localhost:5432",
+			User:     "moov",
+			Password: "moov",
+		},
+	}
+
+	db, err := database.New(context.Background(), log.NewTestLogger(), config)
+	require.NoError(t, err)
+	require.NotNil(t, db)
+	defer db.Close()
+}
+
+func TestPostgres_TLS(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	config := database.DatabaseConfig{
+		DatabaseName: "moov",
+		Postgres: &database.PostgresConfig{
 			Address:           "localhost:5432",
 			User:              "moov",
 			Password:          "moov",
