@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/moov-io/base"
 	"github.com/moov-io/base/database"
+	"github.com/moov-io/base/database/testdb"
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
@@ -29,4 +31,27 @@ func TestPostgres_Basic(t *testing.T) {
 	defer db.Close()
 
 	require.NoError(t, db.Ping())
+}
+
+func Test_Postgres_Embedded_Migration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	// create a test postgres db
+	config := database.DatabaseConfig{
+		DatabaseName: "postgres" + base.ID(),
+		Postgres: &database.PostgresConfig{
+			Address:  "localhost:5432",
+			User:     "moov",
+			Password: "moov",
+		},
+	}
+
+	err := testdb.NewPostgresDatabase(t, config)
+	require.NoError(t, err)
+
+	db, err := database.NewAndMigrate(context.Background(), log.NewDefaultLogger(), config, database.WithEmbeddedMigrations(base.PostgresMigrations))
+	require.NoError(t, err)
+	defer db.Close()
 }

@@ -10,3 +10,6 @@ var MySQLMigrations embed.FS
 
 //go:embed migrations/*.up.spanner.sql
 var SpannerMigrations embed.FS
+
+//go:embed migrations/*.up.postgres.sql
+var PostgresMigrations embed.FS

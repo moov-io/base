@@ -1,0 +1,1 @@
+create table more_tests(name varchar(10));
