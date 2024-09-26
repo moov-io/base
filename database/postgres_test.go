@@ -77,3 +77,33 @@ func Test_Postgres_Embedded_Migration(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 }
+
+func Test_Postgres_UniqueViolation(t *testing.T) {
+	// create a test postgres db
+	config := database.DatabaseConfig{
+		DatabaseName: "postgres" + base.ID(),
+		Postgres: &database.PostgresConfig{
+			Address:  "localhost:5432",
+			User:     "moov",
+			Password: "moov",
+		},
+	}
+
+	err := testdb.NewPostgresDatabase(t, config)
+	require.NoError(t, err)
+
+	db, err := database.New(context.Background(), log.NewDefaultLogger(), config)
+	require.NoError(t, err)
+
+	createQry := `CREATE TABLE names (id SERIAL PRIMARY KEY, name VARCHAR(255));`
+	_, err = db.Exec(createQry)
+	require.NoError(t, err)
+
+	insertQry := `INSERT INTO names (id, name) VALUES ($1, $2);`
+	_, err = db.Exec(insertQry, 1, "James")
+	require.NoError(t, err)
+
+	_, err = db.Exec(insertQry, 1, "James")
+	require.Error(t, err)
+	require.True(t, database.UniqueViolation(err))
+}

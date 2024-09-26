@@ -2,10 +2,17 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/moov-io/base/log"
+)
+
+const (
+	// PostgreSQL Error Codes
+	// https://www.postgresql.org/docs/current/errcodes-appendix.html
+	postgresErrUniqueViolation = "23505"
 )
 
 func postgresConnection(logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
@@ -44,4 +51,17 @@ func postgresConnection(logger log.Logger, config PostgresConfig, databaseName s
 	}
 
 	return db, nil
+}
+
+func PostgresUniqueViolation(err error) bool {
+	if err == nil {
+		return false
+	}
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) {
+		if pgError.Code == postgresErrUniqueViolation {
+			return true
+		}
+	}
+	return false
 }
