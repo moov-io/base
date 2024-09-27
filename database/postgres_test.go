@@ -2,6 +2,7 @@ package database_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/moov-io/base"
@@ -56,6 +57,70 @@ func TestPostgres_TLS(t *testing.T) {
 	defer db.Close()
 }
 
+func TestProstres_Alloy(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	alloydbInstanceURI := os.Getenv("ALLOYDB_INSTANCE_URI")
+	alloydbDBName := os.Getenv("ALLOYDB_DBNAME")
+	alloydbUser := os.Getenv("ALLOYDB_USER")
+	alloydbPassword := os.Getenv("ALLOYDB_PASSWORD")
+
+	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbUser == "" || alloydbPassword == "" {
+		t.Skip("missing required environment variables")
+	}
+
+	config := database.DatabaseConfig{
+		DatabaseName: alloydbDBName,
+		Postgres: &database.PostgresConfig{
+			User:     alloydbUser,
+			Password: alloydbPassword,
+			Alloy: &database.PostgresAlloyConfig{
+				InstanceURI: alloydbInstanceURI,
+				UseIAM:      false,
+				UsePSC:      true,
+			},
+		},
+	}
+
+	db, err := database.New(context.Background(), log.NewTestLogger(), config)
+	require.NoError(t, err)
+	require.NotNil(t, db)
+	defer db.Close()
+}
+
+func TestProstres_Alloy_IAM(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	alloydbInstanceURI := os.Getenv("ALLOYDB_INSTANCE_URI")
+	alloydbDBName := os.Getenv("ALLOYDB_DBNAME")
+	alloydbUser := os.Getenv("ALLOYDB_USER")
+
+	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbUser == "" {
+		t.Skip("missing required environment variables")
+	}
+
+	config := database.DatabaseConfig{
+		DatabaseName: alloydbDBName,
+		Postgres: &database.PostgresConfig{
+			User: alloydbUser,
+			Alloy: &database.PostgresAlloyConfig{
+				InstanceURI: alloydbInstanceURI,
+				UseIAM:      true,
+				UsePSC:      true,
+			},
+		},
+	}
+
+	db, err := database.New(context.Background(), log.NewTestLogger(), config)
+	require.NoError(t, err)
+	require.NotNil(t, db)
+	defer db.Close()
+}
+
 func Test_Postgres_Embedded_Migration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short flag enabled")
@@ -80,6 +145,10 @@ func Test_Postgres_Embedded_Migration(t *testing.T) {
 }
 
 func Test_Postgres_UniqueViolation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
 	// create a test postgres db
 	config := database.DatabaseConfig{
 		DatabaseName: "postgres" + base.ID(),
