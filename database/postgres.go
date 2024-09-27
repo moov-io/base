@@ -117,8 +117,13 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 		return "", fmt.Errorf("failed to parse pgx config: %v", err)
 	}
 
+	var connOptions []alloydbconn.DialOption
+	if config.Alloy.UsePSC {
+		connOptions = append(connOptions, alloydbconn.WithPSC())
+	}
+
 	connConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
-		return dialer.Dial(ctx, config.Alloy.InstanceURI)
+		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
 	}
 
 	connStr := stdlib.RegisterConnConfig(connConfig)

@@ -41,6 +41,7 @@ type PostgresTLSConfig struct {
 type PostgresAlloyConfig struct {
 	InstanceURI string
 	UseIAM      bool
+	UsePSC      bool
 }
 
 type MySQLConfig struct {
