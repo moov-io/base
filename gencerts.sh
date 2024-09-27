@@ -1,3 +1,9 @@
+#!/bin/bash
+# This script generates TLS certs for local development:
+# - Creates a self-signed root CA
+# - Generates server and client certs signed by the root CA
+# - Sets up certs for localhost use (e.g., local HTTPS and mTLS testing)
+# Note: These certs are for development/testing only, not for production use.
 mkdir -p testcerts
 cd testcerts
 openssl genrsa -out root.key 2048
