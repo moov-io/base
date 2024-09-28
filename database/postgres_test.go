@@ -12,6 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	alloydbInstanceURI    = os.Getenv("ALLOYDB_INSTANCE_URI")
+	alloydbDBName         = os.Getenv("ALLOYDB_DBNAME")
+	alloydbIAMUser        = os.Getenv("ALLOYDB_IAM_USER")
+	alloydbNativeUser     = os.Getenv("ALLOYDB_NATIVE_USER")
+	alloydbNativePassword = os.Getenv("ALLOYDB_NATIVE_PASSWORD")
+)
+
 func TestPostgres_Basic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short flag enabled")
@@ -62,20 +70,15 @@ func TestProstres_Alloy(t *testing.T) {
 		t.Skip("-short flag enabled")
 	}
 
-	alloydbInstanceURI := os.Getenv("ALLOYDB_INSTANCE_URI")
-	alloydbDBName := os.Getenv("ALLOYDB_DBNAME")
-	alloydbUser := os.Getenv("ALLOYDB_USER")
-	alloydbPassword := os.Getenv("ALLOYDB_PASSWORD")
-
-	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbUser == "" || alloydbPassword == "" {
+	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbNativeUser == "" || alloydbNativePassword == "" {
 		t.Skip("missing required environment variables")
 	}
 
 	config := database.DatabaseConfig{
 		DatabaseName: alloydbDBName,
 		Postgres: &database.PostgresConfig{
-			User:     alloydbUser,
-			Password: alloydbPassword,
+			User:     alloydbNativeUser,
+			Password: alloydbNativePassword,
 			Alloy: &database.PostgresAlloyConfig{
 				InstanceURI: alloydbInstanceURI,
 				UseIAM:      false,
@@ -95,18 +98,14 @@ func TestProstres_Alloy_IAM(t *testing.T) {
 		t.Skip("-short flag enabled")
 	}
 
-	alloydbInstanceURI := os.Getenv("ALLOYDB_INSTANCE_URI")
-	alloydbDBName := os.Getenv("ALLOYDB_DBNAME")
-	alloydbUser := os.Getenv("ALLOYDB_USER")
-
-	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbUser == "" {
+	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbIAMUser == "" {
 		t.Skip("missing required environment variables")
 	}
 
 	config := database.DatabaseConfig{
 		DatabaseName: alloydbDBName,
 		Postgres: &database.PostgresConfig{
-			User: alloydbUser,
+			User: alloydbIAMUser,
 			Alloy: &database.PostgresAlloyConfig{
 				InstanceURI: alloydbInstanceURI,
 				UseIAM:      true,
@@ -138,6 +137,35 @@ func Test_Postgres_Embedded_Migration(t *testing.T) {
 
 	err := testdb.NewPostgresDatabase(t, config)
 	require.NoError(t, err)
+
+	db, err := database.NewAndMigrate(context.Background(), log.NewDefaultLogger(), config, database.WithEmbeddedMigrations(base.PostgresMigrations))
+	require.NoError(t, err)
+	defer db.Close()
+}
+
+func Test_Postgres_Alloy_Migrations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short flag enabled")
+	}
+
+	if alloydbInstanceURI == "" || alloydbDBName == "" || alloydbNativeUser == "" || alloydbNativePassword == "" {
+		t.Skip("missing required environment variables")
+	}
+
+	config := database.DatabaseConfig{
+		DatabaseName: alloydbDBName,
+		Postgres: &database.PostgresConfig{
+			User:     alloydbNativeUser,
+			Password: alloydbNativePassword,
+			Alloy: &database.PostgresAlloyConfig{
+				InstanceURI: alloydbInstanceURI,
+				UseIAM:      false,
+				UsePSC:      true,
+			},
+		},
+	}
+
+	// migrating database given by ALLOYDB_DBNAME env var
 
 	db, err := database.NewAndMigrate(context.Background(), log.NewDefaultLogger(), config, database.WithEmbeddedMigrations(base.PostgresMigrations))
 	require.NoError(t, err)

@@ -1,1 +1,1 @@
-create table more_tests(name varchar(10));
+create table mig_test(name varchar(10));
