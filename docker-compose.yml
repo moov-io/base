@@ -33,7 +33,7 @@ services:
     restart: always
     ports:
       - "5432:5432"
-    command: -c ssl=on -c ssl_cert_file=/opt/moov/certs/server.crt -c ssl_key_file=/opt/moov/certs/server.key -c ssl_ca_file=/opt/moov/certs/root.crt
+    # command: -c ssl=on -c ssl_cert_file=/opt/moov/certs/server.crt -c ssl_key_file=/opt/moov/certs/server.key -c ssl_ca_file=/opt/moov/certs/root.crt
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U moov"]
       interval: 5s
@@ -45,11 +45,11 @@ services:
       - POSTGRES_PASSWORD=moov
     networks:
       - intranet
-    volumes:
-      - ./testcerts/root.crt:/opt/moov/certs/root.crt
-      - ./testcerts/server.crt:/opt/moov/certs/server.crt
-      - ./testcerts/server.key:/opt/moov/certs/server.key
-      - ./database/testdata/owncerts.sh:/docker-entrypoint-initdb.d/owncerts.sh
+    # volumes:
+    #   - ./testcerts/root.crt:/opt/moov/certs/root.crt
+    #   - ./testcerts/server.crt:/opt/moov/certs/server.crt
+    #   - ./testcerts/server.key:/opt/moov/certs/server.key
+    #   - ./database/testdata/owncerts.sh:/docker-entrypoint-initdb.d/owncerts.sh
 
 networks:
   intranet:
