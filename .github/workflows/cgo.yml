@@ -41,3 +41,7 @@ jobs:
       run: make check
       env:
         GOTEST_FLAGS: "-short"
+
+    - name: Logs
+      if: failure() && runner.os == 'Linux'
+      run: docker compose logs

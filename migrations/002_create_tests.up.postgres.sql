@@ -1,0 +1,1 @@
+create table mig_test(name varchar(10));

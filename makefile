@@ -1,5 +1,5 @@
 .PHONY: setup
-setup:
+setup: gen-certs
 	docker compose up -d --force-recreate --remove-orphans
 
 .PHONY: check
@@ -21,3 +21,12 @@ cover-test:
 	go test -coverprofile=cover.out ./...
 cover-web:
 	go tool cover -html=cover.out
+
+.PHONY: teardown
+teardown:
+	-docker compose down --remove-orphans
+	-docker compose rm -f -v
+
+.PHONY: gen-certs
+gen-certs:
+	./database/testdata/gencerts.sh

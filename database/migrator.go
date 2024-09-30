@@ -17,6 +17,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
+	migpostgres "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 
@@ -155,6 +156,29 @@ func getDriver(logger log.Logger, config DatabaseConfig, opts *migrateOptions) (
 				return nil, nil, err
 			}
 		}
+	} else if config.Postgres != nil {
+		if opts.source == nil {
+			src, err := NewPkgerSource("postgres", false)
+			if err != nil {
+				return nil, nil, err
+			}
+			opts.source = &SourceDriver{
+				name:   "pkger-postgres",
+				Driver: src,
+			}
+		}
+
+		if opts.driver == nil {
+			db, err := New(context.Background(), logger, config)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			opts.driver, err = PostgresDriver(db)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
 	}
 
 	if opts.source == nil || opts.driver == nil {
@@ -170,6 +194,10 @@ func MySQLDriver(db *sql.DB) (database.Driver, error) {
 
 func SpannerDriver(config DatabaseConfig) (database.Driver, error) {
 	return SpannerMigrationDriver(*config.Spanner, config.DatabaseName)
+}
+
+func PostgresDriver(db *sql.DB) (database.Driver, error) {
+	return migpostgres.WithInstance(db, &migpostgres.Config{})
 }
 
 type MigrateOption func(o *migrateOptions) error
