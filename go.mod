@@ -1,6 +1,8 @@
 module github.com/moov-io/base
 
-go 1.21
+go 1.22.0
+
+toolchain go1.23.1
 
 require (
 	cloud.google.com/go/alloydbconn v1.12.1
@@ -8,7 +10,7 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.13.0
 	github.com/googleapis/go-sql-spanner v1.7.1
