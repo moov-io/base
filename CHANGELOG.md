@@ -1,3 +1,16 @@
+## v0.53.0 (Released 2024-09-30)
+
+IMPROVEMENTS
+
+- database: enable TLS with postgres tests
+- database: fix another printf
+- feat: Support PostgreSQL databases via config
+
+BUILD
+
+- fix(deps): update module github.com/googleapis/go-sql-spanner to v1.7.2 (#438)
+- fix(deps): update module github.com/madflojo/testcerts to v1.3.0 (#435)
+
 ## v0.52.1 (Released 2024-09-24)
 
 IMPROVEMENTS
