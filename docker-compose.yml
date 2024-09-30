@@ -28,8 +28,8 @@ services:
     networks:
       - intranet
 
-  alloydbomni:
-    image: google/alloydbomni
+  postgres:
+    image: postgres:17.0
     restart: always
     ports:
       - "5432:5432"
