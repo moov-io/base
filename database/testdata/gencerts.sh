@@ -18,7 +18,6 @@ openssl req -newkey rsa:2048 -nodes -keyout client.key -subj "/C=CN/ST=GD/L=SZ/O
 openssl x509 -req -extfile <(printf "subjectAltName=DNS:localhost,IP:127.0.0.1") -days 365 -in client.csr -CA root.crt -CAkey root.key -CAcreateserial -out client.crt
 
 rm -f server.csr client.csr
-chmod 600 *.key
-chmod 644 *.crt
+ls -l
 
 echo "FINIHSED Generating test certificates"
