@@ -1,17 +1,18 @@
 package database
 
 import (
-	"cloud.google.com/go/alloydbconn"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
+
+	"cloud.google.com/go/alloydbconn"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/moov-io/base/log"
-	"net"
 )
 
 const (
@@ -25,26 +26,26 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 	if config.Alloy != nil {
 		c, err := getAlloyDBConnectorConnStr(ctx, config, databaseName)
 		if err != nil {
-			return nil, fmt.Errorf("creating alloydb connection: %w", err)
+			return nil, logger.LogErrorf("creating alloydb connection: %w", err).Err()
 		}
 		connStr = c
 	} else {
 		c, err := getPostgresConnStr(config, databaseName)
 		if err != nil {
-			return nil, fmt.Errorf("creating postgres connection: %w", err)
+			return nil, logger.LogErrorf("creating postgres connection: %w", err).Err()
 		}
 		connStr = c
 	}
 
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		return nil, fmt.Errorf("opening database: %w", err)
+		return nil, logger.LogErrorf("opening database: %w", err).Err()
 	}
 
 	err = db.Ping()
 	if err != nil {
 		_ = db.Close()
-		return nil, fmt.Errorf("connecting to database: %w", err)
+		return nil, logger.LogErrorf("connecting to database: %w", err).Err()
 	}
 
 	return db, nil
