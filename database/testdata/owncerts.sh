@@ -1,10 +1,12 @@
 #!/bin/bash
 set -e
 
-chmod 600 /var/lib/postgresql/*.key
-chmod 644 /var/lib/postgresql/*.crt
+chown -R postgres:postgres /opt/moov/
 
-chown root:root /var/lib/postgresql/*.key
-chown root:root /var/lib/postgresql/*.crt
+chmod 600 /opt/moov/certs/*.key
+chmod 644 /opt/moov/certs/*.crt
+
+chown postgres:postgres /opt/moov/certs/*.key
+chown postgres:postgres /opt/moov/certs/*.crt
 
 ls -l /var/lib/postgresql/
