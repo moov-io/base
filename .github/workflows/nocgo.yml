@@ -47,4 +47,4 @@ jobs:
 
     - name: Logs
       if: failure() && runner.os == 'Linux'
-      run: docker-compose logs
+      run: docker compose logs
