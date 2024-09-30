@@ -49,6 +49,7 @@ services:
       - ./testcerts/root.crt:/var/lib/postgresql/root.crt
       - ./testcerts/server.crt:/var/lib/postgresql/server.crt
       - ./testcerts/server.key:/var/lib/postgresql/server.key
+      - ./database/testdata/owncerts.sh:/docker-entrypoint-initdb.d/owncerts.sh
 
 networks:
   intranet:
