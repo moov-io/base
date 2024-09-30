@@ -29,4 +29,4 @@ teardown:
 
 .PHONY: gen-certs
 gen-certs:
-	./gencerts.sh
+	./database/testdata/gencerts.sh

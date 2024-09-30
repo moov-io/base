@@ -3,6 +3,7 @@ package database_test
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -59,9 +60,9 @@ func TestPostgres_TLS(t *testing.T) {
 			User:     "moov",
 			Password: "moov",
 			TLS: &database.PostgresTLSConfig{
-				CACertFile:     "../testcerts/root.crt",
-				ClientCertFile: "../testcerts/client.crt",
-				ClientKeyFile:  "../testcerts/client.key",
+				CACertFile:     filepath.Join("..", "testcerts", "root.crt"),
+				ClientCertFile: filepath.Join("..", "testcerts", "client.crt"),
+				ClientKeyFile:  filepath.Join("..", "testcerts", "client.key"),
 			},
 		},
 	}
