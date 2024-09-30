@@ -14,7 +14,7 @@ require (
 	github.com/googleapis/go-sql-spanner v1.7.2
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/madflojo/testcerts v1.2.0
+	github.com/madflojo/testcerts v1.3.0
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.20.4
