@@ -29,7 +29,7 @@ func TestPostgres_Basic(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "moov",
 		Postgres: &database.PostgresConfig{
-			Address:  "localhost:5432",
+			Address:  "127.0.0.1:5432",
 			User:     "moov",
 			Password: "moov",
 			Connections: database.ConnectionsConfig{
@@ -55,7 +55,7 @@ func TestPostgres_TLS(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "moov",
 		Postgres: &database.PostgresConfig{
-			Address:  "localhost:5432",
+			Address:  "127.0.0.1:5432",
 			User:     "moov",
 			Password: "moov",
 			TLS: &database.PostgresTLSConfig{
@@ -136,7 +136,7 @@ func Test_Postgres_Embedded_Migration(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "postgres" + base.ID(),
 		Postgres: &database.PostgresConfig{
-			Address:  "localhost:5432",
+			Address:  "127.0.0.1:5432",
 			User:     "moov",
 			Password: "moov",
 		},
@@ -188,7 +188,7 @@ func Test_Postgres_UniqueViolation(t *testing.T) {
 	config := database.DatabaseConfig{
 		DatabaseName: "postgres" + base.ID(),
 		Postgres: &database.PostgresConfig{
-			Address:  "localhost:5432",
+			Address:  "127.0.0.1:5432",
 			User:     "moov",
 			Password: "moov",
 		},
