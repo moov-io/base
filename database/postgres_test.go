@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/moov-io/base"
 	"github.com/moov-io/base/database"
@@ -31,6 +32,12 @@ func TestPostgres_Basic(t *testing.T) {
 			Address:  "localhost:5432",
 			User:     "moov",
 			Password: "moov",
+			Connections: database.ConnectionsConfig{
+				MaxOpen:     4,
+				MaxIdle:     4,
+				MaxLifetime: time.Minute * 2,
+				MaxIdleTime: time.Minute * 2,
+			},
 		},
 	}
 

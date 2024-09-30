@@ -25,11 +25,12 @@ type SpannerConfig struct {
 }
 
 type PostgresConfig struct {
-	Address  string
-	User     string
-	Password string
-	TLS      *PostgresTLSConfig
-	Alloy    *PostgresAlloyConfig
+	Address     string
+	User        string
+	Password    string
+	Connections ConnectionsConfig
+	TLS         *PostgresTLSConfig
+	Alloy       *PostgresAlloyConfig
 }
 
 type PostgresTLSConfig struct {
