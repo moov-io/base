@@ -1,3 +1,4 @@
+testcerts/server.key
 testcerts/client.key:private-key:1
 testcerts/root.key:private-key:1
 testcerts/server.key:private-key:1

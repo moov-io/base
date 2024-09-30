@@ -49,8 +49,6 @@ func TestPostgres_Basic(t *testing.T) {
 }
 
 func TestPostgres_TLS(t *testing.T) {
-	t.Skip()
-
 	if testing.Short() {
 		t.Skip("-short flag enabled")
 	}
