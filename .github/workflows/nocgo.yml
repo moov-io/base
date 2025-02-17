@@ -37,7 +37,6 @@ jobs:
       run: make check
       env:
         CGO_ENABLED: "0"
-        GO_RELEASE: ${{ matrix.version }}
 
     - name: Short Check
       if: runner.os != 'Linux'
@@ -45,7 +44,6 @@ jobs:
       env:
         CGO_ENABLED: "0"
         GOTEST_FLAGS: "-short"
-        GO_RELEASE: ${{ matrix.version }}
 
     - name: Logs
       if: failure() && runner.os == 'Linux'
