@@ -1,3 +1,10 @@
+## v0.54.0 (Released 2025-02-17)
+
+BREAKING CHANGES
+
+- chore(deps): update dependencies
+- requires go 1.24 due to breakage in x/sys and x/net upgrades
+
 ## v0.53.0 (Released 2024-09-30)
 
 IMPROVEMENTS
