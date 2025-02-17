@@ -1,9 +1,11 @@
-## v0.54.0 (Released 2025-02-17)
+## v0.54.1 (Released 2025-02-17)
 
-BREAKING CHANGES
+v0.54.0 was accidently pushed as a breaking change by forcing upgrades to Go 1.24 - v0.54.1 has been released which does not require Go 1.24
 
-- chore(deps): update dependencies
-- requires go 1.24 due to breakage in x/sys and x/net upgrades
+BUILD
+
+- build(deps): bump golang.org/x/crypto from 0.27.0 to 0.31.0
+- build(deps): bump github.com/googleapis/go-sql-spanner to v1.11.1
 
 ## v0.53.0 (Released 2024-09-30)
 
