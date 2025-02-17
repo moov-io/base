@@ -35,12 +35,15 @@ jobs:
     - name: Check
       if: runner.os == 'Linux'
       run: make check
+      env:
+        GO_RELEASE: ${{ matrix.version }}
 
     - name: Short Check
       if: runner.os != 'Linux'
       run: make check
       env:
         GOTEST_FLAGS: "-short"
+        GO_RELEASE: ${{ matrix.version }}
 
     - name: Logs
       if: failure() && runner.os == 'Linux'
