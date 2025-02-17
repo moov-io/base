@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   build:
@@ -13,37 +13,35 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # TODO: re-enable oldstable after 1.25.x
-        # version: [stable, oldstable]
-        version: [stable]
+        version: [stable, oldstable]
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.version }}
-        id: go
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.version }}
+      id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
 
-      - name: Install make (Windows)
-        if: runner.os == 'Windows'
-        run: choco install -y make mingw
+    - name: Install make (Windows)
+      if: runner.os == 'Windows'
+      run: choco install -y make mingw
 
-      - name: Setup
-        if: runner.os == 'Linux'
-        run: make setup
+    - name: Setup
+      if: runner.os == 'Linux'
+      run: make setup
 
-      - name: Check
-        if: runner.os == 'Linux'
-        run: make check
+    - name: Check
+      if: runner.os == 'Linux'
+      run: make check
 
-      - name: Short Check
-        if: runner.os != 'Linux'
-        run: make check
-        env:
-          GOTEST_FLAGS: "-short"
+    - name: Short Check
+      if: runner.os != 'Linux'
+      run: make check
+      env:
+        GOTEST_FLAGS: "-short"
 
-      - name: Logs
-        if: failure() && runner.os == 'Linux'
-        run: docker compose logs
+    - name: Logs
+      if: failure() && runner.os == 'Linux'
+      run: docker compose logs
