@@ -11,8 +11,8 @@ import (
 
 	"github.com/moov-io/base/log"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/markbates/pkger"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -47,6 +47,7 @@ func (s *Service) LoadFromFS(config interface{}, fs fs.FS) error {
 
 func (s *Service) MergeEnvironments(config interface{}) error {
 	v := viper.New()
+	v.SetConfigType("yaml")
 
 	if err := LoadEnvironmentFile(s.logger, APP_CONFIG, v); err != nil {
 		return err
