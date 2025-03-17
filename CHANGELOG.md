@@ -1,3 +1,17 @@
+## v0.54.2 (Released 2025-03-17)
+
+BUILD
+
+- build(deps): bump golang.org/x/net from 0.35.0 to 0.36.0
+- build: bump cloud.google.com/go/alloydbconn from v1.14.1 to v1.15.0
+- build: bump cloud.google.com/go/spanner from v1.75.0 to v1.77.0
+- build: bump github.com/go-sql-driver/mysql from v1.8.1 to v1.9.0
+- build: bump github.com/googleapis/go-sql-spanner from v1.11.1 to v1.11.2
+- build: bump github.com/madflojo/testcerts from v1.3.0 to v1.4.0
+- build: bump github.com/prometheus/client_golang from v1.20.5 to v1.21.1
+- build: bump github.com/rickar/cal/v2 from v2.1.21 to v2.1.22
+- build: bump github.com/spf13/viper from v1.19.0 to v1.20.0
+
 ## v0.54.1 (Released 2025-02-17)
 
 v0.54.0 was accidently pushed as a breaking change by forcing upgrades to Go 1.24 - v0.54.1 has been released which does not require Go 1.24
