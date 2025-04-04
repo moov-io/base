@@ -15,9 +15,26 @@ import (
 )
 
 func TestUniqueViolation(t *testing.T) {
-	err := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": Error 1062: Duplicate entry '282f6ffcd9ba5b029afbf2b739ee826e22d9df3b' for key 'PRIMARY'`)
-	if !database.UniqueViolation(err) {
+	mysqlErr := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": Error 1062 (23000): Duplicate entry '282f6ffcd9ba5b029afbf2b739ee826e22d9df3b' for key 'PRIMARY'`)
+	if !database.UniqueViolation(mysqlErr) {
 		t.Error("should have matched unique violation")
+	}
+
+	psqlErr := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": ERROR: duplicate key value violates unique constraint "depository" (SQLSTATE 23505)`)
+	if !database.UniqueViolation(psqlErr) {
+		t.Error("should have matched unique violation")
+	}
+}
+
+func TestDeadlockFound(t *testing.T) {
+	mysqlErr := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": Error 1213 (40001): Deadlock found when trying to get lock; try restarting transaction`)
+	if !database.DeadlockFound(mysqlErr) {
+		t.Error("should have matched deadlock found")
+	}
+
+	psqlErr := errors.New(`problem upserting depository="282f6ffcd9ba5b029afbf2b739ee826e22d9df3b", userId="f25f48968da47ef1adb5b6531a1c2197295678ce": ERROR: deadlock detected (SQLSTATE 40P01)`)
+	if !database.DeadlockFound(psqlErr) {
+		t.Error("should have matched deadlock found")
 	}
 }
 
