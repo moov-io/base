@@ -77,7 +77,7 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 		previousVersion = 0
 		dirty = false
 	}
-	span.SetAttributes(attribute.Int64("db.previous_version", int64(previousVersion)))
+	span.SetAttributes(attribute.Int64("db.previous_version", int64(previousVersion))) //nolint:gosec
 
 	err = m.Up()
 	migrationMutex.Unlock()
@@ -99,7 +99,7 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 		newVersion = 0
 		newDirty = false
 	}
-	span.SetAttributes(attribute.Int64("db.new_version", int64(newVersion)))
+	span.SetAttributes(attribute.Int64("db.new_version", int64(newVersion))) //nolint:gosec
 
 	logger.Info().Logf("Migrations complete: previous: %d (dirty:%v) -> new: %d (dirty:%v)", previousVersion, dirty, newVersion, newDirty)
 

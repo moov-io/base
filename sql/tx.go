@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"database/sql"
 	gosql "database/sql"
 	"fmt"
 	"time"
@@ -93,7 +92,7 @@ func (w *Tx) finished() {
 	w.done()
 }
 
-func (w *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (w *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	defer done()
 
@@ -101,7 +100,7 @@ func (w *Tx) ExecContext(ctx context.Context, query string, args ...interface{})
 	return r, w.error(err)
 }
 
-func (w *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (w *Tx) Exec(query string, args ...interface{}) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	defer done()
 
@@ -109,23 +108,23 @@ func (w *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return r, w.error(err)
 }
 
-func (w *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (w *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
-	r, err := w.Tx.QueryContext(ctx, query, args...)
+	r, err := w.Tx.QueryContext(ctx, query, args...) //nolint:sqlclosecheck
 	return r, w.error(err)
 }
 
-func (w *Tx) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (w *Tx) Query(query string, args ...interface{}) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
-	r, err := w.Tx.Query(query, args...)
+	r, err := w.Tx.Query(query, args...) //nolint:sqlclosecheck
 	return r, w.error(err)
 }
 
-func (w *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (w *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	defer done()
 
@@ -135,7 +134,7 @@ func (w *Tx) QueryRowContext(ctx context.Context, query string, args ...interfac
 	return r
 }
 
-func (w *Tx) QueryRow(query string, args ...interface{}) *sql.Row {
+func (w *Tx) QueryRow(query string, args ...interface{}) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	defer done()
 
