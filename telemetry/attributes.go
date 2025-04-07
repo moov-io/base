@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccoveille/go-safecast"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -123,12 +122,7 @@ func createAttributes(val reflect.Value, tag *otelTag) (kv []attribute.KeyValue)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		kv = append(kv, attribute.Int64(tag.attributeName, val.Int()))
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		valCast, err := safecast.ToInt64(val.Uint())
-		if err != nil {
-			kv = append(kv, attribute.String(tag.attributeName, fmt.Sprintf("%d", val.Uint())))
-		} else {
-			kv = append(kv, attribute.Int64(tag.attributeName, valCast))
-		}
+		kv = append(kv, attribute.Int64(tag.attributeName, int64(val.Uint()))) //nolint:gosec
 	case reflect.Float32, reflect.Float64:
 		kv = append(kv, attribute.Float64(tag.attributeName, val.Float()))
 	case reflect.Complex64, reflect.Complex128:
