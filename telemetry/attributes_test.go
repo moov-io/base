@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ccoveille/go-safecast"
 	"github.com/moov-io/base/telemetry"
 
 	"github.com/stretchr/testify/require"
@@ -219,6 +220,27 @@ func TestStructAttributes_uint(t *testing.T) {
 			attribute.Int64("uint16", 123),
 			attribute.Int64("uint32", 123),
 			attribute.Int64("uint64", 123),
+		},
+		telemetry.StructAttributes(m),
+	)
+}
+
+func TestStructAttributes_uint_overflow_to_string(t *testing.T) {
+	type foo struct {
+		Uint64 uint64 `otel:"uint64"`
+	}
+
+	uintVal := uint64(math.MaxInt64 + 1)
+	_, err := safecast.ToInt64(uintVal)
+	require.Error(t, err)
+
+	m := foo{
+		Uint64: uintVal,
+	}
+
+	require.ElementsMatch(t,
+		[]attribute.KeyValue{
+			attribute.String("uint64", fmt.Sprintf("%d", uintVal)),
 		},
 		telemetry.StructAttributes(m),
 	)
