@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccoveille/go-safecast"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/telemetry"
 
@@ -77,7 +78,13 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 		previousVersion = 0
 		dirty = false
 	}
-	span.SetAttributes(attribute.Int64("db.previous_version", int64(previousVersion)))
+
+	previousVersionAttrVal, err := safecast.ToInt64(previousVersion)
+	if err != nil {
+		span.SetAttributes(attribute.String("db.previous_version", fmt.Sprintf("%d", previousVersion)))
+	} else {
+		span.SetAttributes(attribute.Int64("db.previous_version", previousVersionAttrVal))
+	}
 
 	err = m.Up()
 	migrationMutex.Unlock()
@@ -99,7 +106,13 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 		newVersion = 0
 		newDirty = false
 	}
-	span.SetAttributes(attribute.Int64("db.new_version", int64(newVersion)))
+
+	newVersionAttrVal, err := safecast.ToInt64(newVersion)
+	if err != nil {
+		span.SetAttributes(attribute.String("db.new_version", fmt.Sprintf("%d", newVersion)))
+	} else {
+		span.SetAttributes(attribute.Int64("db.new_version", newVersionAttrVal))
+	}
 
 	logger.Info().Logf("Migrations complete: previous: %d (dirty:%v) -> new: %d (dirty:%v)", previousVersion, dirty, newVersion, newDirty)
 

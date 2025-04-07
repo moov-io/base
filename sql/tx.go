@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	"database/sql"
-	gosql "database/sql"
 	"fmt"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 )
 
 type Tx struct {
-	*gosql.Tx
+	*sql.Tx
 
 	logger log.Logger
 
@@ -113,7 +112,7 @@ func (w *Tx) QueryContext(ctx context.Context, query string, args ...interface{}
 	done := w.start("query", query, len(args))
 	defer done()
 
-	r, err := w.Tx.QueryContext(ctx, query, args...)
+	r, err := w.Tx.QueryContext(ctx, query, args...) //nolint:sqlclosecheck
 	return r, w.error(err)
 }
 
@@ -121,7 +120,7 @@ func (w *Tx) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
-	r, err := w.Tx.Query(query, args...)
+	r, err := w.Tx.Query(query, args...) //nolint:sqlclosecheck
 	return r, w.error(err)
 }
 
