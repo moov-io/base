@@ -132,29 +132,32 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 	return connStr, nil
 }
 
+// PostgresUniqueViolation returns true when the provided error matches the Postgres code
+// for unique violation.
 func PostgresUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
-	match := strings.Contains(err.Error(), postgresErrUniqueViolation)
 
 	var pgError *pgconn.PgError
-	if errors.As(err, &pgError) {
-		return match || pgError.Code == postgresErrUniqueViolation
+	if errors.As(err, &pgError) && pgError.Code == postgresErrUniqueViolation {
+		return true
 	}
 
-	return match
+	return strings.Contains(err.Error(), postgresErrUniqueViolation)
 }
 
+// PostgresDeadlockFound returns true when the provided error matches the Postgres code
+// for deadlock found.
 func PostgresDeadlockFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	match := strings.Contains(err.Error(), postgresErrDeadlockFound)
+
 	var pgError *pgconn.PgError
-	if errors.As(err, &pgError) {
-		return match || pgError.Code == postgresErrDeadlockFound
+	if errors.As(err, &pgError) && pgError.Code == postgresErrDeadlockFound {
+		return true
 	}
 
-	return match
+	return strings.Contains(err.Error(), postgresErrDeadlockFound)
 }

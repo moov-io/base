@@ -206,11 +206,13 @@ func MySQLUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
-	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d", mySQLErrDuplicateKey))
-	if e, ok := err.(*gomysql.MySQLError); ok {
-		return match || e.Number == mySQLErrDuplicateKey
+
+	var mysqlErr *gomysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == mySQLErrDuplicateKey {
+		return true
 	}
-	return match
+
+	return strings.Contains(err.Error(), fmt.Sprintf("Error %d", mySQLErrDuplicateKey))
 }
 
 // MySQLDataTooLong returns true when the provided error matches the MySQL code
@@ -220,11 +222,13 @@ func MySQLDataTooLong(err error) bool {
 	if err == nil {
 		return false
 	}
-	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d", mysqlErrDataTooLong))
-	if e, ok := err.(*gomysql.MySQLError); ok {
-		return match || e.Number == mysqlErrDataTooLong
+
+	var mysqlErr *gomysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrDataTooLong {
+		return true
 	}
-	return match
+
+	return strings.Contains(err.Error(), fmt.Sprintf("Error %d", mysqlErrDataTooLong))
 }
 
 // MySQLDeadlockFound returns true when the provided error matches the MySQL code
@@ -233,10 +237,11 @@ func MySQLDeadlockFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	match := strings.Contains(err.Error(), fmt.Sprintf("Error %d", mysqlErrDeadlockFound))
-	if e, ok := err.(*gomysql.MySQLError); ok {
-		return match || e.Number == mysqlErrDeadlockFound
+
+	var mysqlErr *gomysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrDeadlockFound {
+		return true
 	}
 
-	return match
+	return strings.Contains(err.Error(), fmt.Sprintf("Error %d", mysqlErrDeadlockFound))
 }
