@@ -89,6 +89,7 @@ func (w *DB) Query(query string, args ...interface{}) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
+	//nolint:sqlclosecheck
 	r, err := w.DB.Query(query, args...)
 	return r, w.error(err)
 }
@@ -101,7 +102,7 @@ func (w *DB) QueryContext(ctx context.Context, query string, args ...interface{}
 		done()
 	}()
 
-	r, err := w.DB.QueryContext(ctx, query, args...)
+	r, err := w.DB.QueryContext(ctx, query, args...) //nolint:sqlclosecheck
 	return r, w.error(err)
 }
 

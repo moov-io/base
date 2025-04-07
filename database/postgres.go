@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/moov-io/base/log"
 )
 

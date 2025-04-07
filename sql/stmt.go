@@ -92,7 +92,7 @@ func (s *Stmt) Query(args ...any) (*gosql.Rows, error) {
 	done := s.start("query", s.query, len(args))
 	defer done()
 
-	r, err := s.ss.Query(args...)
+	r, err := s.ss.Query(args...) //nolint:sqlclosecheck
 	return r, s.error(err)
 }
 
@@ -104,7 +104,7 @@ func (s *Stmt) QueryContext(ctx context.Context, args ...any) (*gosql.Rows, erro
 		done()
 	}()
 
-	r, err := s.ss.QueryContext(ctx, args...)
+	r, err := s.ss.QueryContext(ctx, args...) //nolint:sqlclosecheck
 	return r, s.error(err)
 }
 
