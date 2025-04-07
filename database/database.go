@@ -78,6 +78,10 @@ func DataTooLong(err error) bool {
 	return MySQLDataTooLong(err)
 }
 
+func DeadlockFound(err error) bool {
+	return MySQLDeadlockFound(err) || PostgresDeadlockFound(err)
+}
+
 func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
 	if connections.MaxOpen > 0 {
 		logger.Logf("setting SQL max open connections to %d", connections.MaxOpen)

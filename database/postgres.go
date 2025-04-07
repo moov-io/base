@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"cloud.google.com/go/alloydbconn"
 	"github.com/jackc/pgx/v5"
@@ -18,6 +19,7 @@ const (
 	// PostgreSQL Error Codes
 	// https://www.postgresql.org/docs/current/errcodes-appendix.html
 	postgresErrUniqueViolation = "23505"
+	postgresErrDeadlockFound   = "40P01"
 )
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
@@ -130,15 +132,32 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 	return connStr, nil
 }
 
+// PostgresUniqueViolation returns true when the provided error matches the Postgres code
+// for unique violation.
 func PostgresUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	var pgError *pgconn.PgError
-	if errors.As(err, &pgError) {
-		if pgError.Code == postgresErrUniqueViolation {
-			return true
-		}
+	if errors.As(err, &pgError) && pgError.Code == postgresErrUniqueViolation {
+		return true
 	}
-	return false
+
+	return strings.Contains(err.Error(), postgresErrUniqueViolation)
+}
+
+// PostgresDeadlockFound returns true when the provided error matches the Postgres code
+// for deadlock found.
+func PostgresDeadlockFound(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) && pgError.Code == postgresErrDeadlockFound {
+		return true
+	}
+
+	return strings.Contains(err.Error(), postgresErrDeadlockFound)
 }
