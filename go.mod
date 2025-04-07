@@ -5,7 +5,6 @@ go 1.23.0
 require (
 	cloud.google.com/go/alloydbconn v1.15.0
 	cloud.google.com/go/spanner v1.77.0
-	github.com/ccoveille/go-safecast v1.6.1
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.9.0
