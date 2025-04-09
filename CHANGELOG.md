@@ -1,3 +1,16 @@
+## v0.54.3 (Released 2025-04-09)
+
+IMPROVEMENTS
+
+- feat: catch psql deadlock err
+
+BUILD
+
+- build: update cloud.google.com/go/spanner to v1.79.0
+- build: update github.com/go-sql-driver/mysql to v1.9.2
+- build: update github.com/googleapis/go-sql-spanner to v1.13.0
+- build: update google.golang.org/grpc to v1.71.1
+
 ## v0.54.2 (Released 2025-03-17)
 
 BUILD
