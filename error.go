@@ -30,9 +30,9 @@ type ParseError struct {
 
 func (e ParseError) Error() string {
 	if e.Record == "" {
-		return fmt.Sprintf("line:%d %T %s", e.Line, e.Err, e.Err)
+		return fmt.Sprintf("line:%d %s", e.Line, e.Err)
 	}
-	return fmt.Sprintf("line:%d record:%s %T %s", e.Line, e.Record, e.Err, e.Err)
+	return fmt.Sprintf("line:%d record:%s %s", e.Line, e.Record, e.Err)
 }
 
 // Unwrap implements the UnwrappableError interface for ParseError

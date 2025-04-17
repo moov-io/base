@@ -50,7 +50,7 @@ func TestParseErrorRecordNull_Error(t *testing.T) {
 
 	e1 := pse.Error()
 
-	if e1 != "line:5 base.ErrorList testing" {
+	if e1 != "line:5 testing" {
 		t.Errorf("got %s", e1)
 	}
 }
