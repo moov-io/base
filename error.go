@@ -26,13 +26,21 @@ type ParseError struct {
 	Line   int    // Line number where the error occurred
 	Record string // Name of the record type being parsed
 	Err    error  // The actual error
+	SuppressType bool // Whether to exclude the Go error type from string representation
 }
 
 func (e ParseError) Error() string {
-	if e.Record == "" {
-		return fmt.Sprintf("line:%d %s", e.Line, e.Err)
+	if e.SuppressType {
+		if e.Record == "" {
+			return fmt.Sprintf("line:%d %s", e.Line, e.Err)
+		}
+		return fmt.Sprintf("line:%d record:%s %s", e.Line, e.Record, e.Err)
+	} else {
+		if e.Record == "" {
+			return fmt.Sprintf("line:%d %T %s", e.Line, e.Err, e.Err)
+		}
+		return fmt.Sprintf("line:%d record:%s %T %s", e.Line, e.Record, e.Err, e.Err)
 	}
-	return fmt.Sprintf("line:%d record:%s %s", e.Line, e.Record, e.Err)
 }
 
 // Unwrap implements the UnwrappableError interface for ParseError
