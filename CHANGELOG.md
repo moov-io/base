@@ -1,3 +1,14 @@
+## v0.54.4 (Released 2025-04-22)
+
+BUILD
+
+- build(deps): bump golang.org/x/net from 0.37.0 to 0.38.0
+- build: update cloud.google.com/go/alloydbconn to v1.15.1
+- build: update cloud.google.com/go/spanner to v1.79.0
+- build: update github.com/go-sql-driver/mysql to v1.9.2
+- build: update github.com/jackc/pgx/v5 to v5.7.4
+- build: update google.golang.org/grpc to v1.72.0
+
 ## v0.54.3 (Released 2025-04-09)
 
 IMPROVEMENTS
