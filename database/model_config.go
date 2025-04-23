@@ -31,6 +31,7 @@ type PostgresConfig struct {
 	Connections ConnectionsConfig
 	TLS         *PostgresTLSConfig
 	Alloy       *PostgresAlloyConfig
+	DisableSSL  bool
 }
 
 type PostgresTLSConfig struct {

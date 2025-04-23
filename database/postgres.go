@@ -72,6 +72,10 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 		if config.TLS.ClientKeyFile != "" {
 			params += "&sslkey=" + config.TLS.ClientKeyFile
 		}
+	} else if config.DisableSSL {
+		// When using google/alloydbomni for local development, it will establish a postgres connection
+		// with SSL enabled by default, so we need to disable it to successfully connect.
+		params += "sslmode=disable"
 	}
 
 	connStr := fmt.Sprintf("%s?%s", url, params)
