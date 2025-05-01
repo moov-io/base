@@ -139,6 +139,7 @@ func valueToValuer(v reflect.Value) Valuer {
 		return nil
 	}
 
+	//nolint:exhaustive
 	switch v.Kind() {
 	case reflect.Bool:
 		return Bool(v.Bool())
@@ -179,4 +180,3 @@ func valueToValuer(v reflect.Value) Valuer {
 	// Return as string representation for other types
 	return String(fmt.Sprintf("%v", v.Interface()))
 }
-
