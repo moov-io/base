@@ -20,7 +20,7 @@ func TestStructContext(t *testing.T) {
 		Age       int       `log:"age"`
 		Email     string    `log:"email,omitempty"`
 		CreatedAt time.Time `log:"created_at"`
-		Address   Address
+		Address   Address   `log:"address"`
 		Hidden    string
 	}
 
@@ -42,29 +42,31 @@ func TestStructContext(t *testing.T) {
 	ctx := StructContext(p)
 	fields := ctx.Context()
 
-	require.Equal(t, 7, len(fields))
+	require.Equal(t, 8, len(fields))
 	require.Equal(t, "John Doe", fields["name"].getValue())
 	require.Equal(t, int64(30), fields["age"].getValue())
 	require.Equal(t, "john@example.com", fields["email"].getValue())
 	require.Equal(t, now.Format(time.RFC3339Nano), fields["created_at"].getValue())
-	require.Equal(t, "123 Main St", fields["Address.street"].getValue())
-	require.Equal(t, "New York", fields["Address.city"].getValue())
-	require.Equal(t, "USA", fields["Address.country"].getValue())
+	require.Equal(t, "123 Main St", fields["address.street"].getValue())
+	require.Equal(t, "New York", fields["address.city"].getValue())
+	require.Equal(t, "USA", fields["address.country"].getValue())
+	require.Contains(t, fields, "address") // The struct itself is also included
 	require.NotContains(t, fields, "Hidden")
-	require.NotContains(t, fields, "Address.zip_code") // Should be omitted as it's empty
+	require.NotContains(t, fields, "address.zip_code") // Should be omitted as it's empty
 
 	// Test with prefix
 	ctx = StructContext(p, WithPrefix("user"))
 	fields = ctx.Context()
 
-	require.Equal(t, 7, len(fields))
+	require.Equal(t, 8, len(fields))
 	require.Equal(t, "John Doe", fields["user.name"].getValue())
 	require.Equal(t, int64(30), fields["user.age"].getValue())
 	require.Equal(t, "john@example.com", fields["user.email"].getValue())
 	require.Equal(t, now.Format(time.RFC3339Nano), fields["user.created_at"].getValue())
-	require.Equal(t, "123 Main St", fields["user.Address.street"].getValue())
-	require.Equal(t, "New York", fields["user.Address.city"].getValue())
-	require.Equal(t, "USA", fields["user.Address.country"].getValue())
+	require.Equal(t, "123 Main St", fields["user.address.street"].getValue())
+	require.Equal(t, "New York", fields["user.address.city"].getValue())
+	require.Equal(t, "USA", fields["user.address.country"].getValue())
+	require.Contains(t, fields, "user.address") // The struct itself is also included
 
 	// Test with nil value
 	ctx = StructContext(nil)
@@ -79,7 +81,7 @@ func TestStructContext(t *testing.T) {
 	// Test with pointer to struct
 	ctx = StructContext(&p)
 	fields = ctx.Context()
-	require.Equal(t, 6, len(fields)) // email is empty and omitted
+	require.Equal(t, 7, len(fields)) // email is empty and omitted
 	require.Equal(t, "John Doe", fields["name"].getValue())
 
 	// Test nested pointer structs
@@ -92,7 +94,7 @@ func TestStructContext(t *testing.T) {
 	}
 
 	type Employee struct {
-		Company *Company
+		Company *Company `log:"company"`
 	}
 
 	employee := Employee{
@@ -105,8 +107,33 @@ func TestStructContext(t *testing.T) {
 
 	ctx = StructContext(employee)
 	fields = ctx.Context()
-	require.Equal(t, 2, len(fields))
-	require.Equal(t, "Engineering", fields["Company.department.name"].getValue())
+	require.Equal(t, 3, len(fields))
+	require.Contains(t, fields, "company")
+	require.Contains(t, fields, "company.department")
+	require.Equal(t, "Engineering", fields["company.department.name"].getValue())
+
+	// Test struct without log tag is not included
+	type TeamMember struct {
+		Role     string   `log:"role"`
+		Employee Employee // No log tag
+	}
+
+	team := TeamMember{
+		Role: "Developer",
+		Employee: Employee{
+			Company: &Company{
+				Dept: &Department{
+					Name: "Engineering",
+				},
+			},
+		},
+	}
+
+	ctx = StructContext(team)
+	fields = ctx.Context()
+	require.Equal(t, 1, len(fields))
+	require.Equal(t, "Developer", fields["role"].getValue())
+	require.NotContains(t, fields, "employee.company.department.name")
 
 	// Test with various value types
 	type AllTypes struct {
@@ -142,6 +169,51 @@ func TestStructContext(t *testing.T) {
 	require.Equal(t, float32(3.14), fields["float32"].getValue())
 	require.Equal(t, float64(2.71828), fields["float64"].getValue())
 	require.Equal(t, "hello", fields["string"].getValue())
+}
+
+func TestStructContextWithTag(t *testing.T) {
+	// Define a struct with otel tags instead of log tags
+	type Product struct {
+		ID          int       `otel:"product_id"`
+		Name        string    `otel:"product_name"`
+		Price       float64   `otel:"price"`
+		Description string    `otel:"description,omitempty"`
+		CreatedAt   time.Time `otel:"created_at"`
+	}
+
+	now := time.Now()
+	product := Product{
+		ID:        123,
+		Name:      "Test Product",
+		Price:     29.99,
+		CreatedAt: now,
+	}
+
+	// Use StructContext with WithTag option to use otel tags instead of log tags
+	ctx := StructContext(product, WithTag("otel"))
+	fields := ctx.Context()
+
+	// Verify that the fields are extracted using otel tags
+	require.Contains(t, fields, "product_id")
+	require.Contains(t, fields, "product_name")
+	require.Contains(t, fields, "price")
+	require.Contains(t, fields, "created_at")
+	require.NotContains(t, fields, "description") // Should be omitted as it's empty with omitempty
+
+	// Verify values
+	require.Equal(t, int64(123), fields["product_id"].getValue())
+	require.Equal(t, "Test Product", fields["product_name"].getValue())
+	require.Equal(t, float64(29.99), fields["price"].getValue())
+
+	// Test with both custom tag and prefix
+	ctx = StructContext(product, WithTag("otel"), WithPrefix("item"))
+	fields = ctx.Context()
+
+	require.Contains(t, fields, "item.product_id")
+	require.Contains(t, fields, "item.product_name")
+	require.Contains(t, fields, "item.price")
+	require.Contains(t, fields, "item.created_at")
+	require.NotContains(t, fields, "item.description")
 }
 
 func TestStructContextWithLogger(t *testing.T) {

@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 )
@@ -17,10 +18,18 @@ func WithPrefix(prefix string) StructContextOption {
 	}
 }
 
+// WithTag adds a custom tag to look for in struct fields
+func WithTag(tag string) StructContextOption {
+	return func(sc *structContext) {
+		sc.tag = tag
+	}
+}
+
 // structContext implements the Context interface for struct fields
 type structContext struct {
 	fields map[string]Valuer
 	prefix string
+	tag    string
 }
 
 // Context returns a map of field names to Valuer implementations
@@ -33,6 +42,8 @@ func (sc *structContext) Context() map[string]Valuer {
 func StructContext(v interface{}, opts ...StructContextOption) Context {
 	sc := &structContext{
 		fields: make(map[string]Valuer),
+		prefix: "",
+		tag:    "log",
 	}
 
 	// Apply options
@@ -45,13 +56,13 @@ func StructContext(v interface{}, opts ...StructContextOption) Context {
 	}
 
 	value := reflect.ValueOf(v)
-	extractFields(value, sc.fields, sc.prefix, "")
+	extractFields(value, sc, "")
 
 	return sc
 }
 
 // extractFields recursively extracts fields from a struct value
-func extractFields(value reflect.Value, fields map[string]Valuer, prefix, path string) {
+func extractFields(value reflect.Value, sc *structContext, path string) {
 	// If it's a pointer, dereference it
 	if value.Kind() == reflect.Ptr {
 		if value.IsNil() {
@@ -66,7 +77,7 @@ func extractFields(value reflect.Value, fields map[string]Valuer, prefix, path s
 	}
 
 	typ := value.Type()
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		field := typ.Field(i)
 		fieldValue := value.Field(i)
 
@@ -76,18 +87,9 @@ func extractFields(value reflect.Value, fields map[string]Valuer, prefix, path s
 		}
 
 		// Get the log tag
-		tag := field.Tag.Get("log")
+		tag := field.Tag.Get(sc.tag)
 		if tag == "" {
-			// If the field is a struct, recursively extract its fields
-			if fieldValue.Kind() == reflect.Struct || 
-				(fieldValue.Kind() == reflect.Ptr && !fieldValue.IsNil() && fieldValue.Elem().Kind() == reflect.Struct) {
-				// Use field name for the path
-				newPath := field.Name
-				if path != "" {
-					newPath = path + "." + field.Name
-				}
-				extractFields(fieldValue, fields, prefix, newPath)
-			}
+			// Skip fields without log tag
 			continue
 		}
 
@@ -99,59 +101,36 @@ func extractFields(value reflect.Value, fields map[string]Valuer, prefix, path s
 		}
 
 		// Handle omitempty
-		omitEmpty := false
-		for _, opt := range tagParts[1:] {
-			if opt == "omitempty" {
-				omitEmpty = true
-				break
-			}
-		}
+		omitEmpty := slices.Contains(tagParts, "omitempty")
 
 		// Build the full field name with path and prefix
 		fullName := fieldName
 		if path != "" {
 			fullName = path + "." + fieldName
 		}
-		if prefix != "" {
-			fullName = prefix + "." + fullName
+
+		// we add prefis only once, for the field on the first level
+		if path == "" && sc.prefix != "" {
+			fullName = sc.prefix + "." + fullName
 		}
 
 		// Check if field should be omitted due to empty value
-		if omitEmpty && isEmptyValue(fieldValue) {
+		if omitEmpty && fieldValue.IsZero() {
 			continue
 		}
 
 		// Store the field value
 		valuer := valueToValuer(fieldValue)
 		if valuer != nil {
-			fields[fullName] = valuer
+			sc.fields[fullName] = valuer
 		}
 
-		// If it's a struct, also extract its fields recursively
-		if fieldValue.Kind() == reflect.Struct || 
+		// If it's a struct, recursively extract its fields only if it has a log tag
+		if fieldValue.Kind() == reflect.Struct ||
 			(fieldValue.Kind() == reflect.Ptr && !fieldValue.IsNil() && fieldValue.Elem().Kind() == reflect.Struct) {
-			extractFields(fieldValue, fields, prefix, fullName)
+			extractFields(fieldValue, sc, fullName)
 		}
 	}
-}
-
-// isEmptyValue checks if a value is considered empty
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
-		return v.Len() == 0
-	case reflect.Bool:
-		return !v.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return v.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return v.Float() == 0
-	case reflect.Interface, reflect.Ptr:
-		return v.IsNil()
-	}
-	return false
 }
 
 // valueToValuer converts a reflect.Value to a Valuer
@@ -200,3 +179,4 @@ func valueToValuer(v reflect.Value) Valuer {
 	// Return as string representation for other types
 	return String(fmt.Sprintf("%v", v.Interface()))
 }
+

@@ -59,7 +59,7 @@ type User struct {
     ID       int    `log:"id"`
     Username string `log:"username"`
     Email    string `log:"email,omitempty"` // won't be logged if empty
-    Address  Address
+    Address  Address `log:"address"` // nested struct must have log tag
     Hidden   string // no log tag, won't be logged
 }
 
@@ -87,23 +87,46 @@ logger.With(log.StructContext(user)).Info().Log("User logged in")
 
 // Log with struct context and prefix
 logger.With(log.StructContext(user, log.WithPrefix("user"))).Info().Log("User details")
+
+// Using custom tag other than "log"
+type Product struct {
+    ID    int     `otel:"product_id"`
+    Name  string  `otel:"product_name"`
+    Price float64 `otel:"price,omitempty"`
+}
+
+product := Product{
+    ID:    42,
+    Name:  "Widget",
+    Price: 19.99,
+}
+
+// Use otel tags instead of log tags
+logger.With(log.StructContext(product, log.WithTag("otel"))).Info().Log("Product details")
 ```
 
 The above will produce log entries with the following fields:
 - `id=1`
 - `username=johndoe`
 - `email=john@example.com`
-- `Address.street=123 Main St`
-- `Address.city=New York`
-- `Address.country=USA`
+- `address.street=123 Main St`
+- `address.city=New York`
+- `address.country=USA`
 
 With the prefix option, the fields will be:
 - `user.id=1`
 - `user.username=johndoe`
 - `user.email=john@example.com`
-- `user.Address.street=123 Main St`
-- `user.Address.city=New York`
-- `user.Address.country=USA`
+- `user.address.street=123 Main St`
+- `user.address.city=New York`
+- `user.address.country=USA`
+
+With the custom tag option, the fields will be extracted from the tag you specify (such as `otel`):
+- `product_id=42`
+- `product_name=Widget`
+- `price=19.99`
+
+Note that nested structs or pointers to structs must have the specified tag to be included in the context.
 
 ## Features
 
