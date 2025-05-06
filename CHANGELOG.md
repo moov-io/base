@@ -1,3 +1,14 @@
+## v0.55.0 (Released 2025-05-06)
+
+ADDITIONS
+
+- feat: add `StructContext` for logging fields of a struct
+
+BUILD
+
+- build(deps): bump github.com/go-jose/go-jose/v4 from 4.0.4 to 4.0.5
+- fix(deps): update module github.com/golang-migrate/migrate/v4 to v4.18.3 (#455)
+
 ## v0.54.4 (Released 2025-04-22)
 
 BUILD
