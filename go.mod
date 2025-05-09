@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	cloud.google.com/go/alloydbconn v1.15.1
-	cloud.google.com/go/spanner v1.79.0
+	cloud.google.com/go/spanner v1.81.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.9.2
@@ -12,7 +12,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.14.1
-	github.com/googleapis/go-sql-spanner v1.13.0
+	github.com/googleapis/go-sql-spanner v1.13.1
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/madflojo/testcerts v1.4.0
