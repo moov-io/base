@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
-	"sync"
 	"time"
 
 	"github.com/moov-io/base/log"
@@ -24,8 +23,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
-
-var migrationMutex sync.Mutex
 
 func RunMigrations(logger log.Logger, config DatabaseConfig, opts ...MigrateOption) error {
 	return RunMigrationsContext(context.Background(), logger, config, opts...)
@@ -53,7 +50,6 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 	}
 	defer driver.Close()
 
-	migrationMutex.Lock()
 	m, err := migrate.NewWithInstance(
 		source.name,
 		source,
@@ -80,7 +76,6 @@ func RunMigrationsContext(ctx context.Context, logger log.Logger, config Databas
 	span.SetAttributes(attribute.Int64("db.previous_version", int64(previousVersion))) //nolint:gosec
 
 	err = m.Up()
-	migrationMutex.Unlock()
 
 	switch err {
 	case nil:
