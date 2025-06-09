@@ -1,3 +1,13 @@
+## v0.55.1 (Released 2025-06-09)
+
+IMPROVEMENTS
+
+- fix: remove mutex locking in `database.RunMigrations` to allow tests to fully benefit from runs using `t.Parallel()`
+
+BUILD
+
+- fix(deps): update opentelemetry-go monorepo to v1.36.0 (#458)
+
 ## v0.55.0 (Released 2025-05-06)
 
 ADDITIONS
