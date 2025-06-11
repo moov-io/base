@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -120,19 +121,33 @@ func GetUserID(r *http.Request) string {
 // - skip is the number of records to pass over before starting a search (max math.MaxInt32)
 // - count is the number of records to retrieve in the search  (max 10,000)
 // - exists indicates if skip or count was passed into the request URL
-func GetSkipAndCount(r *http.Request) (skip int, count int, exists bool, err error) {
-	return readSkipCount(r, math.MaxInt32, 10000)
+func GetSkipAndCount[T *http.Request | string](t T) (skip int, count int, exists bool, err error) {
+	return readSkipCount(t, math.MaxInt32, 10000)
 }
 
 // LimitedSkipCount returns the skip and count pagination values from the request's query parameters
 // See GetSkipAndCount for descriptions of each parameter
-func LimitedSkipCount(r *http.Request, skipLimit, countLimit int) (skip int, count int, exists bool, err error) {
-	return readSkipCount(r, skipLimit, countLimit)
+func LimitedSkipCount[T *http.Request | string](t T, skipLimit, countLimit int) (skip int, count int, exists bool, err error) {
+	return readSkipCount(t, skipLimit, countLimit)
 }
 
-func readSkipCount(r *http.Request, skipMax, countMax int) (skip int, count int, exists bool, err error) {
-	skipVal := r.URL.Query().Get("skip")
-	countVal := r.URL.Query().Get("count")
+func readSkipCount[T *http.Request | string](t T, skipMax, countMax int) (skip int, count int, exists bool, err error) {
+	var query url.Values
+
+	switch tt := any(t).(type) {
+	case *http.Request:
+		query = tt.URL.Query()
+	case string:
+		query, err = url.ParseQuery(tt)
+		if err != nil {
+			return skip, count, exists, fmt.Errorf("parsing query string: %w", err)
+		}
+	default:
+		return skip, count, exists, fmt.Errorf("unsupported type %T for reading skip and count", t)
+	}
+
+	skipVal := query.Get("skip")
+	countVal := query.Get("count")
 	exists = len(skipVal) > 0 || len(countVal) > 0
 
 	// Parse skip
