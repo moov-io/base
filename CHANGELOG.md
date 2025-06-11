@@ -1,3 +1,9 @@
+## v0.56.0 (Released 2025-06-11)
+
+IMPROVEMENTS
+
+- http: Update `LimitedSkipCount` and `GetSkipAndCount` to support either http.Request or string as input
+
 ## v0.55.1 (Released 2025-06-09)
 
 IMPROVEMENTS
