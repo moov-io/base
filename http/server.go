@@ -140,7 +140,7 @@ func readSkipCount[T *http.Request | string](t T, skipMax, countMax int) (skip i
 	case string:
 		query, err = url.ParseQuery(tt)
 		if err != nil {
-			return skip, count, exists, fmt.Errorf("parsing query: %w", err)
+			return skip, count, exists, fmt.Errorf("parsing query string: %w", err)
 		}
 	default:
 		return skip, count, exists, fmt.Errorf("unsupported type %T for reading skip and count", t)
