@@ -7,6 +7,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/moov-io/base/log"
@@ -42,8 +43,12 @@ func New(ctx context.Context, logger log.Logger, config DatabaseConfig) (*sql.DB
 		return ApplyConnectionsConfig(db, &config.Postgres.Connections, logger), nil
 	}
 
-	return nil, fmt.Errorf("database config not defined")
+	return nil, ErrMissingConfig
 }
+
+var (
+	ErrMissingConfig = errors.New("database config not defined")
+)
 
 func NewAndMigrate(ctx context.Context, logger log.Logger, config DatabaseConfig, opts ...MigrateOption) (*sql.DB, error) {
 	if logger == nil {
