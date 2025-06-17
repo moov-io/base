@@ -3,18 +3,18 @@ module github.com/moov-io/base
 go 1.23.0
 
 require (
-	cloud.google.com/go/alloydbconn v1.15.1
-	cloud.google.com/go/spanner v1.79.0
+	cloud.google.com/go/alloydbconn v1.15.3
+	cloud.google.com/go/spanner v1.82.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
-	github.com/go-sql-driver/mysql v1.9.2
-	github.com/go-viper/mapstructure/v2 v2.2.1
+	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-viper/mapstructure/v2 v2.3.0
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
-	github.com/googleapis/gax-go/v2 v2.14.1
-	github.com/googleapis/go-sql-spanner v1.13.0
+	github.com/googleapis/gax-go/v2 v2.14.2
+	github.com/googleapis/go-sql-spanner v1.14.0
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/madflojo/testcerts v1.4.0
 	github.com/markbates/pkger v0.17.1
 	github.com/prometheus/client_golang v1.22.0
@@ -27,7 +27,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.36.0
 	go.opentelemetry.io/otel/sdk v1.36.0
 	go.opentelemetry.io/otel/trace v1.36.0
-	google.golang.org/grpc v1.72.1
+	google.golang.org/grpc v1.73.0
 )
 
 require (
