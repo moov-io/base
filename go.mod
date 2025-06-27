@@ -8,7 +8,7 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-sql-driver/mysql v1.9.2
-	github.com/go-viper/mapstructure/v2 v2.2.1
+	github.com/go-viper/mapstructure/v2 v2.3.0
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.14.1
@@ -46,7 +46,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20250121191232-2f005788dc42 // indirect
