@@ -85,6 +85,11 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 
 	var dialer *alloydbconn.Dialer
 	var dsn string
+	var sslMode string = "disable"
+
+	if config.TLS != nil {
+		sslMode = config.TLS.Mode
+	}
 
 	if config.Alloy.UseIAM {
 		d, err := alloydbconn.NewDialer(ctx, alloydbconn.WithIAMAuthN())
@@ -106,8 +111,8 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 		dialer = d
 		dsn = fmt.Sprintf(
 			// sslmode is disabled because the alloy db connection dialer will handle it
-			"user=%s password=%s dbname=%s sslmode=disable",
-			config.User, config.Password, databaseName,
+			"user=%s password=%s dbname=%s sslmode=%s",
+			config.User, config.Password, databaseName, sslMode,
 		)
 	}
 
@@ -119,13 +124,19 @@ func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, data
 		return "", fmt.Errorf("failed to parse pgx config: %v", err)
 	}
 
+	if config.TLS != nil && config.TLS.InsecureSkipVerify {
+		connConfig.TLSConfig.InsecureSkipVerify = true
+	}
+
 	var connOptions []alloydbconn.DialOption
 	if config.Alloy.UsePSC {
 		connOptions = append(connOptions, alloydbconn.WithPSC())
 	}
 
-	connConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
-		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
+	if len(config.Alloy.InstanceURI) > 0 {
+		connConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
+			return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
+		}
 	}
 
 	connStr := stdlib.RegisterConnConfig(connConfig)
