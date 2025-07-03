@@ -58,18 +58,23 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 	params := ""
 
 	if config.TLS != nil {
-		params += "sslmode=verify-full"
+		sslMode := "disable"
 
-		if config.TLS.CACertFile == "" {
-			return "", fmt.Errorf("missing TLS CA file")
+		if len(config.TLS.Mode) > 0 {
+			sslMode = config.TLS.Mode
 		}
-		params += "&sslrootcert=" + config.TLS.CACertFile
 
-		if config.TLS.ClientCertFile != "" {
+		params += "sslmode=" + sslMode
+
+		if len(config.TLS.CACertFile) > 0 {
+			params += "&sslrootcert=" + config.TLS.CACertFile
+		}
+
+		if len(config.TLS.ClientCertFile) > 0 {
 			params += "&sslcert=" + config.TLS.ClientCertFile
 		}
 
-		if config.TLS.ClientKeyFile != "" {
+		if len(config.TLS.ClientKeyFile) > 0 {
 			params += "&sslkey=" + config.TLS.ClientKeyFile
 		}
 	}
