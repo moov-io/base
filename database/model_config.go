@@ -34,6 +34,8 @@ type PostgresConfig struct {
 }
 
 type PostgresTLSConfig struct {
+	Mode string
+
 	CACertFile     string
 	ClientKeyFile  string
 	ClientCertFile string
