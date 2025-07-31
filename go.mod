@@ -3,22 +3,22 @@ module github.com/moov-io/base
 go 1.23.0
 
 require (
-	cloud.google.com/go/alloydbconn v1.15.0
-	cloud.google.com/go/spanner v1.79.0
+	cloud.google.com/go/alloydbconn v1.15.4
+	cloud.google.com/go/spanner v1.83.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
-	github.com/go-sql-driver/mysql v1.9.2
-	github.com/go-viper/mapstructure/v2 v2.3.0
+	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
-	github.com/googleapis/gax-go/v2 v2.14.1
-	github.com/googleapis/go-sql-spanner v1.13.0
+	github.com/googleapis/gax-go/v2 v2.15.0
+	github.com/googleapis/go-sql-spanner v1.16.1
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/madflojo/testcerts v1.4.0
 	github.com/markbates/pkger v0.17.1
-	github.com/prometheus/client_golang v1.22.0
-	github.com/rickar/cal/v2 v2.1.23
+	github.com/prometheus/client_golang v1.23.0
+	github.com/rickar/cal/v2 v2.1.24
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.37.0
@@ -27,7 +27,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.35.0
 	go.opentelemetry.io/otel/sdk v1.35.0
 	go.opentelemetry.io/otel/trace v1.37.0
-	google.golang.org/grpc v1.73.0
+	google.golang.org/grpc v1.74.2
 )
 
 require (
