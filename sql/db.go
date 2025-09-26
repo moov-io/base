@@ -65,7 +65,7 @@ func (w *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	return newStmt(ctx, w.logger, w.DB, query, w.id, w.slowQueryThresholdMs)
 }
 
-func (w *DB) Exec(query string, args ...interface{}) (gosql.Result, error) {
+func (w *DB) Exec(query string, args ...any) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	defer done()
 
@@ -73,7 +73,7 @@ func (w *DB) Exec(query string, args ...interface{}) (gosql.Result, error) {
 	return r, w.error(err)
 }
 
-func (w *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (gosql.Result, error) {
+func (w *DB) ExecContext(ctx context.Context, query string, args ...any) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	ctx, end := span(ctx, w.id, "exec", query, len(args))
 	defer func() {
@@ -85,7 +85,7 @@ func (w *DB) ExecContext(ctx context.Context, query string, args ...interface{})
 	return r, w.error(err)
 }
 
-func (w *DB) Query(query string, args ...interface{}) (*gosql.Rows, error) {
+func (w *DB) Query(query string, args ...any) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
@@ -94,7 +94,7 @@ func (w *DB) Query(query string, args ...interface{}) (*gosql.Rows, error) {
 	return r, w.error(err)
 }
 
-func (w *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*gosql.Rows, error) {
+func (w *DB) QueryContext(ctx context.Context, query string, args ...any) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	ctx, end := span(ctx, w.id, "query", query, len(args))
 	defer func() {
@@ -106,7 +106,7 @@ func (w *DB) QueryContext(ctx context.Context, query string, args ...interface{}
 	return r, w.error(err)
 }
 
-func (w *DB) QueryRow(query string, args ...interface{}) *gosql.Row {
+func (w *DB) QueryRow(query string, args ...any) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	defer done()
 
@@ -116,7 +116,7 @@ func (w *DB) QueryRow(query string, args ...interface{}) *gosql.Row {
 	return r
 }
 
-func (w *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *gosql.Row {
+func (w *DB) QueryRowContext(ctx context.Context, query string, args ...any) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	ctx, end := span(ctx, w.id, "query-row", query, len(args))
 	defer func() {
