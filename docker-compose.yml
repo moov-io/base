@@ -35,7 +35,7 @@ services:
       - "5432:5432"
     # https://github.com/docker-library/postgres/issues/1059#issuecomment-1467077098
     command: |
-      sh -c 'chown postgres:postgres /opt/moov/certs/*.key && chmod 0644 /opt/moov/certs/*.crt && ls -l /opt/moov/certs/ && exec docker-entrypoint.sh -c ssl=on -c ssl_cert_file=/opt/moov/certs/server.crt -c ssl_key_file=/opt/moov/certs/server.key -c ssl_ca_file=/opt/moov/certs/root.crt'
+      sh -c 'chown postgres:postgres /opt/moov/certs/*.key && chmod 0600 /opt/moov/certs/*.crt && chmod 0600 /opt/moov/certs/*.key && ls -l /opt/moov/certs/ && exec docker-entrypoint.sh -c ssl=on -c ssl_cert_file=/opt/moov/certs/server.crt -c ssl_key_file=/opt/moov/certs/server.key -c ssl_ca_file=/opt/moov/certs/root.crt'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U moov"]
       interval: 5s
