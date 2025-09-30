@@ -18,14 +18,18 @@ type RateLimitParams struct {
 	RateLimiter *rate.Limiter // can be nil to create a new rate limiter
 
 	// RetryAttempt represents the current retry attempt, starting at 1. This will increment for each retry
-	RetryAttempt int           `otel:"retry_attempt"`
-	MinDuration  time.Duration `otel:"min_duration_ns"`
-	MaxDuration  time.Duration `otel:"max_duration_ns"`
+	RetryAttempt int
+	MinDuration  time.Duration
+	MaxDuration  time.Duration
 }
 
 func RateLimit(ctx context.Context, params RateLimitParams) (*rate.Limiter, error) {
 	ctx, span := telemetry.StartSpan(ctx, "rate-limiter-wait",
-		trace.WithAttributes(telemetry.StructAttributes(params)...))
+		trace.WithAttributes(
+			attribute.Int("retry_attempt", params.RetryAttempt),
+			attribute.Int64("min_duration_ms", params.MinDuration.Milliseconds()),
+			attribute.Int64("max_duration_ms", params.MaxDuration.Milliseconds()),
+		))
 	defer span.End()
 
 	var (
@@ -82,9 +86,9 @@ func generateRateLimitDuration(multiplier int, minDuration, maxDuration time.Dur
 
 type RetryParams struct {
 	ShouldRetry func(err error) bool
-	MaxRetries  int           `otel:"max_retries"`
-	MinDuration time.Duration `otel:"min_duration_ns"`
-	MaxDuration time.Duration `otel:"max_duration_ns"`
+	MaxRetries  int
+	MinDuration time.Duration
+	MaxDuration time.Duration
 }
 
 func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context) (R, error), params RetryParams) (R, error) {
