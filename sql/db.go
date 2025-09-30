@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/ratex"
 )
 
 type DB struct {
@@ -65,7 +66,7 @@ func (w *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	return newStmt(ctx, w.logger, w.DB, query, w.id, w.slowQueryThresholdMs)
 }
 
-func (w *DB) Exec(query string, args ...interface{}) (gosql.Result, error) {
+func (w *DB) Exec(query string, args ...any) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	defer done()
 
@@ -73,7 +74,7 @@ func (w *DB) Exec(query string, args ...interface{}) (gosql.Result, error) {
 	return r, w.error(err)
 }
 
-func (w *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (gosql.Result, error) {
+func (w *DB) ExecContext(ctx context.Context, query string, args ...any) (gosql.Result, error) {
 	done := w.start("exec", query, len(args))
 	ctx, end := span(ctx, w.id, "exec", query, len(args))
 	defer func() {
@@ -85,7 +86,22 @@ func (w *DB) ExecContext(ctx context.Context, query string, args ...interface{})
 	return r, w.error(err)
 }
 
-func (w *DB) Query(query string, args ...interface{}) (*gosql.Rows, error) {
+func (w *DB) ExecContextRetryable(ctx context.Context, query string, retryParams ratex.RetryParams, args ...any) (gosql.Result, error) {
+	done := w.start("exec", query, len(args))
+	ctx, end := span(ctx, w.id, "exec", query, len(args))
+	defer func() {
+		end()
+		done()
+	}()
+
+	closure := func(ctx context.Context) (gosql.Result, error) {
+		r, err := w.DB.ExecContext(ctx, query, args...)
+		return r, w.error(err)
+	}
+	return ratex.ExecRetryable(ctx, closure, retryParams)
+}
+
+func (w *DB) Query(query string, args ...any) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	defer done()
 
@@ -94,7 +110,7 @@ func (w *DB) Query(query string, args ...interface{}) (*gosql.Rows, error) {
 	return r, w.error(err)
 }
 
-func (w *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*gosql.Rows, error) {
+func (w *DB) QueryContext(ctx context.Context, query string, args ...any) (*gosql.Rows, error) {
 	done := w.start("query", query, len(args))
 	ctx, end := span(ctx, w.id, "query", query, len(args))
 	defer func() {
@@ -106,7 +122,22 @@ func (w *DB) QueryContext(ctx context.Context, query string, args ...interface{}
 	return r, w.error(err)
 }
 
-func (w *DB) QueryRow(query string, args ...interface{}) *gosql.Row {
+func (w *DB) QueryContextRetryable(ctx context.Context, query string, retryParams ratex.RetryParams, args ...any) (*gosql.Rows, error) {
+	done := w.start("query", query, len(args))
+	ctx, end := span(ctx, w.id, "query", query, len(args))
+	defer func() {
+		end()
+		done()
+	}()
+
+	closure := func(ctx context.Context) (*gosql.Rows, error) {
+		r, err := w.DB.QueryContext(ctx, query, args...)
+		return r, w.error(err)
+	}
+	return ratex.ExecRetryable(ctx, closure, retryParams) //nolint:sqlclosecheck
+}
+
+func (w *DB) QueryRow(query string, args ...any) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	defer done()
 
@@ -116,7 +147,7 @@ func (w *DB) QueryRow(query string, args ...interface{}) *gosql.Row {
 	return r
 }
 
-func (w *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *gosql.Row {
+func (w *DB) QueryRowContext(ctx context.Context, query string, args ...any) *gosql.Row {
 	done := w.start("query-row", query, len(args))
 	ctx, end := span(ctx, w.id, "query-row", query, len(args))
 	defer func() {
@@ -127,6 +158,25 @@ func (w *DB) QueryRowContext(ctx context.Context, query string, args ...interfac
 	r := w.DB.QueryRowContext(ctx, query, args...)
 	w.error(r.Err())
 
+	return r
+}
+
+func (w *DB) QueryRowContextRetryable(ctx context.Context, query string, retryParams ratex.RetryParams, args ...any) *gosql.Row {
+	done := w.start("query-row", query, len(args))
+	ctx, end := span(ctx, w.id, "query-row", query, len(args))
+	defer func() {
+		end()
+		done()
+	}()
+
+	closure := func(ctx context.Context) (*gosql.Row, error) {
+		r := w.DB.QueryRowContext(ctx, query, args...)
+		w.error(r.Err())
+		return r, r.Err()
+	}
+
+	// the error is contained in r as r.Err() (see closure implementation), though it will not contain metadata about the retries as are present in the other *Retryable methods
+	r, _ := ratex.ExecRetryable(ctx, closure, retryParams)
 	return r
 }
 

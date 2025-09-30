@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moov-io/base/log"
-	"github.com/moov-io/base/sql"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/ratex"
+	"github.com/moov-io/base/sql"
 )
 
 func Test_SQL_Connect(t *testing.T) {
@@ -369,6 +370,64 @@ func Test_CleanQuery(t *testing.T) {
 	cleaned := sql.CleanQuery(query)
 
 	assert.Equal(t, `SELECT * FROM sometable WHERE sometable.field = ?`, cleaned)
+}
+
+func TestDBRetryableOperations(t *testing.T) {
+	skipIfDisabled(t)
+
+	db, _ := ConnectTestDB(t)
+	require.NotNil(t, db)
+
+	retryParams := ratex.RetryParams{
+		ShouldRetry: func(err error) bool { return true },
+		MaxRetries:  3,
+		MinDuration: 10 * time.Millisecond,
+		MaxDuration: 50 * time.Millisecond,
+	}
+
+	t.Run("ExecContextRetryable - Success on first try", func(t *testing.T) {
+		query := "INSERT INTO moov.test(id, value) VALUES (?, ?)"
+		_, err := db.ExecContextRetryable(context.Background(), query, retryParams, uuid.NewString(), uuid.NewString())
+		require.NoError(t, err)
+	})
+
+	t.Run("ExecContextRetryable - Retryable failure with success before last retry", func(t *testing.T) {
+		attempts := 0
+		query := "INSERT INTO moov.test(id, value) VALUES (?, ?)"
+		closure := func(ctx context.Context) (gosql.Result, error) {
+			if attempts < 2 {
+				attempts++
+				return nil, errors.New("retryable error")
+			}
+			return db.ExecContext(ctx, query, uuid.NewString(), uuid.NewString())
+		}
+		_, err := ratex.ExecRetryable(context.Background(), closure, retryParams)
+		require.NoError(t, err)
+	})
+
+	t.Run("ExecContextRetryable - Non-retryable failure", func(t *testing.T) {
+		query := "INSERT INTO moov.test(id, value) VALUES (?, ?)"
+		retryParams.ShouldRetry = func(err error) bool { return false }
+		_, err := db.ExecContextRetryable(context.Background(), query, retryParams, "too long"+uuid.NewString(), uuid.NewString())
+		require.Error(t, err)
+	})
+
+	t.Run("ExecContextRetryable - Retryable failures exceeding MaxRetries", func(t *testing.T) {
+		closure := func(ctx context.Context) (gosql.Result, error) {
+			return nil, errors.New("retryable error")
+		}
+		_, err := ratex.ExecRetryable(context.Background(), closure, retryParams)
+		require.Error(t, err)
+	})
+
+	t.Run("QueryContextRetryable - Success on first try", func(t *testing.T) {
+		id := AddRecord(t, db)
+		query := "SELECT * FROM moov.test WHERE id = ? LIMIT 1"
+		rows, err := db.QueryContextRetryable(context.Background(), query, retryParams, id)
+		require.NoError(t, err)
+		require.NoError(t, rows.Err())
+		defer rows.Close()
+	})
 }
 
 func skipIfDisabled(t *testing.T) {
