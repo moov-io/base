@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -72,16 +73,32 @@ func generateRateLimiter(ctx context.Context, params RateLimitParams) (*rate.Lim
 }
 
 // generateRateLimitDuration returns a random value between min-max duration multiplied by the multiplier.
+// It handles cases where max <= min and includes overflow protection.
 func generateRateLimitDuration(multiplier int, minDuration, maxDuration time.Duration) (time.Duration, error) {
 	minVal := minDuration.Milliseconds()
 	maxVal := maxDuration.Milliseconds()
 
-	maxRand, err := rand.Int(rand.Reader, big.NewInt(maxVal-minVal))
+	if maxVal <= minVal {
+		// If max <= min, use min * multiplier (or return error if preferred)
+		waitInterval := minVal * int64(multiplier)
+		if waitInterval < 0 || waitInterval > math.MaxInt64/1000000 { // Arbitrary cap to prevent overflow
+			waitInterval = minVal // Fallback to min if overflow
+		}
+		return time.Duration(waitInterval) * time.Millisecond, nil
+	}
+
+	delta := maxVal - minVal
+	maxRand, err := rand.Int(rand.Reader, big.NewInt(delta))
 	if err != nil {
 		return 0, fmt.Errorf("rand int: %w", err)
 	}
+
 	waitInterval := (minVal + maxRand.Int64()) * int64(multiplier)
-	return time.Millisecond * time.Duration(waitInterval), nil
+	if waitInterval < 0 || waitInterval > math.MaxInt64/1000000 { // Arbitrary cap to prevent overflow
+		waitInterval = maxVal * int64(multiplier) // Cap at max * multiplier
+	}
+
+	return time.Duration(waitInterval) * time.Millisecond, nil
 }
 
 type RetryParams struct {
@@ -98,6 +115,17 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 		err         error
 	)
 
+	// Validate params
+	if params.MaxRetries <= 0 {
+		params.MaxRetries = 1 // Default to at least one try
+	}
+	if params.MinDuration <= 0 {
+		params.MinDuration = 100 * time.Millisecond // Default min backoff
+	}
+	if params.MaxDuration < params.MinDuration {
+		params.MaxDuration = params.MinDuration * 10 // Default max to 10x min
+	}
+
 	retryFunc := func(ctx context.Context, retryAttempt int) (R, error) {
 		tryCtx, span := telemetry.StartSpan(ctx, "try",
 			trace.WithAttributes(
@@ -109,7 +137,7 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 		return closure(tryCtx)
 	}
 
-	for i := range params.MaxRetries {
+	for i := 0; i < params.MaxRetries; i++ {
 		retryAttempt := i + 1
 		retVal, err = retryFunc(ctx, retryAttempt)
 
@@ -132,17 +160,17 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 			// generate rate limiter to delay retries.
 			// This will jitter a wait time before the next iteration.
 			//
-			// We continue on rate limit errors and retry without waiting
-			params := RateLimitParams{
+			// We abort on rate limit errors (e.g., ctx cancel) instead of continuing
+			rlParams := RateLimitParams{
 				RateLimiter:  rateLimiter,
 				RetryAttempt: retryAttempt,
 				MinDuration:  params.MinDuration,
 				MaxDuration:  params.MaxDuration,
 			}
-			rateLimiter, err = RateLimit(ctx, params)
+			rateLimiter, err = RateLimit(ctx, rlParams)
 			if err != nil {
 				telemetry.AddEvent(ctx, fmt.Sprintf("rate limit: %s", err.Error()))
-				continue
+				return retVal, err // Abort on error (e.g., context canceled)
 			}
 		}
 	}
