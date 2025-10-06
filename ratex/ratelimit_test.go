@@ -235,7 +235,7 @@ func TestRateLimit(t *testing.T) {
 	t.Run("New limiter", func(t *testing.T) {
 		params := RateLimitParams{
 			RateLimiter: nil,
-			AttemptNum:  1,
+			Attempt:     1,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 20 * time.Millisecond,
 		}
@@ -248,7 +248,7 @@ func TestRateLimit(t *testing.T) {
 		existing := rate.NewLimiter(rate.Every(100*time.Millisecond), 1)
 		params := RateLimitParams{
 			RateLimiter: existing,
-			AttemptNum:  2,
+			Attempt:     2,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 20 * time.Millisecond,
 		}
@@ -261,7 +261,7 @@ func TestRateLimit(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		params := RateLimitParams{
 			RateLimiter: nil,
-			AttemptNum:  1,
+			Attempt:     1,
 			MinDuration: 100 * time.Millisecond,
 			MaxDuration: 200 * time.Millisecond,
 		}

@@ -18,8 +18,8 @@ import (
 type RateLimitParams struct {
 	RateLimiter *rate.Limiter // can be nil to create a new rate limiter
 
-	// AttemptNum represents the current attempt, starting at 1. This will increment for each (re)try
-	AttemptNum int
+	// Attempt represents the current attempt, starting at 1. This will increment for each (re)try
+	Attempt int
 
 	MinDuration time.Duration
 	MaxDuration time.Duration
@@ -28,7 +28,7 @@ type RateLimitParams struct {
 func RateLimit(ctx context.Context, params RateLimitParams) (*rate.Limiter, error) {
 	ctx, span := telemetry.StartSpan(ctx, "rate-limiter-wait",
 		trace.WithAttributes(
-			attribute.Int("attempt_num", params.AttemptNum),
+			attribute.Int("attempt", params.Attempt),
 			attribute.Int64("min_duration_ms", params.MinDuration.Milliseconds()),
 			attribute.Int64("max_duration_ms", params.MaxDuration.Milliseconds()),
 		))
@@ -53,7 +53,7 @@ func RateLimit(ctx context.Context, params RateLimitParams) (*rate.Limiter, erro
 
 // generateRateLimiter initializes a new rate limiter or sets a new limit on it.
 func generateRateLimiter(ctx context.Context, params RateLimitParams) (*rate.Limiter, error) {
-	rateLimitDuration, err := generateRateLimitDuration(params.AttemptNum, params.MinDuration, params.MaxDuration)
+	rateLimitDuration, err := generateRateLimitDuration(params.Attempt, params.MinDuration, params.MaxDuration)
 	if err != nil {
 		return nil, fmt.Errorf("generating rate limit duration: %w", err)
 	}
@@ -130,7 +130,7 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 	tryFunc := func(ctx context.Context, attemptNum int) (R, error) {
 		tryCtx, span := telemetry.StartSpan(ctx, "try",
 			trace.WithAttributes(
-				attribute.Int("attempt_num", attemptNum),
+				attribute.Int("attempt", attemptNum),
 				attribute.Int("max_attempts", params.MaxAttempts),
 			),
 		)
@@ -138,7 +138,7 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 		return closure(tryCtx)
 	}
 
-	for i := 0; i < params.MaxAttempts; i++ {
+	for i := range params.MaxAttempts {
 		attempt := i + 1
 		retVal, err = tryFunc(ctx, attempt)
 
@@ -164,7 +164,7 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 			// We abort on rate limit errors (e.g., ctx cancel) instead of continuing
 			rlParams := RateLimitParams{
 				RateLimiter: rateLimiter,
-				AttemptNum:  attempt,
+				Attempt:     attempt,
 				MinDuration: params.MinDuration,
 				MaxDuration: params.MaxDuration,
 			}
