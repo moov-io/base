@@ -18,16 +18,17 @@ import (
 type RateLimitParams struct {
 	RateLimiter *rate.Limiter // can be nil to create a new rate limiter
 
-	// RetryAttempt represents the current retry attempt, starting at 1. This will increment for each retry
-	RetryAttempt int
-	MinDuration  time.Duration
-	MaxDuration  time.Duration
+	// AttemptNum represents the current attempt, starting at 1. This will increment for each (re)try
+	AttemptNum int
+
+	MinDuration time.Duration
+	MaxDuration time.Duration
 }
 
 func RateLimit(ctx context.Context, params RateLimitParams) (*rate.Limiter, error) {
 	ctx, span := telemetry.StartSpan(ctx, "rate-limiter-wait",
 		trace.WithAttributes(
-			attribute.Int("retry_attempt", params.RetryAttempt),
+			attribute.Int("attempt_num", params.AttemptNum),
 			attribute.Int64("min_duration_ms", params.MinDuration.Milliseconds()),
 			attribute.Int64("max_duration_ms", params.MaxDuration.Milliseconds()),
 		))
@@ -52,7 +53,7 @@ func RateLimit(ctx context.Context, params RateLimitParams) (*rate.Limiter, erro
 
 // generateRateLimiter initializes a new rate limiter or sets a new limit on it.
 func generateRateLimiter(ctx context.Context, params RateLimitParams) (*rate.Limiter, error) {
-	rateLimitDuration, err := generateRateLimitDuration(params.RetryAttempt, params.MinDuration, params.MaxDuration)
+	rateLimitDuration, err := generateRateLimitDuration(params.AttemptNum, params.MinDuration, params.MaxDuration)
 	if err != nil {
 		return nil, fmt.Errorf("generating rate limit duration: %w", err)
 	}
@@ -103,7 +104,7 @@ func generateRateLimitDuration(multiplier int, minDuration, maxDuration time.Dur
 
 type RetryParams struct {
 	ShouldRetry func(err error) bool
-	MaxRetries  int
+	MaxAttempts int
 	MinDuration time.Duration
 	MaxDuration time.Duration
 }
@@ -116,8 +117,8 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 	)
 
 	// Validate params
-	if params.MaxRetries <= 0 {
-		params.MaxRetries = 1 // Default to at least one try
+	if params.MaxAttempts <= 0 {
+		params.MaxAttempts = 1 // Default to at least one try
 	}
 	if params.MinDuration <= 0 {
 		params.MinDuration = 100 * time.Millisecond // Default min backoff
@@ -126,20 +127,20 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 		params.MaxDuration = params.MinDuration * 10 // Default max to 10x min
 	}
 
-	retryFunc := func(ctx context.Context, retryAttempt int) (R, error) {
+	tryFunc := func(ctx context.Context, attemptNum int) (R, error) {
 		tryCtx, span := telemetry.StartSpan(ctx, "try",
 			trace.WithAttributes(
-				attribute.Int("retry_attempt", retryAttempt),
-				attribute.Int("max_tries", params.MaxRetries),
+				attribute.Int("attempt_num", attemptNum),
+				attribute.Int("max_attempts", params.MaxAttempts),
 			),
 		)
 		defer span.End()
 		return closure(tryCtx)
 	}
 
-	for i := 0; i < params.MaxRetries; i++ {
-		retryAttempt := i + 1
-		retVal, err = retryFunc(ctx, retryAttempt)
+	for i := 0; i < params.MaxAttempts; i++ {
+		attempt := i + 1
+		retVal, err = tryFunc(ctx, attempt)
 
 		// no error means success - break out
 		if err == nil {
@@ -152,20 +153,20 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 		}
 
 		// record event if we'll be attempting retries
-		err = fmt.Errorf("try %d of %d: %w", retryAttempt, params.MaxRetries, err)
+		err = fmt.Errorf("try %d of %d: %w", attempt, params.MaxAttempts, err)
 		telemetry.AddEvent(ctx, err.Error())
 
-		if retryAttempt != params.MaxRetries {
+		if attempt != params.MaxAttempts {
 			// If error and we haven't hit max tries,
 			// generate rate limiter to delay retries.
 			// This will jitter a wait time before the next iteration.
 			//
 			// We abort on rate limit errors (e.g., ctx cancel) instead of continuing
 			rlParams := RateLimitParams{
-				RateLimiter:  rateLimiter,
-				RetryAttempt: retryAttempt,
-				MinDuration:  params.MinDuration,
-				MaxDuration:  params.MaxDuration,
+				RateLimiter: rateLimiter,
+				AttemptNum:  attempt,
+				MinDuration: params.MinDuration,
+				MaxDuration: params.MaxDuration,
 			}
 			rateLimiter, err = RateLimit(ctx, rlParams)
 			if err != nil {
@@ -176,7 +177,7 @@ func ExecRetryable[R any](ctx context.Context, closure func(ctx context.Context)
 	}
 
 	if err != nil {
-		return retVal, fmt.Errorf("hit max tries %d: %w", params.MaxRetries, err)
+		return retVal, fmt.Errorf("hit max tries %d: %w", params.MaxAttempts, err)
 	}
 	return retVal, nil
 }

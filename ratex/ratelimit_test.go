@@ -20,7 +20,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -40,7 +40,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -63,7 +63,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return false },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -73,7 +73,7 @@ func TestExecRetryable(t *testing.T) {
 		require.Equal(t, "non-retryable error", err.Error())
 	})
 
-	t.Run("Retryable failures exceeding MaxRetries", func(t *testing.T) {
+	t.Run("Retryable failures exceeding MaxAttempts", func(t *testing.T) {
 		attempts := 0
 		closure := func(ctx context.Context) (string, error) {
 			attempts++
@@ -81,7 +81,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -106,7 +106,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -124,7 +124,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 100 * time.Millisecond,
 			MaxDuration: 200 * time.Millisecond,
 		}
@@ -143,7 +143,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  0, // Should default to 1
+			MaxAttempts: 0, // Should default to 1
 			MinDuration: 0, // Should default to 100ms
 			MaxDuration: 0, // Should default to 100ms * 10 = 1s
 		}
@@ -159,7 +159,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 100 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond, // Will be set to 100ms * 10 = 1s
 		}
@@ -174,7 +174,7 @@ func TestExecRetryable(t *testing.T) {
 		}
 		params := RetryParams{
 			ShouldRetry: func(err error) bool { return true },
-			MaxRetries:  3,
+			MaxAttempts: 3,
 			MinDuration: 10 * time.Millisecond,
 			MaxDuration: 50 * time.Millisecond,
 		}
@@ -234,10 +234,10 @@ func TestRateLimit(t *testing.T) {
 
 	t.Run("New limiter", func(t *testing.T) {
 		params := RateLimitParams{
-			RateLimiter:  nil,
-			RetryAttempt: 1,
-			MinDuration:  10 * time.Millisecond,
-			MaxDuration:  20 * time.Millisecond,
+			RateLimiter: nil,
+			AttemptNum:  1,
+			MinDuration: 10 * time.Millisecond,
+			MaxDuration: 20 * time.Millisecond,
 		}
 		limiter, err := RateLimit(ctx, params)
 		require.NoError(t, err)
@@ -247,10 +247,10 @@ func TestRateLimit(t *testing.T) {
 	t.Run("Existing limiter update", func(t *testing.T) {
 		existing := rate.NewLimiter(rate.Every(100*time.Millisecond), 1)
 		params := RateLimitParams{
-			RateLimiter:  existing,
-			RetryAttempt: 2,
-			MinDuration:  10 * time.Millisecond,
-			MaxDuration:  20 * time.Millisecond,
+			RateLimiter: existing,
+			AttemptNum:  2,
+			MinDuration: 10 * time.Millisecond,
+			MaxDuration: 20 * time.Millisecond,
 		}
 		limiter, err := RateLimit(ctx, params)
 		require.NoError(t, err)
@@ -260,10 +260,10 @@ func TestRateLimit(t *testing.T) {
 	t.Run("Context cancel during wait", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		params := RateLimitParams{
-			RateLimiter:  nil,
-			RetryAttempt: 1,
-			MinDuration:  100 * time.Millisecond,
-			MaxDuration:  200 * time.Millisecond,
+			RateLimiter: nil,
+			AttemptNum:  1,
+			MinDuration: 100 * time.Millisecond,
+			MaxDuration: 200 * time.Millisecond,
 		}
 		go func() {
 			time.Sleep(50 * time.Millisecond)

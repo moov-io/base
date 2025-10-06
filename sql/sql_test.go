@@ -380,7 +380,7 @@ func TestDBRetryableOperations(t *testing.T) {
 
 	retryParams := ratex.RetryParams{
 		ShouldRetry: func(err error) bool { return true },
-		MaxRetries:  3,
+		MaxAttempts: 3,
 		MinDuration: 10 * time.Millisecond,
 		MaxDuration: 50 * time.Millisecond,
 	}
@@ -412,7 +412,7 @@ func TestDBRetryableOperations(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("ExecContextRetryable - Retryable failures exceeding MaxRetries", func(t *testing.T) {
+	t.Run("ExecContextRetryable - Retryable failures exceeding MaxAttempts", func(t *testing.T) {
 		closure := func(ctx context.Context) (gosql.Result, error) {
 			return nil, errors.New("retryable error")
 		}
