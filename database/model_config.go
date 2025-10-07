@@ -15,7 +15,7 @@ type DatabaseConfig struct {
 	Spanner      *SpannerConfig
 	Postgres     *PostgresConfig
 	DatabaseName string
-	Retries      RetryConfig
+	Retries      *RetryConfig
 }
 
 type SpannerConfig struct {
