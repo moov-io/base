@@ -15,7 +15,7 @@ type DatabaseConfig struct {
 	Spanner      *SpannerConfig
 	Postgres     *PostgresConfig
 	DatabaseName string
-	RetryConfig  RetryConfig
+	Retries      RetryConfig
 }
 
 type SpannerConfig struct {
@@ -99,7 +99,7 @@ type ConnectionsConfig struct {
 }
 
 type RetryConfig struct {
-	MaxAttempts          int
-	MinRateLimitDuration time.Duration
-	MaxRateLimitDuration time.Duration
+	MaxAttempts int
+	MinDuration time.Duration
+	MaxDuration time.Duration
 }
