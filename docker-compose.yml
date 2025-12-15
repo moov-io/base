@@ -29,7 +29,7 @@ services:
       - intranet
 
   postgres:
-    image: postgres:18.0
+    image: postgres:18.1
     restart: always
     ports:
       - "5432:5432"
