@@ -220,6 +220,9 @@ func handler() *mux.Router {
 	if profileEnabled("threadcreate") {
 		r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
 	}
+	if profileEnabled("goroutineleak") {
+		r.Handle("/debug/pprof/goroutineleak", pprof.Handler("goroutineleak"))
+	}
 
 	return r
 }
