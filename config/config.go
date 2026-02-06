@@ -9,14 +9,15 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/moov-io/base/log"
-
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/markbates/pkger"
 	"github.com/spf13/viper"
+
+	"github.com/moov-io/base/log"
 )
 
 const APP_CONFIG = "APP_CONFIG"
+
 const APP_CONFIG_SECRETS = "APP_CONFIG_SECRETS" //nolint:gosec
 
 type Service struct {
@@ -129,7 +130,11 @@ func overwriteConfig(cfg *mapstructure.DecoderConfig) {
 	cfg.ErrorUnused = true
 	cfg.ZeroFields = true
 
-	cfg.DecodeHook = mapstructure.ComposeDecodeHookFunc(decodeRegexHook, mapstructure.StringToTimeDurationHookFunc())
+	cfg.DecodeHook = mapstructure.ComposeDecodeHookFunc(
+		decodeRegexHook,
+		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.TextUnmarshallerHookFunc(),
+	)
 }
 
 func decodeRegexHook(t1 reflect.Type, t2 reflect.Type, value interface{}) (interface{}, error) {
