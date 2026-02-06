@@ -1,4 +1,4 @@
-name: Go
+name: Go (CGO Enabled)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Go Build (CGO)
+    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -19,7 +19,6 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: ${{ matrix.version }}
-      id: go
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v6
@@ -35,11 +34,14 @@ jobs:
     - name: Check
       if: runner.os == 'Linux'
       run: make check
+      env:
+        CGO_ENABLED: "1"
 
     - name: Short Check
       if: runner.os != 'Linux'
       run: make check
       env:
+        CGO_ENABLED: "1"
         GOTEST_FLAGS: "-short"
 
     - name: Logs
