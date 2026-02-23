@@ -18,7 +18,7 @@ import (
 
 const APP_CONFIG = "APP_CONFIG"
 
-const APP_CONFIG_SECRETS = "APP_CONFIG_SECRETS" //nolint:gosec
+const APP_CONFIG_SECRETS = "APP_CONFIG_SECRETS"
 
 type Service struct {
 	logger log.Logger
