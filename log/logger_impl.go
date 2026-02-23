@@ -1,6 +1,7 @@
 package log
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"runtime"
@@ -14,7 +15,9 @@ import (
 )
 
 func NewDefaultLogger() Logger {
-	switch strings.ToLower(os.Getenv("MOOV_LOG_FORMAT")) {
+	format := cmp.Or(os.Getenv("MOOV_LOG_FORMAT"), os.Getenv("LOG_FORMAT"))
+
+	switch strings.ToLower(strings.TrimSpace(format)) {
 	case "json":
 		return NewJSONLogger()
 	case "nop", "noop":
