@@ -33,7 +33,7 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 	// HealthCheckPeriod makes pgxpool ping idle connections in the background.
 	// Dead connections (e.g. from an AlloyDB switchover) are evicted before
 	// the application ever sees them.
-	poolConfig.HealthCheckPeriod = 5 * time.Second
+	poolConfig.HealthCheckPeriod = 1 * time.Second
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
