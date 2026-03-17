@@ -2,11 +2,15 @@ package database_test
 
 import (
 	"context"
+	"errors"
+	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/moov-io/base"
 	"github.com/moov-io/base/database"
 	"github.com/moov-io/base/database/testdb"
@@ -178,6 +182,109 @@ func Test_Postgres_Alloy_Migrations(t *testing.T) {
 	db, err := database.NewAndMigrate(context.Background(), log.NewDefaultLogger(), config, database.WithEmbeddedMigrations(base.PostgresMigrations))
 	require.NoError(t, err)
 	defer db.Close()
+}
+
+func TestIsRetryablePostgresError(t *testing.T) {
+	// nil error is not retryable
+	require.False(t, database.IsRetryablePostgresError(nil))
+
+	// admin_shutdown is retryable (seen during AlloyDB maintenance)
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "57P01"}))
+
+	// crash_shutdown is retryable
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "57P02"}))
+
+	// cannot_connect_now is retryable
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "57P03"}))
+
+	// connection_exception class is retryable
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "08006"}))
+
+	// unique_violation is NOT retryable (application-level error)
+	require.False(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "23505"}))
+
+	// syntax_error is NOT retryable
+	require.False(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "42601"}))
+
+	// EOF is retryable (connection severed)
+	require.True(t, database.IsRetryablePostgresError(io.EOF))
+	require.True(t, database.IsRetryablePostgresError(io.ErrUnexpectedEOF))
+
+	// net.OpError is retryable
+	require.True(t, database.IsRetryablePostgresError(&net.OpError{
+		Op:  "read",
+		Err: errors.New("connection reset by peer"),
+	}))
+
+	// context.DeadlineExceeded is NOT retryable
+	require.False(t, database.IsRetryablePostgresError(context.DeadlineExceeded))
+
+	// String-matched connection errors
+	require.True(t, database.IsRetryablePostgresError(errors.New("connection reset by peer")))
+	require.True(t, database.IsRetryablePostgresError(errors.New("broken pipe")))
+	require.True(t, database.IsRetryablePostgresError(errors.New("conn closed")))
+
+	// Random application error is NOT retryable
+	require.False(t, database.IsRetryablePostgresError(errors.New("invalid input")))
+}
+
+func TestRetryPostgres(t *testing.T) {
+	t.Run("succeeds on first attempt", func(t *testing.T) {
+		calls := 0
+		err := database.RetryPostgres(context.Background(), 3, func() error {
+			calls++
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("retries on transient error then succeeds", func(t *testing.T) {
+		calls := 0
+		err := database.RetryPostgres(context.Background(), 3, func() error {
+			calls++
+			if calls < 3 {
+				return &pgconn.PgError{Code: "57P01"} // admin_shutdown
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, 3, calls)
+	})
+
+	t.Run("does not retry non-retryable errors", func(t *testing.T) {
+		calls := 0
+		err := database.RetryPostgres(context.Background(), 3, func() error {
+			calls++
+			return &pgconn.PgError{Code: "23505"} // unique_violation
+		})
+		require.Error(t, err)
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("respects context cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // cancel immediately
+
+		calls := 0
+		err := database.RetryPostgres(ctx, 3, func() error {
+			calls++
+			return io.EOF // retryable, but context is done
+		})
+		// First call happens, then context cancellation is detected
+		require.Error(t, err)
+	})
+
+	t.Run("exhausts all attempts", func(t *testing.T) {
+		calls := 0
+		err := database.RetryPostgres(context.Background(), 3, func() error {
+			calls++
+			return io.EOF
+		})
+		require.Error(t, err)
+		require.Equal(t, 3, calls)
+		require.ErrorIs(t, err, io.EOF)
+	})
 }
 
 func Test_Postgres_UniqueViolation(t *testing.T) {
