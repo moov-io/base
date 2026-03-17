@@ -28,7 +28,7 @@ type SpannerConfig struct {
 type PostgresConfig struct {
 	Address     string
 	User        string
-	Password    string
+	Password    string `json:"-"`
 	Connections ConnectionsConfig
 	TLS         *PostgresTLSConfig
 	Alloy       *PostgresAlloyConfig
@@ -51,7 +51,7 @@ type PostgresAlloyConfig struct {
 type MySQLConfig struct {
 	Address        string
 	User           string
-	Password       string
+	Password       string `json:"-"`
 	Connections    ConnectionsConfig
 	UseTLS         bool
 	TLSCAFile      string
