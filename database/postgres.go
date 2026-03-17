@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/alloydbconn"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/moov-io/base/log"
 )
@@ -25,33 +25,95 @@ const (
 )
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
-	var connStr string
-	if config.Alloy != nil {
-		c, err := getAlloyDBConnectorConnStr(ctx, config, databaseName)
-		if err != nil {
-			return nil, logger.LogErrorf("creating alloydb connection: %w", err).Err()
-		}
-		connStr = c
-	} else {
-		c, err := getPostgresConnStr(config, databaseName)
-		if err != nil {
-			return nil, logger.LogErrorf("creating postgres connection: %w", err).Err()
-		}
-		connStr = c
+	poolConfig, err := buildPgxPoolConfig(ctx, config, databaseName)
+	if err != nil {
+		return nil, logger.LogErrorf("building pgx pool config: %w", err).Err()
 	}
 
-	db, err := sql.Open("pgx", connStr)
+	// HealthCheckPeriod makes pgxpool ping idle connections in the background.
+	// Dead connections (e.g. from an AlloyDB switchover) are evicted before
+	// the application ever sees them.
+	poolConfig.HealthCheckPeriod = 5 * time.Second
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
-		return nil, logger.LogErrorf("opening database: %w", err).Err()
+		return nil, logger.LogErrorf("creating pgx pool: %w", err).Err()
 	}
 
-	err = db.Ping()
+	err = pool.Ping(ctx)
 	if err != nil {
-		_ = db.Close()
+		pool.Close()
 		return nil, logger.LogErrorf("connecting to database: %w", err).Err()
 	}
 
+	// Wrap the pgxpool in a *sql.DB so the rest of the codebase doesn't change.
+	// pgxpool manages the real pool (with health checks); database/sql pool
+	// settings are applied on top via ApplyPostgresConnectionsConfig.
+	db := stdlib.OpenDBFromPool(pool)
+
 	return db, nil
+}
+
+func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
+	if config.Alloy != nil {
+		return buildAlloyDBPoolConfig(ctx, config, databaseName)
+	}
+
+	connStr, err := getPostgresConnStr(config, databaseName)
+	if err != nil {
+		return nil, err
+	}
+	return pgxpool.ParseConfig(connStr)
+}
+
+func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
+	if config.Alloy == nil {
+		return nil, fmt.Errorf("missing alloy config")
+	}
+
+	var dialer *alloydbconn.Dialer
+	var dsn string
+
+	if config.Alloy.UseIAM {
+		d, err := alloydbconn.NewDialer(ctx, alloydbconn.WithIAMAuthN())
+		if err != nil {
+			return nil, fmt.Errorf("creating alloydb dialer: %v", err)
+		}
+		dialer = d
+		dsn = fmt.Sprintf(
+			// sslmode is disabled because the alloy db connection dialer will handle it
+			// no password is used with IAM
+			"user=%s dbname=%s sslmode=disable",
+			config.User, databaseName,
+		)
+	} else {
+		d, err := alloydbconn.NewDialer(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("creating alloydb dialer: %v", err)
+		}
+		dialer = d
+		dsn = fmt.Sprintf(
+			// sslmode is disabled because the alloy db connection dialer will handle it
+			"user=%s password=%s dbname=%s sslmode=disable",
+			config.User, config.Password, databaseName,
+		)
+	}
+
+	poolConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse pgx pool config: %v", err)
+	}
+
+	var connOptions []alloydbconn.DialOption
+	if config.Alloy.UsePSC {
+		connOptions = append(connOptions, alloydbconn.WithPSC())
+	}
+
+	poolConfig.ConnConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
+		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
+	}
+
+	return poolConfig, nil
 }
 
 func getPostgresConnStr(config PostgresConfig, databaseName string) (string, error) {
@@ -80,60 +142,6 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 	}
 
 	connStr := fmt.Sprintf("%s?%s", url, params)
-	return connStr, nil
-}
-
-func getAlloyDBConnectorConnStr(ctx context.Context, config PostgresConfig, databaseName string) (string, error) {
-	if config.Alloy == nil {
-		return "", fmt.Errorf("missing alloy config")
-	}
-
-	var dialer *alloydbconn.Dialer
-	var dsn string
-
-	if config.Alloy.UseIAM {
-		d, err := alloydbconn.NewDialer(ctx, alloydbconn.WithIAMAuthN())
-		if err != nil {
-			return "", fmt.Errorf("creating alloydb dialer: %v", err)
-		}
-		dialer = d
-		dsn = fmt.Sprintf(
-			// sslmode is disabled because the alloy db connection dialer will handle it
-			// no password is used with IAM
-			"user=%s dbname=%s sslmode=disable",
-			config.User, databaseName,
-		)
-	} else {
-		d, err := alloydbconn.NewDialer(ctx)
-		if err != nil {
-			return "", fmt.Errorf("creating alloydb dialer: %v", err)
-		}
-		dialer = d
-		dsn = fmt.Sprintf(
-			// sslmode is disabled because the alloy db connection dialer will handle it
-			"user=%s password=%s dbname=%s sslmode=disable",
-			config.User, config.Password, databaseName,
-		)
-	}
-
-	// TODO
-	//cleanup := func() error { return d.Close() }
-
-	connConfig, err := pgx.ParseConfig(dsn)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse pgx config: %v", err)
-	}
-
-	var connOptions []alloydbconn.DialOption
-	if config.Alloy.UsePSC {
-		connOptions = append(connOptions, alloydbconn.WithPSC())
-	}
-
-	connConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
-		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
-	}
-
-	connStr := stdlib.RegisterConnConfig(connConfig)
 	return connStr, nil
 }
 
