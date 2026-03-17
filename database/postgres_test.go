@@ -272,7 +272,8 @@ func TestRetryPostgres(t *testing.T) {
 			return io.EOF // retryable, but context is done
 		})
 		// First call happens, then context cancellation is detected
-		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+		require.Equal(t, 1, calls)
 	})
 
 	t.Run("exhausts all attempts", func(t *testing.T) {

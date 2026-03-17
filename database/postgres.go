@@ -187,21 +187,9 @@ func IsRetryablePostgresError(err error) bool {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
-		case "57P01": // admin_shutdown
+		case "57P01", "57P02", "57P03": // admin_shutdown, crash_shutdown, cannot_connect_now
 			return true
-		case "57P02": // crash_shutdown
-			return true
-		case "57P03": // cannot_connect_now
-			return true
-		case "08000": // connection_exception
-			return true
-		case "08001": // sqlclient_unable_to_establish_sqlconnection
-			return true
-		case "08003": // connection_does_not_exist
-			return true
-		case "08004": // sqlserver_rejected_establishment_of_sqlconnection
-			return true
-		case "08006": // connection_failure
+		case "08000", "08001", "08003", "08004", "08006": // connection_exception class
 			return true
 		}
 		return false
