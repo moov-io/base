@@ -98,6 +98,19 @@ type ConnectionsConfig struct {
 	MaxIdleTime time.Duration
 }
 
+// DefaultPostgresConnectionsConfig returns connection pool defaults tuned for
+// database failover recovery (e.g. AlloyDB maintenance switchovers). Short
+// lifetimes and idle times ensure dead connections are evicted quickly so
+// the pool re-establishes connections to the new primary.
+func DefaultPostgresConnectionsConfig() ConnectionsConfig {
+	return ConnectionsConfig{
+		MaxOpen:     25,
+		MaxIdle:     5,
+		MaxLifetime: 5 * time.Minute,
+		MaxIdleTime: 30 * time.Second,
+	}
+}
+
 type RetryConfig struct {
 	MaxAttempts int
 	MinDuration time.Duration
