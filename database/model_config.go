@@ -23,6 +23,7 @@ type SpannerConfig struct {
 	Instance string
 
 	DisableCleanStatements bool
+	DisableTelemetry       bool
 }
 
 type PostgresConfig struct {
