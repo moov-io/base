@@ -80,8 +80,6 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 		VerifyCAFile       bool
 	}
 
-	// gosec correctly detects that .Password is passed to a helper in next release
-	//nolint:gosec
 	return json.Marshal(Aux{
 		Address:            m.Address,
 		User:               m.User,
