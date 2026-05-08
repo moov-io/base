@@ -40,6 +40,7 @@ misspell*
 staticcheck*
 lint-project.sh
 gitleaks.tar.gz
+.golangci-lint-generated.yml
 
 .vscode/launch.json
 
