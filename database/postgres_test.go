@@ -197,8 +197,15 @@ func TestIsRetryablePostgresError(t *testing.T) {
 	// cannot_connect_now is retryable
 	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "57P03"}))
 
-	// connection_exception class is retryable
-	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "08006"}))
+	// serialization_failure and deadlock_detected are retryable (server rolled back)
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "40001"}))
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "40P01"}))
+
+	// too_many_connections is retryable (rejected at connect time)
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "53300"}))
+
+	// query_canceled is retryable (server rolled back the transaction)
+	require.True(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "57014"}))
 
 	// unique_violation is NOT retryable (application-level error)
 	require.False(t, database.IsRetryablePostgresError(&pgconn.PgError{Code: "23505"}))

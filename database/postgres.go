@@ -183,13 +183,35 @@ func IsRetryablePostgresError(err error) bool {
 		return false
 	}
 
-	// PostgreSQL error codes indicating the server is shutting down or unavailable
+	// PostgreSQL error codes that are safe to retry because the server guarantees
+	// the transaction was rolled back before the error was returned.
+	//
+	// 57P01 admin_shutdown, 57P02 crash_shutdown: fast shutdown rolls back all
+	// active transactions before disconnecting clients. See:
+	// https://www.postgresql.org/docs/current/server-shutdown.html
+	//
+	// 57P03 cannot_connect_now: server is still starting up; the operation never
+	// reached a transaction.
+	//
+	// 40001 serialization_failure, 40P01 deadlock_detected: the server explicitly
+	// rolled back the transaction and expects the client to retry. See:
+	// https://www.postgresql.org/docs/current/mvcc-serialization-failure-handling.html
+	//
+	// 53300 too_many_connections: rejected at connect time; no transaction started.
+	//
+	// 57014 query_canceled: the server rolled back the transaction before returning
+	// this error.
+	//
+	// Note: 08xxx (connection_exception class) codes are intentionally omitted.
+	// pgx surfaces connection-level failures as TCP/network errors, not as
+	// *pgconn.PgError, so those cases are handled below.
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
-		case "57P01", "57P02", "57P03": // admin_shutdown, crash_shutdown, cannot_connect_now
-			return true
-		case "08000", "08001", "08003", "08004", "08006": // connection_exception class
+		case "57P01", "57P02", "57P03", // admin_shutdown, crash_shutdown, cannot_connect_now
+			"40001", "40P01", // serialization_failure, deadlock_detected
+			"53300",          // too_many_connections
+			"57014":          // query_canceled
 			return true
 		}
 		return false
