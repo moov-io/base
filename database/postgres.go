@@ -231,12 +231,16 @@ func IsRetryablePostgresError(err error) bool {
 		return false // don't retry if the caller's context timed out
 	}
 
-	// pgx wraps connection errors with these messages
+	// pgx sometimes wraps TCP-level disconnection errors as plain strings rather
+	// than preserving the original net.OpError type. These are safe to retry
+	// because they occur on the write path — the server never received the query.
+	// "conn closed" is pgx's own sentinel for a connection already closed before use.
+	// Note: "connection refused" and "unexpected EOF" are intentionally excluded —
+	// the former does not appear in pgx's codebase, the latter is already caught
+	// above by errors.Is(err, io.ErrUnexpectedEOF).
 	msg := err.Error()
 	if strings.Contains(msg, "connection reset by peer") ||
 		strings.Contains(msg, "broken pipe") ||
-		strings.Contains(msg, "connection refused") ||
-		strings.Contains(msg, "unexpected EOF") ||
 		strings.Contains(msg, "conn closed") {
 		return true
 	}
