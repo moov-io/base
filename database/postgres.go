@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"strings"
 	"time"
@@ -243,6 +244,16 @@ func IsRetryablePostgresError(err error) bool {
 	return false
 }
 
+// retryJitterMax is the upper bound for the random delay between retries.
+// Full jitter in [0, retryJitterMax) spreads concurrent retries across the
+// fleet rather than letting them all slam the database at the same instant.
+// AlloyDB planned maintenance switchovers typically cause less than one second
+// of downtime, so three attempts with up to 100ms between each gives a worst-
+// case retry window of ~200ms — well within typical service SLAs while still
+// spanning the switchover blip. The caller's context deadline is the escape
+// hatch for services with tighter latency budgets.
+const retryJitterMax = 100 * time.Millisecond
+
 // RetryPostgres executes fn up to maxAttempts times, retrying on transient
 // connection errors. This is intended for use around individual database
 // operations to survive brief outages like AlloyDB maintenance switchovers.
@@ -260,11 +271,11 @@ func RetryPostgres(ctx context.Context, maxAttempts int, fn func() error) error 
 			return err
 		}
 		if attempt < maxAttempts-1 {
-			backoff := time.Duration(attempt+1) * 200 * time.Millisecond
+			delay := time.Duration(rand.Int63n(int64(retryJitterMax)))
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case <-time.After(backoff):
+			case <-time.After(delay):
 			}
 		}
 	}
