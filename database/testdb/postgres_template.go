@@ -54,6 +54,13 @@ func NewPostgresDatabaseFromTemplate(
 	// Try "moov" first (the standard Moov docker-compose DB), then "postgres".
 	adminDb := openAdminDb(tb, cfg.Postgres)
 
+	// Ensure the service database exists. Some tests (e.g. TestEnvironment)
+	// call service.NewEnvironment directly without going through
+	// CreateTestDatabase, relying on the service database existing as a
+	// side effect of prior test setup. The old CreateTestDatabase created
+	// it via openOrCreateDatabase; we preserve that behavior here.
+	ensureServiceDatabase(tb, adminDb, cfg.DatabaseName)
+
 	// Serialize template creation across processes using an advisory lock
 	// keyed by the migration hash.
 	lockKey := hashToLockKey(hash)
@@ -168,4 +175,30 @@ func hashToLockKey(hash string) int64 {
 		key = key<<8 | int64(hash[i])
 	}
 	return key
+}
+
+// ensureServiceDatabase creates the service database if it doesn't exist.
+// This preserves the side-effect behavior of the old CreateTestDatabase,
+// which created the service database via openOrCreateDatabase. Some tests
+// call service.NewEnvironment directly without CreateTestDatabase and rely
+// on the service database existing.
+func ensureServiceDatabase(tb testing.TB, adminDb *sql.DB, dbName string) {
+	tb.Helper()
+	if dbName == "" {
+		return
+	}
+	var exists bool
+	err := adminDb.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)",
+		dbName,
+	).Scan(&exists)
+	if err != nil {
+		tb.Fatal(fmt.Errorf("checking service database existence: %w", err))
+	}
+	if !exists {
+		_, err = adminDb.Exec(fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{dbName}.Sanitize()))
+		if err != nil {
+			tb.Fatal(fmt.Errorf("creating service database %s: %w", dbName, err))
+		}
+	}
 }
