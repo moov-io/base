@@ -1,6 +1,7 @@
 package testdb
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/fs"
@@ -41,6 +42,9 @@ func NewPostgresDatabaseFromTemplate(
 	if cfg.Postgres == nil {
 		tb.Fatal("NewPostgresDatabaseFromTemplate: postgres config not defined")
 	}
+	if migrations == nil {
+		tb.Fatal("NewPostgresDatabaseFromTemplate: migrations FS is nil")
+	}
 
 	names, contents, err := migrationFiles(migrations, ".up.postgres.sql")
 	if err != nil {
@@ -61,13 +65,29 @@ func NewPostgresDatabaseFromTemplate(
 	// it via openOrCreateDatabase; we preserve that behavior here.
 	ensureServiceDatabase(tb, adminDb, cfg.DatabaseName)
 
-	// Serialize template creation across processes using an advisory lock
-	// keyed by the migration hash.
+	ctx := context.Background()
+	conn, err := adminDb.Conn(ctx)
+	if err != nil {
+		tb.Fatal(fmt.Errorf("acquiring admin connection: %w", err))
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			tb.Logf("cleanup: close admin connection: %v", err)
+		}
+	}()
+
+	// Serialize template creation across processes using a session-level advisory
+	// lock keyed by the migration hash. The lock and unlock must use the same
+	// physical connection.
 	lockKey := hashToLockKey(hash)
-	if _, err := adminDb.Exec("SELECT pg_advisory_lock($1)", lockKey); err != nil {
+	if _, err := conn.ExecContext(ctx, "SELECT pg_advisory_lock($1)", lockKey); err != nil {
 		tb.Fatal(fmt.Errorf("acquiring advisory lock: %w", err))
 	}
-	defer adminDb.Exec("SELECT pg_advisory_unlock($1)", lockKey)
+	defer func() {
+		if _, err := conn.ExecContext(ctx, "SELECT pg_advisory_unlock($1)", lockKey); err != nil {
+			tb.Logf("cleanup: release advisory lock: %v", err)
+		}
+	}()
 
 	// Check if the template already exists and is marked as a template.
 	templateMu.Lock()
@@ -76,7 +96,8 @@ func NewPostgresDatabaseFromTemplate(
 
 	if needCreate {
 		var exists bool
-		err = adminDb.QueryRow(
+		err = conn.QueryRowContext(
+			ctx,
 			"SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1 AND datistemplate = true)",
 			templateName,
 		).Scan(&exists)
@@ -86,10 +107,11 @@ func NewPostgresDatabaseFromTemplate(
 
 		if !exists {
 			// Create the template database.
-			_, err = adminDb.Exec(fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{templateName}.Sanitize()))
+			_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{templateName}.Sanitize()))
 			if err != nil {
 				// Maybe a concurrent process created it — re-check.
-				err2 := adminDb.QueryRow(
+				err2 := conn.QueryRowContext(
+					ctx,
 					"SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1 AND datistemplate = true)",
 					templateName,
 				).Scan(&exists)
@@ -103,16 +125,18 @@ func NewPostgresDatabaseFromTemplate(
 					Postgres:     cfg.Postgres,
 				}
 				if err := database.RunMigrations(logger, templateCfg, database.WithEmbeddedMigrations(migrations)); err != nil {
-					adminDb.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", pgx.Identifier{templateName}.Sanitize()))
+					if _, dropErr := conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s", pgx.Identifier{templateName}.Sanitize())); dropErr != nil {
+						tb.Logf("cleanup: drop template database %s: %v", templateName, dropErr)
+					}
 					tb.Fatal(fmt.Errorf("running migrations on template: %w", err))
 				}
 
 				// Mark as template and disallow direct connections.
-				_, err = adminDb.Exec(fmt.Sprintf("ALTER DATABASE %s IS_TEMPLATE true", pgx.Identifier{templateName}.Sanitize()))
+				_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER DATABASE %s IS_TEMPLATE true", pgx.Identifier{templateName}.Sanitize()))
 				if err != nil {
 					tb.Fatal(fmt.Errorf("marking template: %w", err))
 				}
-				_, err = adminDb.Exec(fmt.Sprintf("ALTER DATABASE %s ALLOW_CONNECTIONS false", pgx.Identifier{templateName}.Sanitize()))
+				_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER DATABASE %s ALLOW_CONNECTIONS false", pgx.Identifier{templateName}.Sanitize()))
 				if err != nil {
 					tb.Fatal(fmt.Errorf("disallowing connections to template: %w", err))
 				}
@@ -126,7 +150,7 @@ func NewPostgresDatabaseFromTemplate(
 
 	// Create the per-test database from the template.
 	testDbName := "test" + base.ID()[0:26]
-	_, err = adminDb.Exec(fmt.Sprintf("CREATE DATABASE %s TEMPLATE %s",
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s TEMPLATE %s",
 		pgx.Identifier{testDbName}.Sanitize(),
 		pgx.Identifier{templateName}.Sanitize()))
 	if err != nil {
@@ -138,7 +162,9 @@ func NewPostgresDatabaseFromTemplate(
 		if err != nil {
 			tb.Logf("cleanup: drop database %s: %v", testDbName, err)
 		}
-		adminDb.Close()
+		if err := adminDb.Close(); err != nil {
+			tb.Logf("cleanup: close admin database: %v", err)
+		}
 	}
 
 	cfg.DatabaseName = testDbName
@@ -198,7 +224,12 @@ func ensureServiceDatabase(tb testing.TB, adminDb *sql.DB, dbName string) {
 	if !exists {
 		_, err = adminDb.Exec(fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{dbName}.Sanitize()))
 		if err != nil {
-			tb.Fatal(fmt.Errorf("creating service database %s: %w", dbName, err))
+			if checkErr := adminDb.QueryRow(
+				"SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)",
+				dbName,
+			).Scan(&exists); checkErr != nil || !exists {
+				tb.Fatal(fmt.Errorf("creating service database %s: %w", dbName, err))
+			}
 		}
 	}
 }

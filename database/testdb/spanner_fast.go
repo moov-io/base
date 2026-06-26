@@ -44,6 +44,10 @@ func CreateSpannerDatabaseFromMigrations(
 	cfg database.DatabaseConfig,
 	migrations fs.FS,
 ) (database.DatabaseConfig, func(), error) {
+	if migrations == nil {
+		return cfg, nil, fmt.Errorf("migrations FS is nil")
+	}
+
 	cfg, err := NewSpannerDatabase(cfg.DatabaseName, cfg.Spanner)
 	if err != nil {
 		return cfg, nil, fmt.Errorf("creating spanner database: %w", err)
@@ -53,7 +57,8 @@ func CreateSpannerDatabaseFromMigrations(
 
 	names, contents, err := migrationFiles(migrations, ".up.spanner.sql")
 	if err != nil {
-		return cfg, dropFn, fmt.Errorf("reading spanner migrations: %w", err)
+		dropSpannerDBByCfg(cfg)
+		return cfg, nil, fmt.Errorf("reading spanner migrations: %w", err)
 	}
 
 	if len(names) == 0 {
@@ -62,7 +67,8 @@ func CreateSpannerDatabaseFromMigrations(
 
 	version, err := migrationVersion(names)
 	if err != nil {
-		return cfg, dropFn, err
+		dropSpannerDBByCfg(cfg)
+		return cfg, nil, err
 	}
 
 	var allStmts []string
@@ -86,7 +92,8 @@ func CreateSpannerDatabaseFromMigrations(
 	ctx := context.Background()
 	adminClient, err := spannerdb.NewDatabaseAdminClient(ctx)
 	if err != nil {
-		return cfg, dropFn, fmt.Errorf("creating spanner admin client: %w", err)
+		dropSpannerDBByCfg(cfg)
+		return cfg, nil, fmt.Errorf("creating spanner admin client: %w", err)
 	}
 	defer adminClient.Close()
 
@@ -108,7 +115,8 @@ func CreateSpannerDatabaseFromMigrations(
 
 	dataClient, err := spanner.NewClient(ctx, dbPath)
 	if err != nil {
-		return cfg, dropFn, fmt.Errorf("creating spanner data client for version insert: %w", err)
+		dropSpannerDBByCfg(cfg)
+		return cfg, nil, fmt.Errorf("creating spanner data client for version insert: %w", err)
 	}
 	_, err = dataClient.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		return txn.BufferWrite([]*spanner.Mutation{
@@ -121,7 +129,8 @@ func CreateSpannerDatabaseFromMigrations(
 	})
 	dataClient.Close()
 	if err != nil {
-		return cfg, dropFn, fmt.Errorf("inserting migration version: %w", err)
+		dropSpannerDBByCfg(cfg)
+		return cfg, nil, fmt.Errorf("inserting migration version: %w", err)
 	}
 
 	logger.Info().Logf("spanner fast create: applied %d migration files as %d DDL statements (version %d)", len(names), len(allStmts)-1, version)
