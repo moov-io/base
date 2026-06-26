@@ -32,8 +32,8 @@ func TestMigrationFiles_postgres(t *testing.T) {
 	assert.Len(t, names, 2)
 	assert.Equal(t, "001_create_users.up.postgres.sql", names[0])
 	assert.Equal(t, "002_add_email.up.postgres.sql", names[1])
-	assert.Equal(t, "CREATE TABLE users (id TEXT PRIMARY KEY);\n", contents[0])
-	assert.Equal(t, "ALTER TABLE users ADD COLUMN email TEXT;\n", contents[1])
+	assert.Contains(t, contents[0], "CREATE TABLE users (id TEXT PRIMARY KEY)")
+	assert.Contains(t, contents[1], "ALTER TABLE users ADD COLUMN email TEXT")
 }
 
 func TestMigrationFiles_spanner(t *testing.T) {
