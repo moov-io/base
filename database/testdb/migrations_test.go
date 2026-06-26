@@ -5,8 +5,12 @@ import (
 	"io/fs"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/moov-io/base/database"
+	"github.com/moov-io/base/log"
 )
 
 //go:embed all:testdata
@@ -99,4 +103,77 @@ func TestMigrationVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHashToLockKey(t *testing.T) {
+	assert.NotZero(t, hashToLockKey("0123456789abcdef"))
+	assert.Equal(t, int64('a'), hashToLockKey("a"))
+}
+
+func TestEnsureServiceDatabase(t *testing.T) {
+	t.Run("empty name", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+
+		ensureServiceDatabase(t, db, "")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("already exists", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery("SELECT EXISTS").
+			WithArgs("svc").
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+		ensureServiceDatabase(t, db, "svc")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("create succeeds", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery("SELECT EXISTS").
+			WithArgs("svc").
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+		mock.ExpectExec("CREATE DATABASE").
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		ensureServiceDatabase(t, db, "svc")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("create loses race", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery("SELECT EXISTS").
+			WithArgs("svc").
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+		mock.ExpectExec("CREATE DATABASE").
+			WillReturnError(assert.AnError)
+		mock.ExpectQuery("SELECT EXISTS").
+			WithArgs("svc").
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+		ensureServiceDatabase(t, db, "svc")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestCreateSpannerDatabaseFromMigrations_nilMigrations(t *testing.T) {
+	cfg, dropFn, err := CreateSpannerDatabaseFromMigrations(log.NewNopLogger(), database.DatabaseConfig{}, nil)
+	require.Error(t, err)
+	assert.Nil(t, dropFn)
+	assert.Empty(t, cfg.DatabaseName)
 }
