@@ -1,0 +1,3 @@
+CREATE TABLE items (
+    ItemID STRING(36) NOT NULL,
+) PRIMARY KEY(ItemID);
