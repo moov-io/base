@@ -180,7 +180,6 @@ func Test_Postgres_Alloy_Migrations(t *testing.T) {
 	defer db.Close()
 }
 
-
 func Test_Postgres_UniqueViolation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short flag enabled")
