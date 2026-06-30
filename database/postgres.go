@@ -65,6 +65,35 @@ func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName
 	return pgxpool.ParseConfig(connStr)
 }
 
+func getPostgresConnStr(config PostgresConfig, databaseName string) (string, error) {
+	url := fmt.Sprintf("postgres://%s:%s@%s/%s", config.User, config.Password, config.Address, databaseName)
+
+	params := ""
+
+	if config.TLS != nil {
+		if len(config.TLS.Mode) < 1 {
+			config.TLS.Mode = "verify-full"
+		}
+
+		params += "sslmode=" + config.TLS.Mode
+
+		if len(config.TLS.CACertFile) > 0 {
+			params += "&sslrootcert=" + config.TLS.CACertFile
+		}
+
+		if len(config.TLS.ClientCertFile) > 0 {
+			params += "&sslcert=" + config.TLS.ClientCertFile
+		}
+
+		if len(config.TLS.ClientKeyFile) > 0 {
+			params += "&sslkey=" + config.TLS.ClientKeyFile
+		}
+	}
+
+	connStr := fmt.Sprintf("%s?%s", url, params)
+	return connStr, nil
+}
+
 func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
 	if config.Alloy == nil {
 		return nil, fmt.Errorf("missing alloy config")
@@ -113,35 +142,6 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 	}
 
 	return poolConfig, nil
-}
-
-func getPostgresConnStr(config PostgresConfig, databaseName string) (string, error) {
-	url := fmt.Sprintf("postgres://%s:%s@%s/%s", config.User, config.Password, config.Address, databaseName)
-
-	params := ""
-
-	if config.TLS != nil {
-		if len(config.TLS.Mode) < 1 {
-			config.TLS.Mode = "verify-full"
-		}
-
-		params += "sslmode=" + config.TLS.Mode
-
-		if len(config.TLS.CACertFile) > 0 {
-			params += "&sslrootcert=" + config.TLS.CACertFile
-		}
-
-		if len(config.TLS.ClientCertFile) > 0 {
-			params += "&sslcert=" + config.TLS.ClientCertFile
-		}
-
-		if len(config.TLS.ClientKeyFile) > 0 {
-			params += "&sslkey=" + config.TLS.ClientKeyFile
-		}
-	}
-
-	connStr := fmt.Sprintf("%s?%s", url, params)
-	return connStr, nil
 }
 
 // PostgresUniqueViolation returns true when the provided error matches the Postgres code
