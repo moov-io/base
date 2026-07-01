@@ -29,10 +29,16 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 		return nil, logger.LogErrorf("building pgx pool config: %w", err).Err()
 	}
 
-	// HealthCheckPeriod makes pgxpool ping idle connections in the background.
-	// Dead connections (e.g. from an AlloyDB switchover) are evicted before
-	// the application ever sees them.
-	poolConfig.HealthCheckPeriod = 1 * time.Second
+	// Ping connections that have been idle for more than 200ms before handing
+	// them to the caller. This catches dead connections left by an AlloyDB
+	// switchover before a query is attempted, without adding overhead on
+	// hot connections used moments ago.
+	// HealthCheckPeriod (the background reaper) does NOT ping — it only evicts
+	// connections that have exceeded their age thresholds. ShouldPing is the
+	// mechanism that actually tests liveness at acquire time.
+	poolConfig.ShouldPing = func(_ context.Context, p pgxpool.ShouldPingParams) bool {
+		return p.IdleDuration > 200*time.Millisecond
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
@@ -45,9 +51,10 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 		return nil, logger.LogErrorf("connecting to database: %w", err).Err()
 	}
 
-	// Wrap the pgxpool in a *sql.DB so the rest of the codebase doesn't change.
-	// pgxpool manages the real pool (with health checks); database/sql pool
-	// settings are applied on top via ApplyPostgresConnectionsConfig.
+	// OpenDBFromPool wraps pgxpool in a *sql.DB for compatibility with the rest
+	// of the codebase. It automatically sets MaxIdleConns to 0 on the sql.DB —
+	// this must not be overridden, as pgxpool manages its own connection pool
+	// and a non-zero value would prevent connections from being released back.
 	db := stdlib.OpenDBFromPool(pool)
 
 	return db, nil
