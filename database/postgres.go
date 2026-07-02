@@ -29,6 +29,8 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 		return nil, logger.LogErrorf("building pgx pool config: %w", err).Err()
 	}
 
+	applyPgxPoolConnectionsConfig(logger, poolConfig, config.Connections)
+
 	// Ping connections that have been idle for more than 200ms before handing
 	// them to the caller. This catches dead connections left by an AlloyDB
 	// switchover before a query is attempted, without adding overhead on
@@ -58,6 +60,31 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 	db := stdlib.OpenDBFromPool(pool)
 
 	return db, nil
+}
+
+// applyPgxPoolConnectionsConfig translates ConnectionsConfig onto a pgxpool.Config.
+// MaxIdle has no pgxpool equivalent — pgxpool caps total connections via MaxConns
+// rather than idle count, and keeps a floor via MinConns. When set, MaxIdle is
+// logged and ignored so operators aren't misled into thinking it took effect.
+func applyPgxPoolConnectionsConfig(logger log.Logger, poolConfig *pgxpool.Config, connections ConnectionsConfig) {
+	if connections.MaxOpen > 0 {
+		logger.Logf("setting pgx pool MaxConns to %d", connections.MaxOpen)
+		poolConfig.MaxConns = int32(connections.MaxOpen)
+	}
+
+	if connections.MaxIdle > 0 {
+		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent", connections.MaxIdle)
+	}
+
+	if connections.MaxIdleTime > 0 {
+		logger.Logf("setting pgx pool MaxConnIdleTime to %v", connections.MaxIdleTime)
+		poolConfig.MaxConnIdleTime = connections.MaxIdleTime
+	}
+
+	if connections.MaxLifetime > 0 {
+		logger.Logf("setting pgx pool MaxConnLifetime to %v", connections.MaxLifetime)
+		poolConfig.MaxConnLifetime = connections.MaxLifetime
+	}
 }
 
 func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
