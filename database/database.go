@@ -112,4 +112,3 @@ func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger l
 
 	return db
 }
-
