@@ -121,7 +121,6 @@ func TestDataTooLong(t *testing.T) {
 	}
 }
 
-
 func TestConnectionsConfigOrder(t *testing.T) {
 	bs, err := os.ReadFile("database.go")
 	require.NoError(t, err)
