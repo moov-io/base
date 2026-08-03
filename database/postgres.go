@@ -3,10 +3,12 @@ package database
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/alloydbconn"
@@ -21,15 +23,23 @@ const (
 	// https://www.postgresql.org/docs/current/errcodes-appendix.html
 	postgresErrUniqueViolation = "23505"
 	postgresErrDeadlockFound   = "40P01"
+
+	// Bound ShouldPing wait so acquire retries during failover stay inside
+	// typical request budgets. AlloyDB disconnects usually fail fast (TCP RST);
+	// this caps hung/TIME_WAIT peers.
+	defaultPostgresPingTimeout = time.Second
 )
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
-	poolConfig, err := buildPgxPoolConfig(ctx, config, databaseName)
+	poolConfig, dialer, err := buildPgxPoolConfig(ctx, config, databaseName)
 	if err != nil {
 		return nil, logger.LogErrorf("building pgx pool config: %w", err).Err()
 	}
 
-	applyPgxPoolConnectionsConfig(logger, poolConfig, config.Connections)
+	// Apply connection limits to pgxpool (not database/sql). OpenDBFromPool
+	// requires sql.DB MaxIdleConns=0; sql.DB setters do not configure the
+	// underlying pool and SetMaxIdleConns(n>0) actively breaks it.
+	ApplyPostgresPoolConfig(logger, poolConfig, config.Connections)
 
 	// Ping connections that have been idle for more than 200ms before handing
 	// them to the caller. This catches dead connections left by an AlloyDB
@@ -42,61 +52,145 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 		return p.IdleDuration > 200*time.Millisecond
 	}
 
+	if poolConfig.PingTimeout <= 0 {
+		poolConfig.PingTimeout = defaultPostgresPingTimeout
+	}
+
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
+		_ = closeAlloyDialer(dialer)
 		return nil, logger.LogErrorf("creating pgx pool: %w", err).Err()
 	}
 
 	err = pool.Ping(ctx)
 	if err != nil {
 		pool.Close()
+		_ = closeAlloyDialer(dialer)
 		return nil, logger.LogErrorf("connecting to database: %w", err).Err()
 	}
 
-	// OpenDBFromPool wraps pgxpool in a *sql.DB for compatibility with the rest
-	// of the codebase. It automatically sets MaxIdleConns to 0 on the sql.DB —
-	// this must not be overridden, as pgxpool manages its own connection pool
-	// and a non-zero value would prevent connections from being released back.
-	db := stdlib.OpenDBFromPool(pool)
+	// OpenDBFromPool does not close the pool when *sql.DB is closed. Wrap the
+	// connector so db.Close() shuts down the pool (and AlloyDB dialer).
+	db := openDBFromPool(pool, dialer)
 
 	return db, nil
 }
 
-// applyPgxPoolConnectionsConfig translates ConnectionsConfig onto a pgxpool.Config.
-// MaxIdle has no pgxpool equivalent — pgxpool caps total connections via MaxConns
-// rather than idle count, and keeps a floor via MinConns. When set, MaxIdle is
-// logged and ignored so operators aren't misled into thinking it took effect.
-func applyPgxPoolConnectionsConfig(logger log.Logger, poolConfig *pgxpool.Config, connections ConnectionsConfig) {
-	if connections.MaxOpen > 0 {
-		logger.Logf("setting pgx pool MaxConns to %d", connections.MaxOpen)
-		poolConfig.MaxConns = int32(connections.MaxOpen)
+// ApplyPostgresPoolConfig fills zero-valued fields in connections with
+// DefaultPostgresConnectionsConfig, then maps them onto poolConfig.
+//
+// Unlike database/sql (where MaxOpen=0 means unlimited), pgxpool always has a
+// finite MaxConns. Leaving MaxOpen unset previously fell through to pgxpool's
+// default of max(4, NumCPU()), which silently shrinks pools for services that
+// never configured Connections. We instead apply explicit library defaults so
+// behavior is predictable and logged.
+//
+// MaxIdle has no pgxpool "max idle" equivalent. When set (or defaulted), it is
+// applied as MinIdleConns (warm floor), capped by MaxConns, so the field still
+// influences pool shape rather than being dropped on the floor.
+func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, connections ConnectionsConfig) {
+	if poolConfig == nil {
+		return
 	}
 
-	if connections.MaxIdle > 0 {
-		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent", connections.MaxIdle)
-	}
+	applied := ResolvePostgresConnectionsConfig(connections)
 
-	if connections.MaxIdleTime > 0 {
-		logger.Logf("setting pgx pool MaxConnIdleTime to %v", connections.MaxIdleTime)
-		poolConfig.MaxConnIdleTime = connections.MaxIdleTime
-	}
+	logger.Logf("setting pgx pool MaxConns to %d", applied.MaxOpen)
+	poolConfig.MaxConns = int32(applied.MaxOpen)
 
-	if connections.MaxLifetime > 0 {
-		logger.Logf("setting pgx pool MaxConnLifetime to %v", connections.MaxLifetime)
-		poolConfig.MaxConnLifetime = connections.MaxLifetime
+	minIdle := applied.MaxIdle
+	if minIdle > applied.MaxOpen {
+		minIdle = applied.MaxOpen
 	}
+	if minIdle < 0 {
+		minIdle = 0
+	}
+	logger.Logf("setting pgx pool MinIdleConns to %d (from ConnectionsConfig.MaxIdle)", minIdle)
+	poolConfig.MinIdleConns = int32(minIdle)
+
+	logger.Logf("setting pgx pool MaxConnIdleTime to %v", applied.MaxIdleTime)
+	poolConfig.MaxConnIdleTime = applied.MaxIdleTime
+
+	logger.Logf("setting pgx pool MaxConnLifetime to %v", applied.MaxLifetime)
+	poolConfig.MaxConnLifetime = applied.MaxLifetime
 }
 
-func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
+// ResolvePostgresConnectionsConfig returns connections with zero-valued fields
+// replaced by DefaultPostgresConnectionsConfig.
+func ResolvePostgresConnectionsConfig(connections ConnectionsConfig) ConnectionsConfig {
+	defaults := DefaultPostgresConnectionsConfig()
+	if connections.MaxOpen <= 0 {
+		connections.MaxOpen = defaults.MaxOpen
+	}
+	if connections.MaxIdle <= 0 {
+		connections.MaxIdle = defaults.MaxIdle
+	}
+	if connections.MaxLifetime <= 0 {
+		connections.MaxLifetime = defaults.MaxLifetime
+	}
+	if connections.MaxIdleTime <= 0 {
+		connections.MaxIdleTime = defaults.MaxIdleTime
+	}
+	return connections
+}
+
+// openDBFromPool wraps pgxpool in a *sql.DB whose Close also closes the pool
+// and optional AlloyDB dialer. stdlib.OpenDBFromPool alone leaks both.
+func openDBFromPool(pool *pgxpool.Pool, dialer *alloydbconn.Dialer) *sql.DB {
+	c := &poolConnector{
+		Connector: stdlib.GetPoolConnector(pool),
+		pool:      pool,
+		dialer:    dialer,
+	}
+	db := sql.OpenDB(c)
+	// Required when using a pgxpool-backed connector: non-zero idle conns on
+	// sql.DB prevent connections from being released back to the pool.
+	db.SetMaxIdleConns(0)
+	return db
+}
+
+// poolConnector delegates to pgx stdlib's pool connector and implements
+// io.Closer so database/sql.DB.Close shuts down the underlying pgxpool.
+type poolConnector struct {
+	driver.Connector
+	pool   *pgxpool.Pool
+	dialer *alloydbconn.Dialer
+
+	closeOnce sync.Once
+	closeErr  error
+}
+
+func (c *poolConnector) Close() error {
+	c.closeOnce.Do(func() {
+		if c.pool != nil {
+			c.pool.Close()
+		}
+		c.closeErr = closeAlloyDialer(c.dialer)
+	})
+	return c.closeErr
+}
+
+func closeAlloyDialer(dialer *alloydbconn.Dialer) error {
+	if dialer == nil {
+		return nil
+	}
+	return dialer.Close()
+}
+
+func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, *alloydbconn.Dialer, error) {
 	if config.Alloy != nil {
 		return buildAlloyDBPoolConfig(ctx, config, databaseName)
 	}
 
 	connStr, err := getPostgresConnStr(config, databaseName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return pgxpool.ParseConfig(connStr)
+	poolConfig, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return poolConfig, nil, nil
 }
 
 func getPostgresConnStr(config PostgresConfig, databaseName string) (string, error) {
@@ -128,9 +222,9 @@ func getPostgresConnStr(config PostgresConfig, databaseName string) (string, err
 	return connStr, nil
 }
 
-func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, error) {
+func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, databaseName string) (*pgxpool.Config, *alloydbconn.Dialer, error) {
 	if config.Alloy == nil {
-		return nil, fmt.Errorf("missing alloy config")
+		return nil, nil, fmt.Errorf("missing alloy config")
 	}
 
 	var dialer *alloydbconn.Dialer
@@ -139,7 +233,7 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 	if config.Alloy.UseIAM {
 		d, err := alloydbconn.NewDialer(ctx, alloydbconn.WithIAMAuthN())
 		if err != nil {
-			return nil, fmt.Errorf("creating alloydb dialer: %v", err)
+			return nil, nil, fmt.Errorf("creating alloydb dialer: %w", err)
 		}
 		dialer = d
 		dsn = fmt.Sprintf(
@@ -151,7 +245,7 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 	} else {
 		d, err := alloydbconn.NewDialer(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("creating alloydb dialer: %v", err)
+			return nil, nil, fmt.Errorf("creating alloydb dialer: %w", err)
 		}
 		dialer = d
 		dsn = fmt.Sprintf(
@@ -163,7 +257,8 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse pgx pool config: %v", err)
+		_ = closeAlloyDialer(dialer)
+		return nil, nil, fmt.Errorf("failed to parse pgx pool config: %w", err)
 	}
 
 	var connOptions []alloydbconn.DialOption
@@ -175,7 +270,7 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
 	}
 
-	return poolConfig, nil
+	return poolConfig, dialer, nil
 }
 
 // PostgresUniqueViolation returns true when the provided error matches the Postgres code
@@ -207,4 +302,3 @@ func PostgresDeadlockFound(err error) bool {
 
 	return strings.Contains(err.Error(), postgresErrDeadlockFound)
 }
-
