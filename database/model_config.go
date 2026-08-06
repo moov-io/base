@@ -105,23 +105,12 @@ type RetryConfig struct {
 	MaxDuration time.Duration
 }
 
-// DefaultPostgresConnectionsConfig returns connection pool defaults tuned for
-// database failover recovery (e.g. AlloyDB maintenance switchovers).
-//
-// These are applied by ResolvePostgresConnectionsConfig / ApplyPostgresPoolConfig
-// whenever a field on ConnectionsConfig is zero. pgxpool always uses a finite
-// MaxConns (unlike database/sql, where MaxOpen=0 means unlimited), so leaving
-// MaxOpen unset would otherwise silently fall back to max(4, NumCPU()).
-// Explicit defaults keep pool size and eviction policy predictable across
-// services that never set Connections.
-//
-// Short MaxLifetime / MaxIdleTime help the background reaper drop stale
-// connections after a primary change; acquire-time liveness is separate
-// (pgxpool ShouldPing / PingTimeout).
+// DefaultPostgresConnectionsConfig returns pgxpool defaults for Postgres/AlloyDB.
+// Zero fields on ConnectionsConfig are filled from this by ResolvePostgresConnectionsConfig.
+// Short lifetimes help the background reaper evict stale connections after a failover.
 func DefaultPostgresConnectionsConfig() ConnectionsConfig {
 	return ConnectionsConfig{
 		MaxOpen:     25,
-		MaxIdle:     5,
 		MaxLifetime: 5 * time.Minute,
 		MaxIdleTime: 2 * time.Minute,
 	}
