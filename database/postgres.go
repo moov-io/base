@@ -85,9 +85,9 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 // never configured Connections. We instead apply explicit library defaults so
 // behavior is predictable and logged.
 //
-// MaxIdle has no pgxpool "max idle" equivalent. When set (or defaulted), it is
-// applied as MinIdleConns (warm floor), capped by MaxConns, so the field still
-// influences pool shape rather than being dropped on the floor.
+// MaxIdle has no pgxpool equivalent — pgxpool caps total connections via MaxConns
+// rather than idle count. When set, MaxIdle is logged and ignored so operators
+// aren't misled into thinking it took effect.
 func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, connections ConnectionsConfig) {
 	if poolConfig == nil {
 		return
@@ -98,15 +98,9 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 	logger.Logf("setting pgx pool MaxConns to %d", applied.MaxOpen)
 	poolConfig.MaxConns = int32(applied.MaxOpen)
 
-	minIdle := applied.MaxIdle
-	if minIdle > applied.MaxOpen {
-		minIdle = applied.MaxOpen
+	if applied.MaxIdle > 0 {
+		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent", applied.MaxIdle)
 	}
-	if minIdle < 0 {
-		minIdle = 0
-	}
-	logger.Logf("setting pgx pool MinIdleConns to %d (from ConnectionsConfig.MaxIdle)", minIdle)
-	poolConfig.MinIdleConns = int32(minIdle)
 
 	logger.Logf("setting pgx pool MaxConnIdleTime to %v", applied.MaxIdleTime)
 	poolConfig.MaxConnIdleTime = applied.MaxIdleTime
