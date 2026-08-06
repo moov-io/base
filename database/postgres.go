@@ -116,9 +116,6 @@ func ResolvePostgresConnectionsConfig(connections ConnectionsConfig) Connections
 	if connections.MaxOpen <= 0 {
 		connections.MaxOpen = defaults.MaxOpen
 	}
-	if connections.MaxIdle <= 0 {
-		connections.MaxIdle = defaults.MaxIdle
-	}
 	if connections.MaxLifetime <= 0 {
 		connections.MaxLifetime = defaults.MaxLifetime
 	}
