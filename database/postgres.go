@@ -38,6 +38,12 @@ const (
 	// pgxpool defaults MaxConnLifetimeJitter to 0. Without jitter, every
 	// connection created around the same time can expire together.
 	defaultPostgresMaxConnLifetimeJitter = 30 * time.Second
+
+	// database/sql.DB.Close calls connector.Close without waiting for in-use
+	// driver connections (open Stmts/Rows/Tx). pgxpool.Close blocks until every
+	// acquired conn is returned, which deadlocks in that situation. Bound the
+	// wait so process shutdown and tests cannot hang forever.
+	defaultPostgresPoolCloseWait = 5 * time.Second
 )
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
@@ -258,11 +264,37 @@ func (c *poolConnector) Close() error {
 			unregisterPostgresPool(c.db)
 		}
 		if c.pool != nil {
-			c.pool.Close()
+			c.closeErr = closePgxPool(c.pool, defaultPostgresPoolCloseWait)
 		}
-		c.closeErr = closeAlloyDialer(c.dialer)
+		if err := closeAlloyDialer(c.dialer); err != nil && c.closeErr == nil {
+			c.closeErr = err
+		}
 	})
 	return c.closeErr
+}
+
+// closePgxPool closes pool, returning an error if acquired connections prevent
+// shutdown within wait. The close continues in the background on timeout so
+// connections released later are still reaped.
+func closePgxPool(pool *pgxpool.Pool, wait time.Duration) error {
+	if pool == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	go func() {
+		pool.Close()
+		close(done)
+	}()
+	if wait <= 0 {
+		<-done
+		return nil
+	}
+	select {
+	case <-done:
+		return nil
+	case <-time.After(wait):
+		return fmt.Errorf("pgxpool close timed out after %s; open Stmts/Rows/Tx may still hold connections", wait)
+	}
 }
 
 func closeAlloyDialer(dialer *alloydbconn.Dialer) error {

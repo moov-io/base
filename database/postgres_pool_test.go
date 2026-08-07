@@ -161,6 +161,26 @@ func TestOpenDBFromPool_CloseClosesPool(t *testing.T) {
 	require.Contains(t, err.Error(), "closed")
 }
 
+func TestClosePgxPool_EmptyPool(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	require.NoError(t, err)
+
+	start := time.Now()
+	require.NoError(t, closePgxPool(pool, defaultPostgresPoolCloseWait))
+	require.Less(t, time.Since(start), 2*time.Second)
+
+	_, err = pool.Acquire(context.Background())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "closed")
+}
+
+func TestClosePgxPool_NilSafe(t *testing.T) {
+	require.NoError(t, closePgxPool(nil, time.Second))
+}
+
 func TestOpenDBFromPool_CloseIdempotent(t *testing.T) {
 	cfg, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
 	require.NoError(t, err)
