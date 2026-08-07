@@ -13,11 +13,12 @@ import (
 	"time"
 
 	"cloud.google.com/go/alloydbconn"
+	kitprom "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/moov-io/base/log"
-	moovsql "github.com/moov-io/base/sql"
+	stdprom "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -31,6 +32,74 @@ const (
 	// this caps hung/TIME_WAIT peers.
 	defaultPostgresPingTimeout = time.Second
 )
+
+var (
+	postgresMetricsMu = &sync.Mutex{}
+
+	// Same pattern as mysql_connections: scrape pgxpool.Stat on a ticker.
+	// db.Stats() is not useful here — OpenDBFromPool keeps sql.DB MaxIdleConns=0
+	// so the database/sql layer does not retain connections.
+	postgresConnections = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
+		Name: "postgres_connections",
+		Help: "How many Postgres/pgxpool connections and what status they're in.",
+	}, []string{"state"})
+
+	postgresConnectionsCounters = kitprom.NewGaugeFrom(stdprom.GaugeOpts{
+		Name: "postgres_connections_counters",
+		Help: `Counters specific to the Postgres/pgxpool connections.
+			wait_count: Successful acquires that waited because the pool was empty.
+			wait_ms: Cumulative time spent waiting for those acquires (milliseconds).
+			max_idle_time_closed: Connections destroyed due to MaxConnIdleTime.
+			max_lifetime_closed: Connections destroyed due to MaxConnLifetime.
+			max_open: Configured MaxConns.
+			new_conns: Cumulative new connections opened.
+			canceled_acquire: Cumulative acquires canceled by context.
+		`,
+	}, []string{"counter"})
+)
+
+// RecordPostgresPoolStats writes pgxpool.Stat into postgres_connections* gauges.
+// Mirrors RecordMySQLStats for the Postgres/AlloyDB path.
+func RecordPostgresPoolStats(pool *pgxpool.Pool) error {
+	if pool == nil {
+		return nil
+	}
+
+	s := pool.Stat()
+
+	postgresMetricsMu.Lock()
+	defer postgresMetricsMu.Unlock()
+
+	postgresConnections.With("state", "idle").Set(float64(s.IdleConns()))
+	postgresConnections.With("state", "inuse").Set(float64(s.AcquiredConns()))
+	postgresConnections.With("state", "open").Set(float64(s.TotalConns()))
+	postgresConnections.With("state", "constructing").Set(float64(s.ConstructingConns()))
+
+	postgresConnectionsCounters.With("counter", "wait_count").Set(float64(s.EmptyAcquireCount()))
+	postgresConnectionsCounters.With("counter", "wait_ms").Set(float64(s.EmptyAcquireWaitTime().Milliseconds()))
+	postgresConnectionsCounters.With("counter", "max_idle_time_closed").Set(float64(s.MaxIdleDestroyCount()))
+	postgresConnectionsCounters.With("counter", "max_lifetime_closed").Set(float64(s.MaxLifetimeDestroyCount()))
+	postgresConnectionsCounters.With("counter", "max_open").Set(float64(s.MaxConns()))
+	postgresConnectionsCounters.With("counter", "new_conns").Set(float64(s.NewConnsCount()))
+	postgresConnectionsCounters.With("counter", "canceled_acquire").Set(float64(s.CanceledAcquireCount()))
+
+	return nil
+}
+
+func monitorPostgresPool(ctx context.Context, pool *pgxpool.Pool) {
+	go func() {
+		t := time.NewTicker(time.Minute)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				_ = RecordPostgresPoolStats(pool)
+			}
+		}
+	}()
+}
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
 	poolConfig, dialer, err := buildPgxPoolConfig(ctx, config, databaseName)
@@ -74,6 +143,9 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 	// OpenDBFromPool does not close the pool when *sql.DB is closed. Wrap the
 	// connector so db.Close() shuts down the pool (and AlloyDB dialer).
 	db := openDBFromPool(pool, dialer)
+
+	// Collect pool metrics from pgxpool.Stat (not db.Stats()).
+	monitorPostgresPool(ctx, pool)
 
 	return db, nil
 }
@@ -135,11 +207,6 @@ func ResolvePostgresConnectionsConfig(connections ConnectionsConfig) Connections
 
 // openDBFromPool wraps pgxpool in a *sql.DB whose Close also closes the pool
 // and optional AlloyDB dialer. stdlib.OpenDBFromPool alone leaks both.
-//
-// It also registers a moovsql.StatsProvider so ObserveDB/MeasureStats read
-// pgxpool.Stat instead of database/sql.DB.Stats. With MaxIdleConns=0 the
-// sql.DB layer does not retain connections, so db.Stats() is near-zero and
-// not useful for capacity or wait monitoring.
 func openDBFromPool(pool *pgxpool.Pool, dialer *alloydbconn.Dialer) *sql.DB {
 	c := &poolConnector{
 		Connector: stdlib.GetPoolConnector(pool),
@@ -150,78 +217,7 @@ func openDBFromPool(pool *pgxpool.Pool, dialer *alloydbconn.Dialer) *sql.DB {
 	// Required when using a pgxpool-backed connector: non-zero idle conns on
 	// sql.DB prevent connections from being released back to the pool.
 	db.SetMaxIdleConns(0)
-	c.db = db
-
-	registerPostgresPool(db, pool)
-	moovsql.RegisterStatsProvider(db, func() moovsql.ConnectionStats {
-		return connectionStatsFromPgx(pool.Stat())
-	})
-
 	return db
-}
-
-// connectionStatsFromPgx maps pgxpool.Stat onto the fields MeasureStats emits.
-//
-// Rough equivalents to database/sql.DBStats:
-//
-//	Open              ← TotalConns
-//	InUse             ← AcquiredConns
-//	Idle              ← IdleConns
-//	WaitCount         ← EmptyAcquireCount
-//	WaitDuration      ← EmptyAcquireWaitTime
-//	MaxLifetimeClosed ← MaxLifetimeDestroyCount
-//	MaxIdleTimeClosed ← MaxIdleDestroyCount
-//	MaxIdleClosed     ← (no pgxpool equivalent; left 0)
-func connectionStatsFromPgx(s *pgxpool.Stat) moovsql.ConnectionStats {
-	if s == nil {
-		return moovsql.ConnectionStats{}
-	}
-	return moovsql.ConnectionStats{
-		Idle:                 int(s.IdleConns()),
-		InUse:                int(s.AcquiredConns()),
-		Open:                 int(s.TotalConns()),
-		WaitCount:            s.EmptyAcquireCount(),
-		WaitDuration:         s.EmptyAcquireWaitTime(),
-		MaxIdleTimeClosed:    s.MaxIdleDestroyCount(),
-		MaxLifetimeClosed:    s.MaxLifetimeDestroyCount(),
-		MaxOpen:              int(s.MaxConns()),
-		Constructing:         int(s.ConstructingConns()),
-		NewConnsCount:        s.NewConnsCount(),
-		CanceledAcquireCount: s.CanceledAcquireCount(),
-	}
-}
-
-// PoolStat returns a snapshot of the underlying pgxpool when db was opened by
-// this package's Postgres path. ok is false for MySQL/Spanner DBs or after Close.
-func PoolStat(db *sql.DB) (*pgxpool.Stat, bool) {
-	if db == nil {
-		return nil, false
-	}
-	v, ok := postgresPools.Load(db)
-	if !ok {
-		return nil, false
-	}
-	pool, ok := v.(*pgxpool.Pool)
-	if !ok || pool == nil {
-		return nil, false
-	}
-	return pool.Stat(), true
-}
-
-var postgresPools sync.Map // *sql.DB → *pgxpool.Pool
-
-func registerPostgresPool(db *sql.DB, pool *pgxpool.Pool) {
-	if db == nil || pool == nil {
-		return
-	}
-	postgresPools.Store(db, pool)
-}
-
-func unregisterPostgresPool(db *sql.DB) {
-	if db == nil {
-		return
-	}
-	postgresPools.Delete(db)
 }
 
 // poolConnector delegates to pgx stdlib's pool connector and implements
@@ -230,7 +226,6 @@ type poolConnector struct {
 	driver.Connector
 	pool   *pgxpool.Pool
 	dialer *alloydbconn.Dialer
-	db     *sql.DB
 
 	closeOnce sync.Once
 	closeErr  error
@@ -238,10 +233,6 @@ type poolConnector struct {
 
 func (c *poolConnector) Close() error {
 	c.closeOnce.Do(func() {
-		if c.db != nil {
-			moovsql.UnregisterStatsProvider(c.db)
-			unregisterPostgresPool(c.db)
-		}
 		if c.pool != nil {
 			c.pool.Close()
 		}

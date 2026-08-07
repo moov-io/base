@@ -34,9 +34,9 @@ type SpannerConfig struct {
 //   - Connections.MaxIdle has no pgxpool equivalent and is ignored (logged when set).
 //   - Do not call sql.DB SetMaxIdleConns with a non-zero value on the returned DB;
 //     OpenDBFromPool requires MaxIdleConns=0 so connections return to pgxpool.
-//   - db.Stats() is not meaningful for capacity monitoring; ObserveDB/MeasureStats
-//     read pgxpool.Stat via a registered provider. Prefer database.PoolStat for
-//     direct access.
+//   - db.Stats() is not meaningful for capacity monitoring (sql.DB does not hold
+//     the pool). New starts a ticker that records pgxpool.Stat into the
+//     postgres_connections* Prometheus metrics (same idea as mysql_connections).
 type PostgresConfig struct {
 	Address     string
 	User        string

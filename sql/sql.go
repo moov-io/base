@@ -21,20 +21,17 @@ var (
 
 	sqlConnections = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "sql_connections",
-		Help: "How many SQL connections and what status they're in.",
+		Help: "How many MySQL connections and what status they're in.",
 	}, []string{"state", "id"})
 
 	sqlConnectionsCounters = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "sql_connections_counters",
 		Help: `Counters specific to the sql connections.
 			wait_count: The total number of connections waited for.
-			wait_ms: The total time blocked waiting for a new connection (milliseconds).
+			wait_duration: The total time blocked waiting for a new connection.
 			max_idle_closed: The total number of connections closed due to SetMaxIdleConns.
-			max_idle_time_closed: The total number of connections closed due to max idle time.
-			max_lifetime_closed: The total number of connections closed due to max lifetime.
-			max_open: Configured maximum open connections (gauge).
-			new_conns: Cumulative new connections opened (when exposed by the pool).
-			canceled_acquire: Cumulative canceled connection acquires (when exposed by the pool).
+			max_idle_time_closed: The total number of connections closed due to SetConnMaxIdleTime.
+			max_lifetime_closed: The total number of connections closed due to SetConnMaxLifetime.
 		`,
 	}, []string{"counter", "id"})
 
@@ -78,21 +75,17 @@ func MeasureStats(db *sql.DB, id string) error {
 	statusLock.Lock()
 	defer statusLock.Unlock()
 
-	stats := StatsFor(db)
+	stats := db.Stats()
 
 	sqlConnections.With(prometheus.Labels{"state": "idle", "id": id}).Set(float64(stats.Idle))
 	sqlConnections.With(prometheus.Labels{"state": "inuse", "id": id}).Set(float64(stats.InUse))
-	sqlConnections.With(prometheus.Labels{"state": "open", "id": id}).Set(float64(stats.Open))
-	sqlConnections.With(prometheus.Labels{"state": "constructing", "id": id}).Set(float64(stats.Constructing))
+	sqlConnections.With(prometheus.Labels{"state": "open", "id": id}).Set(float64(stats.OpenConnections))
 
 	sqlConnectionsCounters.With(prometheus.Labels{"counter": "wait_count", "id": id}).Set(float64(stats.WaitCount))
 	sqlConnectionsCounters.With(prometheus.Labels{"counter": "wait_ms", "id": id}).Set(float64(stats.WaitDuration.Milliseconds()))
 	sqlConnectionsCounters.With(prometheus.Labels{"counter": "max_idle_closed", "id": id}).Set(float64(stats.MaxIdleClosed))
 	sqlConnectionsCounters.With(prometheus.Labels{"counter": "max_idle_time_closed", "id": id}).Set(float64(stats.MaxIdleTimeClosed))
 	sqlConnectionsCounters.With(prometheus.Labels{"counter": "max_lifetime_closed", "id": id}).Set(float64(stats.MaxLifetimeClosed))
-	sqlConnectionsCounters.With(prometheus.Labels{"counter": "max_open", "id": id}).Set(float64(stats.MaxOpen))
-	sqlConnectionsCounters.With(prometheus.Labels{"counter": "new_conns", "id": id}).Set(float64(stats.NewConnsCount))
-	sqlConnectionsCounters.With(prometheus.Labels{"counter": "canceled_acquire", "id": id}).Set(float64(stats.CanceledAcquireCount))
 
 	return nil
 }
