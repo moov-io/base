@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"strings"
 	"sync"
@@ -95,8 +96,14 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 
 	applied := ResolvePostgresConnectionsConfig(connections)
 
-	logger.Logf("setting pgx pool MaxConns to %d", applied.MaxOpen)
-	poolConfig.MaxConns = int32(applied.MaxOpen)
+	// pgxpool.MaxConns is int32; clamp to avoid gosec G115 on int->int32.
+	maxOpen := applied.MaxOpen
+	if maxOpen > math.MaxInt32 {
+		logger.Logf("clamping pgx pool MaxConns from %d to %d", maxOpen, math.MaxInt32)
+		maxOpen = math.MaxInt32
+	}
+	logger.Logf("setting pgx pool MaxConns to %d", maxOpen)
+	poolConfig.MaxConns = int32(maxOpen)
 
 	if applied.MaxIdle > 0 {
 		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent", applied.MaxIdle)

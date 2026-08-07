@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -94,6 +95,17 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
 	require.Equal(t, minIdleBefore, poolConfig.MinIdleConns)
+}
+
+func TestApplyPostgresPoolConfig_ClampsMaxOpenToInt32(t *testing.T) {
+	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+
+	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, ConnectionsConfig{
+		MaxOpen: math.MaxInt32 + 1,
+	})
+
+	require.Equal(t, int32(math.MaxInt32), poolConfig.MaxConns)
 }
 
 func TestApplyPostgresPoolConfig_NilPoolConfig(t *testing.T) {
