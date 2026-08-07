@@ -91,19 +91,6 @@ func DeadlockFound(err error) bool {
 	return MySQLDeadlockFound(err) || PostgresDeadlockFound(err)
 }
 
-// ApplyPostgresConnectionsConfig applies connection pool settings onto a *sql.DB.
-//
-// Deprecated: Postgres connections from New use pgxpool under the hood. Pool
-// settings are applied via ApplyPostgresPoolConfig inside postgresConnection.
-// Calling this on a Postgres *sql.DB from New is incorrect: SetMaxIdleConns
-// with a non-zero value breaks OpenDBFromPool, and the other setters do not
-// configure the underlying pgxpool. Prefer ConnectionsConfig on PostgresConfig
-// (applied automatically) or ApplyPostgresPoolConfig when building a pool.
-func ApplyPostgresConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
-	applied := ResolvePostgresConnectionsConfig(*connections)
-	return ApplyConnectionsConfig(db, &applied, logger)
-}
-
 func ApplyConnectionsConfig(db *sql.DB, connections *ConnectionsConfig, logger log.Logger) *sql.DB {
 	if connections.MaxOpen > 0 {
 		logger.Logf("setting SQL max open connections to %d", connections.MaxOpen)

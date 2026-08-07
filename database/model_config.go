@@ -137,10 +137,11 @@ type RetryConfig struct {
 //   - MaxOpen (25): pgxpool always has a finite MaxConns. Unset MaxOpen no
 //     longer means unlimited — it becomes 25. High-concurrency services must
 //     set PostgresConfig.Connections.MaxOpen explicitly if they need more.
-//   - MaxLifetime (5m): connections are recycled after this age (pgxpool
-//     adds jitter). Unset previously meant no max lifetime. Shorter lifetime
-//     helps drop stale sockets after AlloyDB failover; increase if reconnect
-//     cost (for example AlloyDB IAM) is more expensive than churn.
+//   - MaxLifetime (5m): connections are recycled after this age. ApplyPostgresPoolConfig
+//     also sets MaxConnLifetimeJitter (pgxpool defaults it to 0) so recycling is
+//     staggered. Unset previously meant no max lifetime. Shorter lifetime helps
+//     drop stale sockets after AlloyDB failover; increase if reconnect cost
+//     (for example AlloyDB IAM) is more expensive than churn.
 //   - MaxIdleTime (2m): idle connections are closed after this duration.
 //     Unset previously meant keep idle forever. Quiet processes will
 //     reconnect after idle gaps; raise this if cold-connect latency matters.

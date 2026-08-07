@@ -65,6 +65,7 @@ func TestApplyPostgresPoolConfig_Defaults(t *testing.T) {
 
 	// Start from pgxpool's own defaults so we can see our overrides.
 	require.NotEqual(t, int32(DefaultPostgresConnectionsConfig().MaxOpen), poolConfig.MaxConns)
+	require.Equal(t, time.Duration(0), poolConfig.MaxConnLifetimeJitter)
 
 	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, ConnectionsConfig{})
 
@@ -72,6 +73,8 @@ func TestApplyPostgresPoolConfig_Defaults(t *testing.T) {
 	require.Equal(t, int32(defaults.MaxOpen), poolConfig.MaxConns)
 	require.Equal(t, defaults.MaxLifetime, poolConfig.MaxConnLifetime)
 	require.Equal(t, defaults.MaxIdleTime, poolConfig.MaxConnIdleTime)
+	// pgxpool does not default jitter; we fill it so lifetime recycle is staggered.
+	require.Equal(t, defaultPostgresMaxConnLifetimeJitter, poolConfig.MaxConnLifetimeJitter)
 }
 
 func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
@@ -95,6 +98,27 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
 	require.Equal(t, minIdleBefore, poolConfig.MinIdleConns)
+	// 10% of 20m = 2m > fixed 30s default.
+	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
+}
+
+func TestApplyPostgresPoolConfig_PreservesConfiguredJitter(t *testing.T) {
+	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+	poolConfig.MaxConnLifetimeJitter = 45 * time.Second
+
+	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, ConnectionsConfig{})
+
+	require.Equal(t, 45*time.Second, poolConfig.MaxConnLifetimeJitter)
+}
+
+func TestDefaultPostgresPingTimeout(t *testing.T) {
+	// Document the acquire worst-case: (MaxOpen+1) * PingTimeout should stay
+	// well under a long request budget for blackholed peers.
+	require.Equal(t, 300*time.Millisecond, defaultPostgresPingTimeout)
+	maxOpen := DefaultPostgresConnectionsConfig().MaxOpen
+	worstCase := time.Duration(maxOpen+1) * defaultPostgresPingTimeout
+	require.LessOrEqual(t, worstCase, 10*time.Second)
 }
 
 func TestApplyPostgresPoolConfig_ClampsMaxOpenToInt32(t *testing.T) {
