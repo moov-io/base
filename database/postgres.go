@@ -28,7 +28,16 @@ const (
 	// Bound ShouldPing wait so acquire retries during failover stay inside
 	// typical request budgets. AlloyDB disconnects usually fail fast (TCP RST);
 	// this caps hung/TIME_WAIT peers.
-	defaultPostgresPingTimeout = time.Second
+	//
+	// Keep this low: Pool.Acquire retries up to maxConns+1 times, and each
+	// failed ping can burn the full timeout. At MaxOpen=25 and 1s that is a
+	// theoretical ~26s blackhole path; 300ms keeps a full-pool burn nearer a
+	// typical request budget while still covering real ping RTT.
+	defaultPostgresPingTimeout = 300 * time.Millisecond
+
+	// pgxpool defaults MaxConnLifetimeJitter to 0. Without jitter, every
+	// connection created around the same time can expire together.
+	defaultPostgresMaxConnLifetimeJitter = 30 * time.Second
 )
 
 func postgresConnection(ctx context.Context, logger log.Logger, config PostgresConfig, databaseName string) (*sql.DB, error) {
@@ -114,6 +123,18 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 
 	logger.Logf("setting pgx pool MaxConnLifetime to %v", applied.MaxLifetime)
 	poolConfig.MaxConnLifetime = applied.MaxLifetime
+
+	// MaxConnLifetimeJitter defaults to 0 in pgxpool (not automatic). Only fill
+	// when unset so a DSN/pool_max_conn_lifetime_jitter still wins.
+	if poolConfig.MaxConnLifetimeJitter <= 0 {
+		jitter := defaultPostgresMaxConnLifetimeJitter
+		// Prefer ~10% of lifetime when that is larger than the fixed default.
+		if tenth := applied.MaxLifetime / 10; tenth > jitter {
+			jitter = tenth
+		}
+		logger.Logf("setting pgx pool MaxConnLifetimeJitter to %v", jitter)
+		poolConfig.MaxConnLifetimeJitter = jitter
+	}
 }
 
 // ResolvePostgresConnectionsConfig returns connections with zero-valued fields
