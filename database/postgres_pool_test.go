@@ -2,12 +2,14 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"math"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moov-io/base/log"
+	moovsql "github.com/moov-io/base/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -168,4 +170,76 @@ func TestOpenDBFromPool_SetsMaxIdleConnsZero(t *testing.T) {
 	// in its own pool (OpenConns drops to 0 when unused).
 	require.Equal(t, 0, db.Stats().OpenConnections)
 	require.Equal(t, 0, db.Stats().Idle)
+}
+
+func TestOpenDBFromPool_RegistersStatsProvider(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+	cfg.MaxConns = 7
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	require.NoError(t, err)
+
+	db := openDBFromPool(pool, nil)
+
+	// db.Stats() is the useless sql.DB handoff view.
+	require.Equal(t, 0, db.Stats().OpenConnections)
+
+	// StatsFor / PoolStat must surface the real pgxpool.
+	stat, ok := PoolStat(db)
+	require.True(t, ok)
+	require.Equal(t, int32(7), stat.MaxConns())
+
+	got := moovsql.StatsFor(db)
+	require.Equal(t, 7, got.MaxOpen)
+	require.Equal(t, int(stat.TotalConns()), got.Open)
+	require.Equal(t, int(stat.IdleConns()), got.Idle)
+	require.Equal(t, int(stat.AcquiredConns()), got.InUse)
+	require.NoError(t, moovsql.MeasureStats(db, "pgx-pool-test"))
+
+	require.NoError(t, db.Close())
+
+	// After Close, provider and pool registry are cleared.
+	_, ok = PoolStat(db)
+	require.False(t, ok)
+	require.Equal(t, 0, moovsql.StatsFor(db).MaxOpen)
+}
+
+func TestConnectionStatsFromPgx_NilSafe(t *testing.T) {
+	require.Equal(t, moovsql.ConnectionStats{}, connectionStatsFromPgx(nil))
+}
+
+func TestConnectionStatsFromPgx_MapsFields(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+	cfg.MaxConns = 4
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	require.NoError(t, err)
+	defer pool.Close()
+
+	raw := pool.Stat()
+	got := connectionStatsFromPgx(raw)
+
+	require.Equal(t, int(raw.IdleConns()), got.Idle)
+	require.Equal(t, int(raw.AcquiredConns()), got.InUse)
+	require.Equal(t, int(raw.TotalConns()), got.Open)
+	require.Equal(t, raw.EmptyAcquireCount(), got.WaitCount)
+	require.Equal(t, raw.EmptyAcquireWaitTime(), got.WaitDuration)
+	require.Equal(t, raw.MaxIdleDestroyCount(), got.MaxIdleTimeClosed)
+	require.Equal(t, raw.MaxLifetimeDestroyCount(), got.MaxLifetimeClosed)
+	require.Equal(t, int(raw.MaxConns()), got.MaxOpen)
+	require.Equal(t, int(raw.ConstructingConns()), got.Constructing)
+	require.Equal(t, raw.NewConnsCount(), got.NewConnsCount)
+	require.Equal(t, raw.CanceledAcquireCount(), got.CanceledAcquireCount)
+	// No pgxpool equivalent.
+	require.Equal(t, int64(0), got.MaxIdleClosed)
+}
+
+func TestPoolStat_NilAndUnknown(t *testing.T) {
+	_, ok := PoolStat(nil)
+	require.False(t, ok)
+
+	_, ok = PoolStat(&sql.DB{})
+	require.False(t, ok)
 }
