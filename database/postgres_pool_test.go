@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"math"
 	"testing"
 	"time"
@@ -192,4 +193,44 @@ func TestOpenDBFromPool_SetsMaxIdleConnsZero(t *testing.T) {
 	// in its own pool (OpenConns drops to 0 when unused).
 	require.Equal(t, 0, db.Stats().OpenConnections)
 	require.Equal(t, 0, db.Stats().Idle)
+}
+
+func TestPoolDBStats_FromOpenDBFromPool(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+	require.NoError(t, err)
+	cfg.MaxConns = 9
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	require.NoError(t, err)
+
+	db := openDBFromPool(pool, nil)
+
+	// sql.DB handoff layer stays empty.
+	require.Equal(t, 0, db.Stats().OpenConnections)
+	require.Equal(t, 0, db.Stats().MaxOpenConnections)
+
+	// PoolDBStats reflects the real pgxpool.
+	got, ok := PoolDBStats(db)
+	require.True(t, ok)
+	require.Equal(t, 9, got.MaxOpenConnections)
+	require.Equal(t, int(pool.Stat().TotalConns()), got.OpenConnections)
+	require.Equal(t, int(pool.Stat().IdleConns()), got.Idle)
+	require.Equal(t, int(pool.Stat().AcquiredConns()), got.InUse)
+
+	require.NoError(t, db.Close())
+
+	_, ok = PoolDBStats(db)
+	require.False(t, ok)
+}
+
+func TestPoolDBStats_UnknownDB(t *testing.T) {
+	_, ok := PoolDBStats(nil)
+	require.False(t, ok)
+
+	_, ok = PoolDBStats(&sql.DB{})
+	require.False(t, ok)
+}
+
+func TestPgxPoolStatToDBStats_NilSafe(t *testing.T) {
+	require.Equal(t, sql.DBStats{}, pgxPoolStatToDBStats(nil))
 }
