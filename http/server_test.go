@@ -25,7 +25,16 @@ func truncate(s string) string {
 	return s
 }
 
+func withCORSAllowOrigins(t *testing.T, origins string) {
+	t.Helper()
+	t.Setenv(CORSAllowedOriginsEnv, origins)
+	ResetCORSAllowlistForTest()
+	t.Cleanup(ResetCORSAllowlistForTest)
+}
+
 func TestHTTP__AddCORSHandler(t *testing.T) {
+	withCORSAllowOrigins(t, "https://moov.io")
+
 	router := mux.NewRouter()
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("OPTIONS", "https://api.moov.io/v1/auth/ping", nil)
@@ -51,6 +60,29 @@ func TestHTTP__AddCORSHandler(t *testing.T) {
 		if v == "" {
 			t.Errorf("%s's value is an empty string", headers[i])
 		}
+	}
+}
+
+func TestHTTP__CORSRejectsUnlistedHTTPSOrigin(t *testing.T) {
+	withCORSAllowOrigins(t, "https://moov.io")
+
+	w := httptest.NewRecorder()
+	SetAccessControlAllowHeaders(w, "https://evil.example")
+	if v := w.Header().Get("Access-Control-Allow-Origin"); v != "" {
+		t.Errorf("expected no ACAO for unlisted origin, got %q", v)
+	}
+	if v := w.Header().Get("Access-Control-Allow-Credentials"); v != "" {
+		t.Errorf("expected no credentials header for unlisted origin, got %q", v)
+	}
+}
+
+func TestHTTP__CORSAllowsLocalhost(t *testing.T) {
+	withCORSAllowOrigins(t, "")
+
+	w := httptest.NewRecorder()
+	SetAccessControlAllowHeaders(w, "http://localhost:3000")
+	if v := w.Header().Get("Access-Control-Allow-Origin"); v != "http://localhost:3000" {
+		t.Errorf("got %q", v)
 	}
 }
 

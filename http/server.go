@@ -11,10 +11,12 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/moov-io/base/strx"
@@ -92,19 +94,60 @@ func AddCORSHandler(r *mux.Router) {
 	})
 }
 
+// CORSAllowedOriginsEnv is a comma-separated list of exact Origins permitted for
+// credentialed CORS. Example: "https://moov.io,https://dashboard.moov.io".
+// Localhost (http://localhost:<port>) remains allowed for development.
+const CORSAllowedOriginsEnv = "MOOV_CORS_ALLOW_ORIGINS"
+
+var (
+	corsAllowlistOnce sync.Once
+	corsAllowlist     map[string]struct{}
+)
+
+func loadCORSAllowlist() map[string]struct{} {
+	corsAllowlistOnce.Do(func() {
+		corsAllowlist = make(map[string]struct{})
+		for _, part := range strings.Split(os.Getenv(CORSAllowedOriginsEnv), ",") {
+			origin := strings.TrimSpace(part)
+			if origin != "" {
+				corsAllowlist[origin] = struct{}{}
+			}
+		}
+	})
+	return corsAllowlist
+}
+
+// ResetCORSAllowlistForTest clears the cached allowlist. Intended for tests only.
+func ResetCORSAllowlistForTest() {
+	corsAllowlistOnce = sync.Once{}
+	corsAllowlist = nil
+}
+
+func originAllowedForCORS(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	// Dev convenience: any localhost HTTP origin.
+	if strings.HasPrefix(origin, "http://localhost:") {
+		return true
+	}
+	_, ok := loadCORSAllowlist()[origin]
+	return ok
+}
+
 // SetAccessControlAllowHeaders writes Access-Control-Allow-* headers to a response to allow
 // for further CORS-allowed requests.
 func SetAccessControlAllowHeaders(w http.ResponseWriter, origin string) {
 	// Access-Control-Allow-Origin can't be '*' with requests that send credentials.
-	// Instead, we need to explicitly set the domain (from request's Origin header)
-	//
-	// Allow requests from anyone's localhost and only from secure pages.
-	if strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "https://") {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Cookie,X-User-Id,X-Request-Id,Content-Type")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	// Reflect only explicitly allowlisted Origins (plus localhost for local dev).
+	// Never reflect arbitrary https:// Origins with Allow-Credentials: true.
+	if !originAllowedForCORS(origin) {
+		return
 	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Cookie,X-User-Id,X-Request-Id,Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 }
 
 // GetRequestID returns the Moov header value for request IDs
