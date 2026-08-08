@@ -25,7 +25,16 @@ func truncate(s string) string {
 	return s
 }
 
+func withCORSAllowOrigins(t *testing.T, origins string) {
+	t.Helper()
+	t.Setenv(CORSAllowedOriginsEnv, origins)
+	ResetCORSAllowlistForTest()
+	t.Cleanup(ResetCORSAllowlistForTest)
+}
+
 func TestHTTP__AddCORSHandler(t *testing.T) {
+	withCORSAllowOrigins(t, "https://moov.io")
+
 	router := mux.NewRouter()
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("OPTIONS", "https://api.moov.io/v1/auth/ping", nil)
@@ -51,6 +60,60 @@ func TestHTTP__AddCORSHandler(t *testing.T) {
 		if v == "" {
 			t.Errorf("%s's value is an empty string", headers[i])
 		}
+	}
+}
+
+func TestHTTP__CORSRejectsUnlistedHTTPSOrigin(t *testing.T) {
+	withCORSAllowOrigins(t, "https://moov.io")
+
+	w := httptest.NewRecorder()
+	SetAccessControlAllowHeaders(w, "https://evil.example")
+	if v := w.Header().Get("Access-Control-Allow-Origin"); v != "" {
+		t.Errorf("expected no ACAO for unlisted origin, got %q", v)
+	}
+	if v := w.Header().Get("Access-Control-Allow-Credentials"); v != "" {
+		t.Errorf("expected no credentials header for unlisted origin, got %q", v)
+	}
+}
+
+func TestHTTP__CORSAllowsLocalhost(t *testing.T) {
+	withCORSAllowOrigins(t, "")
+
+	for _, origin := range []string{
+		"http://localhost:3000",
+		"http://localhost",
+		"http://127.0.0.1:8080",
+		"http://127.0.0.1",
+	} {
+		w := httptest.NewRecorder()
+		SetAccessControlAllowHeaders(w, origin)
+		if v := w.Header().Get("Access-Control-Allow-Origin"); v != origin {
+			t.Errorf("origin %q: got ACAO %q", origin, v)
+		}
+	}
+}
+
+func TestHTTP__SetCORSAllowedOrigins(t *testing.T) {
+	t.Cleanup(ResetCORSAllowlistForTest)
+	SetCORSAllowedOrigins([]string{"https://app.example", " https://admin.example "})
+
+	if !OriginAllowedForCORS("https://app.example") {
+		t.Fatal("expected app.example allowed")
+	}
+	if !OriginAllowedForCORS("https://admin.example") {
+		t.Fatal("expected admin.example allowed after trim")
+	}
+	if OriginAllowedForCORS("https://evil.example") {
+		t.Fatal("expected evil.example denied")
+	}
+
+	w := httptest.NewRecorder()
+	SetAccessControlAllowHeaders(w, "https://app.example")
+	if v := w.Header().Get("Access-Control-Allow-Origin"); v != "https://app.example" {
+		t.Errorf("got %q", v)
+	}
+	if v := w.Header().Get("Vary"); v != "Origin" {
+		t.Errorf("expected Vary: Origin, got %q", v)
 	}
 }
 

@@ -21,8 +21,12 @@ var (
 )
 
 func TestResponse__Wrap(t *testing.T) {
+	t.Setenv(CORSAllowedOriginsEnv, "https://moov.io")
+	ResetCORSAllowlistForTest()
+	t.Cleanup(ResetCORSAllowlistForTest)
+
 	req := httptest.NewRequest("GET", "https://api.moov.io/v1/ach/ping", nil)
-	req.Header.Set("Origin", "https://moov.io/demo")
+	req.Header.Set("Origin", "https://moov.io")
 
 	w := httptest.NewRecorder()
 

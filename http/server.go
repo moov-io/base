@@ -11,10 +11,12 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/moov-io/base/strx"
@@ -92,19 +94,118 @@ func AddCORSHandler(r *mux.Router) {
 	})
 }
 
+// CORSAllowedOriginsEnv is a comma-separated list of exact Origins permitted for
+// credentialed CORS. Example: "https://moov.io,https://dashboard.moov.io".
+//
+// Services that use AddCORSHandler, SetAccessControlAllowHeaders, or Wrap honor this
+// allowlist automatically after upgrading moov-io/base — set the env var in deploy.
+// Local development origins (http://localhost[:port], http://127.0.0.1[:port]) remain allowed.
+const CORSAllowedOriginsEnv = "MOOV_CORS_ALLOW_ORIGINS"
+
+var (
+	corsAllowlistMu   sync.RWMutex
+	corsAllowlist     map[string]struct{}
+	corsAllowlistInit sync.Once
+)
+
+func parseCORSAllowlist(value string) map[string]struct{} {
+	out := make(map[string]struct{})
+	for _, part := range strings.Split(value, ",") {
+		origin := strings.TrimSpace(part)
+		if origin != "" {
+			out[origin] = struct{}{}
+		}
+	}
+	return out
+}
+
+func loadCORSAllowlist() map[string]struct{} {
+	corsAllowlistInit.Do(func() {
+		corsAllowlistMu.Lock()
+		defer corsAllowlistMu.Unlock()
+		if corsAllowlist == nil {
+			corsAllowlist = parseCORSAllowlist(os.Getenv(CORSAllowedOriginsEnv))
+		}
+	})
+	corsAllowlistMu.RLock()
+	defer corsAllowlistMu.RUnlock()
+	return corsAllowlist
+}
+
+// SetCORSAllowedOrigins replaces the in-process CORS allowlist with the given exact
+// Origins. Pass nil or empty to clear. Useful for tests and for services that load
+// allowed origins from config rather than (or in addition to) the env var.
+//
+// Safe for concurrent use with SetAccessControlAllowHeaders / Wrap.
+func SetCORSAllowedOrigins(origins []string) {
+	next := make(map[string]struct{}, len(origins))
+	for _, origin := range origins {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			next[origin] = struct{}{}
+		}
+	}
+	corsAllowlistMu.Lock()
+	defer corsAllowlistMu.Unlock()
+	// Ensure loadCORSAllowlist will not overwrite a programmatic set from env later.
+	corsAllowlistInit.Do(func() {})
+	corsAllowlist = next
+}
+
+// ResetCORSAllowlistForTest clears the cached allowlist so the next use reloads from
+// MOOV_CORS_ALLOW_ORIGINS. Intended for tests only.
+func ResetCORSAllowlistForTest() {
+	corsAllowlistMu.Lock()
+	defer corsAllowlistMu.Unlock()
+	corsAllowlistInit = sync.Once{}
+	corsAllowlist = nil
+}
+
+// OriginAllowedForCORS reports whether origin may receive credentialed CORS headers.
+// Empty origins are rejected. Localhost / 127.0.0.1 HTTP origins are always allowed
+// for local development; all other origins must appear in the allowlist.
+func OriginAllowedForCORS(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	// Dev convenience: loopback HTTP origins (with or without explicit port).
+	if isLocalDevOrigin(origin) {
+		return true
+	}
+	// Allowlists are replaced wholesale (never mutated in place), so indexing the
+	// snapshot returned by loadCORSAllowlist is safe without holding the lock.
+	_, ok := loadCORSAllowlist()[origin]
+	return ok
+}
+
+func isLocalDevOrigin(origin string) bool {
+	switch {
+	case origin == "http://localhost", origin == "http://127.0.0.1":
+		return true
+	case strings.HasPrefix(origin, "http://localhost:"),
+		strings.HasPrefix(origin, "http://127.0.0.1:"):
+		return true
+	default:
+		return false
+	}
+}
+
 // SetAccessControlAllowHeaders writes Access-Control-Allow-* headers to a response to allow
-// for further CORS-allowed requests.
+// for further CORS-allowed requests. Used by AddCORSHandler and Wrap; services can call it
+// directly (e.g. ACH go-kit ServerAfter) and share the same allowlist.
 func SetAccessControlAllowHeaders(w http.ResponseWriter, origin string) {
 	// Access-Control-Allow-Origin can't be '*' with requests that send credentials.
-	// Instead, we need to explicitly set the domain (from request's Origin header)
-	//
-	// Allow requests from anyone's localhost and only from secure pages.
-	if strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "https://") {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Cookie,X-User-Id,X-Request-Id,Content-Type")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	// Reflect only explicitly allowlisted Origins (plus localhost for local dev).
+	// Never reflect arbitrary https:// Origins with Allow-Credentials: true.
+	if !OriginAllowedForCORS(origin) {
+		return
 	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Cookie,X-User-Id,X-Request-Id,Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	// Vary so caches don't serve one origin's ACAO to another.
+	w.Header().Add("Vary", "Origin")
 }
 
 // GetRequestID returns the Moov header value for request IDs
