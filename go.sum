@@ -5,8 +5,6 @@ cloud.google.com/go v0.123.0 h1:2NAUJwPR47q+E35uaJeYoNhuNEM9kM8SjgRgdeOJUSE=
 cloud.google.com/go v0.123.0/go.mod h1:xBoMV08QcqUGuPW65Qfm1o9Y4zKZBpGS+7bImXLTAZU=
 cloud.google.com/go/alloydb v1.26.0 h1:UTzyumJ8tEo0CqwzLkV4WMGnCxvvhw3BDy1nXfCt9KE=
 cloud.google.com/go/alloydb v1.26.0/go.mod h1:oqHGc/Xb5fWtH+wIDpu2wcPJX9oML/fGJuH/sp8ysyo=
-cloud.google.com/go/alloydbconn v1.18.5 h1:DsUY/zZIARley3ZKGO6Sa7enGaSMh614uT0CBYjCJY0=
-cloud.google.com/go/alloydbconn v1.18.5/go.mod h1:3TUfDxT+TUbfYk18UgiiUx+h783jcJNERcvsHvmGZ2s=
 cloud.google.com/go/alloydbconn v1.18.6 h1:vtRmNRk1kq0QjJ8lbrPLeooIVqCbKcDxKycRtmb6gsQ=
 cloud.google.com/go/alloydbconn v1.18.6/go.mod h1:P70koybK8sRT5E11jBlCQxthyWc3+Y0gKhA4hL1favE=
 cloud.google.com/go/auth v0.20.0 h1:kXTssoVb4azsVDoUiF8KvxAqrsQcQtB53DcSgta74CA=
@@ -218,8 +216,6 @@ github.com/prometheus/common v0.70.1 h1:1HvjP4D5oL3t8RsPlwxA9onvvStjtIHYE5XuuwOi
 github.com/prometheus/common v0.70.1/go.mod h1:VdFUQDMZK3VLkurFUVhia6uys/0suUp86TJz5qbJRhc=
 github.com/prometheus/procfs v0.21.1 h1:GljZCt+zSTS+NZq88cyQ1LjZ+RCHp3uVuabBWA5+OJI=
 github.com/prometheus/procfs v0.21.1/go.mod h1:aB55Cww9pdSJVHk0hUf0inxWyyjPogFIjmHKYgMKmtY=
-github.com/rickar/cal/v2 v2.1.28 h1:PLNjsw5YrCMkcE+EtD/wFh0Ys+a4Qp9yN6SKyksVso0=
-github.com/rickar/cal/v2 v2.1.28/go.mod h1:/fdlMcx7GjPlIBibMzOM9gMvDBsrK+mOtRXdTzUqV/A=
 github.com/rickar/cal/v2 v2.1.29 h1:VDs0S1RZTD7DUbc/pDBdZyTMOQn0uOf5Qjz3sIpaeAU=
 github.com/rickar/cal/v2 v2.1.29/go.mod h1:/fdlMcx7GjPlIBibMzOM9gMvDBsrK+mOtRXdTzUqV/A=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
