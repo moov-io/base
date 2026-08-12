@@ -3,7 +3,7 @@ module github.com/moov-io/base
 go 1.25.8
 
 require (
-	cloud.google.com/go/alloydbconn v1.18.5
+	cloud.google.com/go/alloydbconn v1.18.6
 	cloud.google.com/go/spanner v1.94.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-kit/kit v0.13.0
