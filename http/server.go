@@ -32,8 +32,8 @@ func Problem(w http.ResponseWriter, err error) {
 	if err == nil {
 		return
 	}
-	w.WriteHeader(http.StatusBadRequest)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
 	})

@@ -167,6 +167,52 @@ func TestHTTP__Problem(t *testing.T) {
 	}
 }
 
+// headerFreezeWriter matches net/http's contract: Header().Set after WriteHeader
+// does not change the headers that were sent. httptest.ResponseRecorder does not
+// enforce this, so the existing TestHTTP__Problem cannot catch the old order.
+type headerFreezeWriter struct {
+	code  int
+	hdr   http.Header
+	sent  http.Header
+	wrote bool
+	body  strings.Builder
+}
+
+func (w *headerFreezeWriter) Header() http.Header {
+	if w.hdr == nil {
+		w.hdr = make(http.Header)
+	}
+	return w.hdr
+}
+
+func (w *headerFreezeWriter) WriteHeader(code int) {
+	if w.wrote {
+		return
+	}
+	w.wrote = true
+	w.code = code
+	w.sent = w.hdr.Clone()
+}
+
+func (w *headerFreezeWriter) Write(p []byte) (int, error) {
+	if !w.wrote {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.body.Write(p)
+}
+
+func TestHTTP__ProblemSetsContentTypeBeforeWriteHeader(t *testing.T) {
+	w := &headerFreezeWriter{}
+	Problem(w, errors.New("problem X"))
+
+	if w.code != http.StatusBadRequest {
+		t.Errorf("got %d", w.code)
+	}
+	if v := w.sent.Get("Content-Type"); !strings.Contains(v, "application/json") {
+		t.Errorf("sent Content-Type = %q, want application/json (Set after WriteHeader is dropped)", v)
+	}
+}
+
 func TestHTTP_InternalError(t *testing.T) {
 	w := httptest.NewRecorder()
 	where := InternalError(w, errors.New("problem Y"))
