@@ -133,24 +133,30 @@ func TestHTTP__emptyOrigin(t *testing.T) {
 }
 
 func TestHTTP__Problem(t *testing.T) {
-	w := httptest.NewRecorder()
-	Problem(w, errors.New("problem X"))
-	w.Flush()
+	// httptest.ResponseRecorder does not freeze headers on WriteHeader, so use a
+	// real server to assert the Content-Type the client actually receives.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Problem(w, errors.New("problem X"))
+	}))
+	t.Cleanup(srv.Close)
 
-	// check http response
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("got %d", w.Code)
+	resp, err := srv.Client().Get(srv.URL)
+	if err != nil {
+		t.Fatal(err)
 	}
-	v := w.Header().Get("Content-Type")
-	if !strings.Contains(v, "application/json") {
+	t.Cleanup(func() { resp.Body.Close() })
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("got %d", resp.StatusCode)
+	}
+	if v := resp.Header.Get("Content-Type"); !strings.Contains(v, "application/json") {
 		t.Errorf("got %s", v)
 	}
 
-	type resp struct {
+	var response struct {
 		Error string `json:"error"`
 	}
-	var response resp
-	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		t.Error(err)
 	}
 	if response.Error != "problem X" {
@@ -158,7 +164,7 @@ func TestHTTP__Problem(t *testing.T) {
 	}
 
 	// nil error, respond http.StatusOK
-	w = httptest.NewRecorder()
+	w := httptest.NewRecorder()
 	Problem(w, nil)
 	w.Flush()
 
