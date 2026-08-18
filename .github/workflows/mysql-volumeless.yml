@@ -4,6 +4,9 @@ on:
   push:
     tags: [ "v*.*.*" ]
 
+permissions:
+  contents: read
+
 jobs:
   docker:
     name: Build and push MySQL volumeless docker image
@@ -13,15 +16,17 @@ jobs:
         working-directory: ./mysql
     steps:
     - name: Check out code
-      uses: actions/checkout@v7
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Build docker image from MySQL initialized DB inside container
       run: make build
 
     - name: Docker Push
-      run: |+
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          make push
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        make push
