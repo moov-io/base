@@ -16,7 +16,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	migmysql "github.com/golang-migrate/migrate/v4/database/mysql"
-	migpostgres "github.com/golang-migrate/migrate/v4/database/postgres"
+	migpgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 
@@ -192,7 +192,7 @@ func SpannerDriver(config DatabaseConfig) (database.Driver, error) {
 }
 
 func PostgresDriver(db *sql.DB) (database.Driver, error) {
-	return migpostgres.WithInstance(db, &migpostgres.Config{})
+	return migpgx.WithInstance(db, &migpgx.Config{})
 }
 
 type MigrateOption func(o *migrateOptions) error
