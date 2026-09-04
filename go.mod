@@ -12,7 +12,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
-	github.com/googleapis/gax-go/v2 v2.24.0
+	github.com/googleapis/gax-go/v2 v2.24.1
 	github.com/googleapis/go-sql-spanner v1.26.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.10.0
