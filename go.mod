@@ -1,6 +1,6 @@
 module github.com/moov-io/base
 
-go 1.25.8
+go 1.26.0
 
 require (
 	cloud.google.com/go/alloydbconn v1.19.0
@@ -15,7 +15,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.24.1
 	github.com/googleapis/go-sql-spanner v1.26.0
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/madflojo/testcerts v1.5.0
 	github.com/markbates/pkger v0.17.1
 	github.com/prometheus/client_golang v1.24.1
@@ -28,7 +28,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.46.0
 	go.opentelemetry.io/otel/sdk v1.46.0
 	go.opentelemetry.io/otel/trace v1.46.0
-	golang.org/x/time v0.15.0
+	golang.org/x/time v0.16.0
 	google.golang.org/grpc v1.83.2
 )
 
