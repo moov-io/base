@@ -33,6 +33,8 @@ cloud.google.com/go/spanner v1.94.0 h1:tve2XojeMa32SsrDNkp3J08TW4TZUVrv8TvTqGUif
 cloud.google.com/go/spanner v1.94.0/go.mod h1:Z2+83J5oVDmd1n5ntVMmjEuiNoXOpAyNeG7y1tuEHk0=
 cloud.google.com/go/spanner v1.95.0 h1:qIffeZvIZLBOA0Dvvi/6YwVtIxb8P61kEf3uqFQxU2o=
 cloud.google.com/go/spanner v1.95.0/go.mod h1:Z2+83J5oVDmd1n5ntVMmjEuiNoXOpAyNeG7y1tuEHk0=
+cloud.google.com/go/spanner v1.95.1 h1:9HYr+AAeAOubn0NZAYv34dFHQ3NbIUcWHZmgJvufPzk=
+cloud.google.com/go/spanner v1.95.1/go.mod h1:Z2+83J5oVDmd1n5ntVMmjEuiNoXOpAyNeG7y1tuEHk0=
 cloud.google.com/go/trace v1.15.0 h1:kAYkTwKyYHkGtAGFuu6qaUFRBkOVr+d1Yo44yZtGtgg=
 cloud.google.com/go/trace v1.15.0/go.mod h1:r+bdAn16dKLSV1G2D5v3e58IlQlizfxWrUfjx7kM7X0=
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=

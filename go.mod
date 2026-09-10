@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	cloud.google.com/go/alloydbconn v1.19.1
-	cloud.google.com/go/spanner v1.95.0
+	cloud.google.com/go/spanner v1.95.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
