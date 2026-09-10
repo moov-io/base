@@ -9,6 +9,8 @@ cloud.google.com/go/alloydbconn v1.18.6 h1:vtRmNRk1kq0QjJ8lbrPLeooIVqCbKcDxKycRt
 cloud.google.com/go/alloydbconn v1.18.6/go.mod h1:P70koybK8sRT5E11jBlCQxthyWc3+Y0gKhA4hL1favE=
 cloud.google.com/go/alloydbconn v1.19.0 h1:6EqOBOF1vCedq1zSzcWk5mfP0qgRlvxAVZ9nL1usQ48=
 cloud.google.com/go/alloydbconn v1.19.0/go.mod h1:P70koybK8sRT5E11jBlCQxthyWc3+Y0gKhA4hL1favE=
+cloud.google.com/go/alloydbconn v1.19.1 h1:trZK0OtIC4RlFNiaPaX+dTC1Zl4EMC9lOeOxzUsw98w=
+cloud.google.com/go/alloydbconn v1.19.1/go.mod h1:sUQ98EeCuAu1rXbiqVHgg+ypOzBqrt4rXYQO3ELLzIc=
 cloud.google.com/go/auth v0.20.0 h1:kXTssoVb4azsVDoUiF8KvxAqrsQcQtB53DcSgta74CA=
 cloud.google.com/go/auth v0.20.0/go.mod h1:942/yi/itH1SsmpyrbnTMDgGfdy2BUqIKyd0cyYLc5Q=
 cloud.google.com/go/auth/oauth2adapt v0.2.8 h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIiLpZnkHRbnc=
@@ -129,6 +131,8 @@ github.com/golang-migrate/migrate/v4 v4.19.1 h1:OCyb44lFuQfYXYLx1SCxPZQGU7mcaZ7g
 github.com/golang-migrate/migrate/v4 v4.19.1/go.mod h1:CTcgfjxhaUtsLipnLoQRWCrjYXycRz/g5+RWDuYgPrE=
 github.com/golang-migrate/migrate/v4 v4.20.0 h1:2ssVc6WfY3fz2aQRCBk8jFF9RPp4ziAX2uWnUdjMgO0=
 github.com/golang-migrate/migrate/v4 v4.20.0/go.mod h1:DDPgKVb4ovSWc4FwSPfV2Uz1160f4XBiTHTrAJtljmM=
+github.com/golang-migrate/migrate/v4 v4.20.1 h1:2N/ToVTKrKl58ynBpgeVJ4In7VcLCjWTZtm4eP1LxhU=
+github.com/golang-migrate/migrate/v4 v4.20.1/go.mod h1:DDPgKVb4ovSWc4FwSPfV2Uz1160f4XBiTHTrAJtljmM=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 h1:f+oWsMOmNPc8JmEHVZIycC7hBoQxHH9pNKQORJNozsQ=
