@@ -5,7 +5,11 @@ package admin
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdmin__profileEnabled(t *testing.T) {
@@ -25,4 +29,50 @@ func TestAdmin__profileEnabled(t *testing.T) {
 			t.Errorf("value=%q, got=%v, expected=%v", value, v, enabled)
 		}
 	}
+}
+
+func TestPprofEnabled(t *testing.T) {
+	require.True(t, pprofEnabled(Opts{}))
+	require.True(t, pprofEnabled(Opts{Pprof: &Pprof{Enabled: true}}))
+	require.False(t, pprofEnabled(Opts{Pprof: &Pprof{Enabled: false}}))
+	require.False(t, pprofEnabled(Opts{Pprof: &Pprof{}}))
+}
+
+func TestHandler_PprofDefaultEnabled(t *testing.T) {
+	rec := servePprof(t, handler(Opts{}), "/debug/pprof/cmdline")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestHandler_PprofDisabled(t *testing.T) {
+	h := handler(Opts{Pprof: &Pprof{Enabled: false}})
+
+	rec := servePprof(t, h, "/debug/pprof/")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/heap")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+
+	rec = servePprof(t, h, "/metrics")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestHandler_PprofExplicitlyEnabled(t *testing.T) {
+	h := handler(Opts{Pprof: &Pprof{Enabled: true}})
+
+	rec := servePprof(t, h, "/debug/pprof/")
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+func servePprof(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
 }

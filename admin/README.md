@@ -18,7 +18,7 @@ var logger log.Logger
 
 // in main.go or cmd/server/main.go
 
-adminServer, err := admin.New(Opts{
+adminServer, err := admin.New(admin.Opts{
 	Addr: ":9090",
 })
 if err != nil {
@@ -66,6 +66,23 @@ Readiness probes can be registered with the following callback:
 ```
 func (s *Server) AddReadinessCheck(name string, f func() error)
 ```
+
+### Profiling
+
+`GET /debug/pprof/` and the standard Go pprof handlers are registered by default so existing callers keep current behavior.
+
+To omit them (recommended in production), set `Pprof.Enabled` to false:
+
+```
+adminServer, err := admin.New(admin.Opts{
+	Addr: ":9090",
+	Pprof: &admin.Pprof{
+		Enabled: false,
+	},
+})
+```
+
+Per-profile `PPROF_*` environment variables still disable individual handlers when pprof is enabled (for example `PPROF_ALLOCS=no`).
 
 ### Metrics
 

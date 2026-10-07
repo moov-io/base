@@ -25,6 +25,16 @@ import (
 type Opts struct {
 	Addr    string
 	Timeout time.Duration
+
+	// Pprof configures /debug/pprof routes. A nil value keeps historical
+	// behavior: all profiles are registered.
+	Pprof *Pprof
+}
+
+// Pprof controls whether the admin server registers /debug/pprof routes.
+type Pprof struct {
+	// Enabled registers /debug/pprof handlers. The zero value omits them.
+	Enabled bool
 }
 
 // New returns an admin.Server instance that handles Prometheus metrics and pprof requests.
@@ -46,7 +56,7 @@ func New(opts Opts) (*Server, error) {
 		return nil, fmt.Errorf("listening on %s failed: %v", opts.Addr, err)
 	}
 
-	router := handler()
+	router := handler(opts)
 	svc := &Server{
 		router:   router,
 		listener: listener,
@@ -153,6 +163,15 @@ func (s *Server) Subrouter(pathPrefix string) *mux.Router {
 	return s.router.PathPrefix(pathPrefix).Subrouter()
 }
 
+// pprofEnabled reports whether /debug/pprof routes should be registered.
+// A nil Opts.Pprof keeps historical behavior (enabled).
+func pprofEnabled(opts Opts) bool {
+	if opts.Pprof == nil {
+		return true
+	}
+	return opts.Pprof.Enabled
+}
+
 // profileEnabled returns if a given pprof handler should be
 // enabled according to pprofHandlers and the PPROF_* environment
 // variables.
@@ -175,15 +194,20 @@ func profileEnabled(name string) bool {
 //
 // We only want to expose on the admin servlet because these
 // profiles/dumps can contain sensitive info (raw memory).
+// Handler uses default Opts, so pprof routes are registered.
 func Handler() http.Handler {
-	return handler()
+	return handler(Opts{})
 }
 
-func handler() *mux.Router {
+func handler(opts Opts) *mux.Router {
 	r := mux.NewRouter()
 
 	// prometheus metrics
 	r.Path("/metrics").Handler(promhttp.Handler())
+
+	if !pprofEnabled(opts) {
+		return r
+	}
 
 	// always register index and cmdline handlers
 	r.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
