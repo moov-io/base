@@ -82,6 +82,18 @@ adminServer, err := admin.New(admin.Opts{
 })
 ```
 
+When `Pprof.Secret` is set, `/debug/pprof` requires `Authorization: Bearer <secret>` or `X-Pprof-Token: <secret>`. An empty secret keeps unauthenticated access.
+
+```
+adminServer, err := admin.New(admin.Opts{
+	Addr: ":9090",
+	Pprof: &admin.Pprof{
+		Enabled: true,
+		Secret:  secret,
+	},
+})
+```
+
 Per-profile `PPROF_*` environment variables still disable individual handlers when pprof is enabled (for example `PPROF_ALLOCS=no`).
 
 ### Metrics

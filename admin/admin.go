@@ -9,6 +9,8 @@ package admin
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"fmt"
 	"net"
 	"net/http"
@@ -27,7 +29,7 @@ type Opts struct {
 	Timeout time.Duration
 
 	// Pprof configures /debug/pprof routes. A nil value keeps historical
-	// behavior: all profiles are registered.
+	// behavior: all profiles are registered without authentication.
 	Pprof *Pprof
 }
 
@@ -35,6 +37,11 @@ type Opts struct {
 type Pprof struct {
 	// Enabled registers /debug/pprof handlers. The zero value omits them.
 	Enabled bool
+
+	// Secret, when non-empty, requires callers to present the value as
+	// `Authorization: Bearer <secret>` or `X-Pprof-Token: <secret>`.
+	// An empty Secret keeps unauthenticated access.
+	Secret string
 }
 
 // New returns an admin.Server instance that handles Prometheus metrics and pprof requests.
@@ -209,44 +216,76 @@ func handler(opts Opts) *mux.Router {
 		return r
 	}
 
+	handle := func(path string, h http.Handler) {
+		r.Handle(path, wrapPprof(opts, h))
+	}
+
 	// always register index and cmdline handlers
-	r.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	r.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
 
 	if profileEnabled("profile") {
-		r.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+		handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
 	}
 	if profileEnabled("symbol") {
-		r.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+		handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 	}
 	if profileEnabled("trace") {
-		r.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+		handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	}
 
 	// Register runtime/pprof handlers
 	if profileEnabled("allocs") {
-		r.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
+		handle("/debug/pprof/allocs", pprof.Handler("allocs"))
 	}
 	if profileEnabled("block") {
 		runtime.SetBlockProfileRate(1)
-		r.Handle("/debug/pprof/block", pprof.Handler("block"))
+		handle("/debug/pprof/block", pprof.Handler("block"))
 	}
 	if profileEnabled("goroutine") {
-		r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+		handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
 	}
 	if profileEnabled("heap") {
-		r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+		handle("/debug/pprof/heap", pprof.Handler("heap"))
 	}
 	if profileEnabled("mutex") {
 		runtime.SetMutexProfileFraction(1)
-		r.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
+		handle("/debug/pprof/mutex", pprof.Handler("mutex"))
 	}
 	if profileEnabled("threadcreate") {
-		r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+		handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
 	}
 	if profileEnabled("goroutineleak") {
-		r.Handle("/debug/pprof/goroutineleak", pprof.Handler("goroutineleak"))
+		handle("/debug/pprof/goroutineleak", pprof.Handler("goroutineleak"))
 	}
 
 	return r
+}
+
+func wrapPprof(opts Opts, next http.Handler) http.Handler {
+	if opts.Pprof == nil || opts.Pprof.Secret == "" {
+		return next
+	}
+	want := sha256.Sum256([]byte(opts.Pprof.Secret))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got := sha256.Sum256([]byte(pprofToken(r)))
+		if subtle.ConstantTimeCompare(got[:], want[:]) != 1 {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="pprof"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func pprofToken(r *http.Request) string {
+	if v := strings.TrimSpace(r.Header.Get("X-Pprof-Token")); v != "" {
+		return v
+	}
+	const prefix = "Bearer "
+	auth := r.Header.Get("Authorization")
+	if len(auth) >= len(prefix) && strings.EqualFold(auth[:len(prefix)], prefix) {
+		return strings.TrimSpace(auth[len(prefix):])
+	}
+	return ""
 }

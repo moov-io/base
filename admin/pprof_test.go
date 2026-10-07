@@ -69,9 +69,46 @@ func TestHandler_PprofExplicitlyEnabled(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 }
 
-func servePprof(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
+func TestHandler_PprofSecret(t *testing.T) {
+	const secret = "test-pprof-secret"
+	h := handler(Opts{Pprof: &Pprof{Enabled: true, Secret: secret}})
+
+	rec := servePprof(t, h, "/debug/pprof/cmdline")
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+	require.Equal(t, `Bearer realm="pprof"`, rec.Header().Get("WWW-Authenticate"))
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline", header{"Authorization", "Bearer " + secret})
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline", header{"X-Pprof-Token", secret})
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline", header{"Authorization", "Bearer wrong"})
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/cmdline", header{"X-Pprof-Token", "wrong"})
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+
+	rec = servePprof(t, h, "/metrics")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestHandler_PprofEmptySecretUnauthenticated(t *testing.T) {
+	h := handler(Opts{Pprof: &Pprof{Enabled: true, Secret: ""}})
+	rec := servePprof(t, h, "/debug/pprof/cmdline")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+type header struct {
+	key, value string
+}
+
+func servePprof(t *testing.T, h http.Handler, path string, headers ...header) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
+	for _, hdr := range headers {
+		req.Header.Set(hdr.key, hdr.value)
+	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	return rec
