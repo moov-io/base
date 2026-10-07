@@ -84,12 +84,16 @@ adminServer, err := admin.New(admin.Opts{
 
 When `Pprof.Secret` is set, `/debug/pprof` requires `Authorization: Bearer <secret>` or `X-Pprof-Token: <secret>`. An empty secret keeps unauthenticated access.
 
+`Pprof.Block` and `Pprof.Mutex` enable runtime block/mutex sampling (`SetBlockProfileRate` / `SetMutexProfileFraction`) and their handlers. They default to false when `Pprof` is set. A nil `Pprof` keeps the historical `PPROF_BLOCK` / `PPROF_MUTEX` behavior.
+
 ```
 adminServer, err := admin.New(admin.Opts{
 	Addr: ":9090",
 	Pprof: &admin.Pprof{
 		Enabled: true,
 		Secret:  secret,
+		Block:   true,
+		Mutex:   true,
 	},
 })
 ```

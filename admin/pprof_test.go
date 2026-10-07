@@ -93,6 +93,43 @@ func TestHandler_PprofSecret(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 }
 
+func TestBlockProfileEnabled(t *testing.T) {
+	require.True(t, blockProfileEnabled(Opts{}))
+	require.False(t, blockProfileEnabled(Opts{Pprof: &Pprof{Enabled: true}}))
+	require.False(t, blockProfileEnabled(Opts{Pprof: &Pprof{Block: true}}))
+	require.True(t, blockProfileEnabled(Opts{Pprof: &Pprof{Enabled: true, Block: true}}))
+}
+
+func TestMutexProfileEnabled(t *testing.T) {
+	require.True(t, mutexProfileEnabled(Opts{}))
+	require.False(t, mutexProfileEnabled(Opts{Pprof: &Pprof{Enabled: true}}))
+	require.False(t, mutexProfileEnabled(Opts{Pprof: &Pprof{Mutex: true}}))
+	require.True(t, mutexProfileEnabled(Opts{Pprof: &Pprof{Enabled: true, Mutex: true}}))
+}
+
+func TestHandler_BlockMutexDefaultWhenPprofSet(t *testing.T) {
+	h := handler(Opts{Pprof: &Pprof{Enabled: true}})
+
+	rec := servePprof(t, h, "/debug/pprof/block")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/mutex")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/heap")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestHandler_BlockMutexExplicitlyEnabled(t *testing.T) {
+	h := handler(Opts{Pprof: &Pprof{Enabled: true, Block: true, Mutex: true}})
+
+	rec := servePprof(t, h, "/debug/pprof/block")
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	rec = servePprof(t, h, "/debug/pprof/mutex")
+	require.Equal(t, http.StatusOK, rec.Code)
+}
+
 func TestHandler_PprofEmptySecretUnauthenticated(t *testing.T) {
 	h := handler(Opts{Pprof: &Pprof{Enabled: true, Secret: ""}})
 	rec := servePprof(t, h, "/debug/pprof/cmdline")

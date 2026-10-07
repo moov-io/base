@@ -42,6 +42,14 @@ type Pprof struct {
 	// `Authorization: Bearer <secret>` or `X-Pprof-Token: <secret>`.
 	// An empty Secret keeps unauthenticated access.
 	Secret string
+
+	// Block enables runtime block profiling and /debug/pprof/block.
+	// Ignored when Opts.Pprof is nil, which keeps historical PPROF_BLOCK behavior.
+	Block bool
+
+	// Mutex enables runtime mutex profiling and /debug/pprof/mutex.
+	// Ignored when Opts.Pprof is nil, which keeps historical PPROF_MUTEX behavior.
+	Mutex bool
 }
 
 // New returns an admin.Server instance that handles Prometheus metrics and pprof requests.
@@ -179,6 +187,20 @@ func pprofEnabled(opts Opts) bool {
 	return opts.Pprof.Enabled
 }
 
+func blockProfileEnabled(opts Opts) bool {
+	if opts.Pprof != nil {
+		return opts.Pprof.Enabled && opts.Pprof.Block
+	}
+	return profileEnabled("block")
+}
+
+func mutexProfileEnabled(opts Opts) bool {
+	if opts.Pprof != nil {
+		return opts.Pprof.Enabled && opts.Pprof.Mutex
+	}
+	return profileEnabled("mutex")
+}
+
 // profileEnabled returns if a given pprof handler should be
 // enabled according to pprofHandlers and the PPROF_* environment
 // variables.
@@ -238,7 +260,7 @@ func handler(opts Opts) *mux.Router {
 	if profileEnabled("allocs") {
 		handle("/debug/pprof/allocs", pprof.Handler("allocs"))
 	}
-	if profileEnabled("block") {
+	if blockProfileEnabled(opts) {
 		runtime.SetBlockProfileRate(1)
 		handle("/debug/pprof/block", pprof.Handler("block"))
 	}
@@ -248,7 +270,7 @@ func handler(opts Opts) *mux.Router {
 	if profileEnabled("heap") {
 		handle("/debug/pprof/heap", pprof.Handler("heap"))
 	}
-	if profileEnabled("mutex") {
+	if mutexProfileEnabled(opts) {
 		runtime.SetMutexProfileFraction(1)
 		handle("/debug/pprof/mutex", pprof.Handler("mutex"))
 	}
