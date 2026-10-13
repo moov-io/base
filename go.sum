@@ -150,6 +150,8 @@ github.com/googleapis/gax-go/v2 v2.26.2 h1:ydkmNXxj7bEmmeK5AihkKnWxyOyBR9TDebvp5
 github.com/googleapis/gax-go/v2 v2.26.2/go.mod h1:sMKqnMesnKH+3wiRJROcttA+cJoZoGbZl1vDQ8XYtGk=
 github.com/googleapis/go-sql-spanner v1.26.0 h1:kJ82/XRqWYLNGW7GLfABG4j0HuP7POvklUDCYHSFATk=
 github.com/googleapis/go-sql-spanner v1.26.0/go.mod h1:QqG0NfeQbM5HOkKYti3YavRLDO1gQ8fke48IN3cnMfI=
+github.com/googleapis/go-sql-spanner v1.27.0 h1:ACs1Pp02Tmod15e/++0s3X3JhjiROCAIXg6Y8uTaYK0=
+github.com/googleapis/go-sql-spanner v1.27.0/go.mod h1:zWt0MMR7eFlB9P37yuhbBtEgdJTkm/mlutYQvKjIfOE=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 h1:Bd7KaOxzULLxtZ/K5s1aLbWhR0+5RToO65TXHsf3bqQ=
