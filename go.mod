@@ -3,7 +3,7 @@ module github.com/moov-io/base
 go 1.26.0
 
 require (
-	cloud.google.com/go/alloydbconn v1.19.1
+	cloud.google.com/go/alloydbconn v1.19.2
 	cloud.google.com/go/spanner v1.96.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-kit/kit v0.13.0
@@ -92,7 +92,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
