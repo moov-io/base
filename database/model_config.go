@@ -112,13 +112,17 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 //	MaxOpen     -> pgxpool MaxConns (required; pgxpool has no "unlimited")
 //	MaxLifetime  -> pgxpool MaxConnLifetime
 //	MaxIdleTime -> pgxpool MaxConnIdleTime
+//	MinIdle     -> pgxpool MinIdleConns (capped at MaxConns; nil uses the default, 0 disables)
 //	MaxIdle     -> ignored (no pgxpool equivalent; logged when > 0)
+//
+// MinIdle is Postgres-only; MySQL ignores it.
 //
 // Zero means "unset". For Postgres, unset fields are filled from
 // DefaultPostgresConnectionsConfig — unlike database/sql, 0 does not mean unlimited.
 type ConnectionsConfig struct {
 	MaxOpen     int
 	MaxIdle     int
+	MinIdle     *int
 	MaxLifetime time.Duration
 	MaxIdleTime time.Duration
 }
@@ -149,15 +153,22 @@ type RetryConfig struct {
 //     Unset previously meant keep idle forever. Quiet processes will
 //     reconnect after idle gaps; raise this if cold-connect latency matters.
 //   - MaxIdle: not defaulted and not applied for Postgres (no pgxpool
-//     equivalent). Prefer MaxOpen to bound total connections.
+//     equivalent). Prefer MaxOpen to bound total connections, and MinIdle to
+//     keep warm connections open.
+//   - MinIdle (2): pgxpool keeps no idle connections by default, so a drained
+//     pool makes the next request dial (and TLS handshake) on its own path.
+//     MinIdle is a pointer so an explicit 0 turns this off.
+//     It replaces any DSN pool_min_idle_conns.
 //
 // Override any value via PostgresConfig.Connections. There is no sentinel for
 // "unlimited" lifetime or idle time under pgxpool — leave a field zero only
 // when the default above is acceptable.
 func DefaultPostgresConnectionsConfig() ConnectionsConfig {
+	minIdle := 2
 	return ConnectionsConfig{
 		MaxOpen:     25,
 		MaxLifetime: 5 * time.Minute,
 		MaxIdleTime: 2 * time.Minute,
+		MinIdle:     &minIdle,
 	}
 }
