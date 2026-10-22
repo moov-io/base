@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -314,4 +316,51 @@ func TestPoolConnector_RetriesConnectErrorOnce(t *testing.T) {
 			require.Equal(t, tc.wantCalls, fake.calls)
 		})
 	}
+}
+
+func TestBuildPgxPoolConfig_DefaultConnectTimeout(t *testing.T) {
+	cfg := PostgresConfig{Address: "127.0.0.1:1", User: "user", TLS: &PostgresTLSConfig{Mode: "disable"}}
+
+	poolConfig, dialer, err := buildPgxPoolConfig(context.Background(), cfg, "db")
+	require.NoError(t, err)
+	require.Nil(t, dialer)
+	require.Equal(t, defaultPostgresConnectTimeout, poolConfig.ConnConfig.ConnectTimeout)
+}
+
+func TestOpenDBFromPool_HungHandshakeTimesOutAndRetries(t *testing.T) {
+	// A server that accepts TCP and never answers the startup message.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { ln.Close() })
+
+	var accepted atomic.Int32
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			accepted.Add(1)
+			t.Cleanup(func() { conn.Close() })
+		}
+	}()
+
+	cfg := PostgresConfig{Address: ln.Addr().String(), User: "user", TLS: &PostgresTLSConfig{Mode: "disable"}}
+	poolConfig, _, err := buildPgxPoolConfig(context.Background(), cfg, "db")
+	require.NoError(t, err)
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	require.NoError(t, err)
+	db := openDBFromPool(pool, nil)
+	t.Cleanup(func() { db.Close() })
+
+	start := time.Now()
+	err = db.PingContext(context.Background())
+	elapsed := time.Since(start)
+
+	var connectErr *pgconn.ConnectError
+	require.ErrorAs(t, err, &connectErr)
+	require.Equal(t, int32(2), accepted.Load(), "one attempt and one retry")
+	require.GreaterOrEqual(t, elapsed, 2*defaultPostgresConnectTimeout)
+	require.Less(t, elapsed, 2*defaultPostgresConnectTimeout+500*time.Millisecond)
 }
