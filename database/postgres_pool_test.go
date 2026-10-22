@@ -3,10 +3,14 @@ package database
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
+	"errors"
+	"fmt"
 	"math"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
@@ -76,6 +80,17 @@ func TestApplyPostgresPoolConfig_Defaults(t *testing.T) {
 	require.Equal(t, defaults.MaxIdleTime, poolConfig.MaxConnIdleTime)
 	// pgxpool does not default jitter; we fill it so lifetime recycle is staggered.
 	require.Equal(t, defaultPostgresMaxConnLifetimeJitter, poolConfig.MaxConnLifetimeJitter)
+	// pgxpool defaults MinIdleConns to 0; we keep at least one idle connection.
+	require.Equal(t, int32(1), poolConfig.MinIdleConns)
+}
+
+func TestApplyPostgresPoolConfig_PreservesHigherMinIdleConns(t *testing.T) {
+	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable&pool_min_idle_conns=3")
+	require.NoError(t, err)
+
+	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, ConnectionsConfig{})
+
+	require.Equal(t, int32(3), poolConfig.MinIdleConns)
 }
 
 func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
@@ -88,9 +103,8 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 		MaxIdleTime: 90 * time.Second,
 		MaxIdle:     99, // ignored for pgxpool
 	}
-	// Capture MinConns / MinIdleConns so we can prove MaxIdle is not mapped.
+	// Capture MinConns so we can prove MaxIdle is not mapped.
 	minConnsBefore := poolConfig.MinConns
-	minIdleBefore := poolConfig.MinIdleConns
 
 	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, in)
 
@@ -98,7 +112,8 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 20*time.Minute, poolConfig.MaxConnLifetime)
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
-	require.Equal(t, minIdleBefore, poolConfig.MinIdleConns)
+	// MaxIdle is not mapped; MinIdleConns is the library minimum of 1.
+	require.Equal(t, defaultPostgresMinIdleConns, poolConfig.MinIdleConns)
 	// 10% of 20m = 2m > fixed 30s default.
 	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
 }
@@ -253,4 +268,61 @@ func TestPoolDBStats_UnknownDB(t *testing.T) {
 
 func TestPgxPoolStatToDBStats_NilSafe(t *testing.T) {
 	require.Equal(t, sql.DBStats{}, pgxPoolStatToDBStats(nil))
+}
+
+type fakeConnector struct {
+	errs  []error
+	calls int
+}
+
+func (f *fakeConnector) Connect(context.Context) (driver.Conn, error) {
+	f.calls++
+	if len(f.errs) == 0 {
+		return nil, nil
+	}
+	err := f.errs[0]
+	f.errs = f.errs[1:]
+	return nil, err
+}
+
+func (f *fakeConnector) Driver() driver.Driver { return nil }
+
+func TestPoolConnector_RetriesConnectErrorOnce(t *testing.T) {
+	// A real *pgconn.ConnectError: nothing listens on port 1.
+	_, connectErr := pgconn.Connect(context.Background(), "postgres://user@127.0.0.1:1/db?sslmode=disable&connect_timeout=1")
+	var ce *pgconn.ConnectError
+	require.ErrorAs(t, connectErr, &ce)
+
+	otherErr := errors.New("other")
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	cases := []struct {
+		name      string
+		ctx       context.Context
+		errs      []error
+		wantErr   error
+		wantCalls int
+	}{
+		{name: "success", ctx: context.Background(), wantCalls: 1},
+		{name: "connect error then success", ctx: context.Background(), errs: []error{connectErr}, wantCalls: 2},
+		{name: "wrapped connect error then success", ctx: context.Background(), errs: []error{fmt.Errorf("acquire: %w", connectErr)}, wantCalls: 2},
+		{name: "connect error twice", ctx: context.Background(), errs: []error{connectErr, connectErr}, wantErr: connectErr, wantCalls: 2},
+		{name: "other error is not retried", ctx: context.Background(), errs: []error{otherErr}, wantErr: otherErr, wantCalls: 1},
+		{name: "canceled context is not retried", ctx: canceled, errs: []error{connectErr}, wantErr: connectErr, wantCalls: 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := &fakeConnector{errs: tc.errs}
+			c := &poolConnector{Connector: fake}
+
+			_, err := c.Connect(tc.ctx)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.wantCalls, fake.calls)
+		})
+	}
 }
