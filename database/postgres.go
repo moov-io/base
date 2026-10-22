@@ -35,6 +35,12 @@ const (
 	// typical request budget while still covering real ping RTT.
 	defaultPostgresPingTimeout = 300 * time.Millisecond
 
+	// Bound each new-connection attempt (dial, TLS, startup) so a stuck or
+	// reset handshake fails fast and poolConnector.Connect can retry once.
+	// In-region dials normally take 20-50ms. pgconn has no default timeout,
+	// so without this a handshake waits on the request context.
+	defaultPostgresConnectTimeout = 300 * time.Millisecond
+
 	// pgxpool defaults MaxConnLifetimeJitter to 0. Without jitter, every
 	// connection created around the same time can expire together.
 	defaultPostgresMaxConnLifetimeJitter = 30 * time.Second
@@ -258,6 +264,20 @@ type poolConnector struct {
 	closeErr  error
 }
 
+// Connect retries once, immediately, when opening a new connection fails.
+// database/sql only retries driver.ErrBadConn, and pgx does not mark a failed
+// dial or TLS handshake (*pgconn.ConnectError) as safe to retry, so one reset
+// from the server fails the query. No query has been sent at that point, so
+// the retry is safe for reads and writes.
+func (c *poolConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	conn, err := c.Connector.Connect(ctx)
+	var connectErr *pgconn.ConnectError
+	if err != nil && errors.As(err, &connectErr) && ctx.Err() == nil {
+		return c.Connector.Connect(ctx)
+	}
+	return conn, err
+}
+
 func (c *poolConnector) Close() error {
 	c.closeOnce.Do(func() {
 		if c.db != nil {
@@ -316,6 +336,11 @@ func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName
 	poolConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return nil, nil, err
+	}
+	// Not applied to AlloyDB: the dialer can fetch certificates on first dial,
+	// which can take longer than this.
+	if poolConfig.ConnConfig.ConnectTimeout <= 0 {
+		poolConfig.ConnConfig.ConnectTimeout = defaultPostgresConnectTimeout
 	}
 	return poolConfig, nil, nil
 }
