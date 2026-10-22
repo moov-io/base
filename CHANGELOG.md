@@ -2,6 +2,12 @@
 
 Please refer to the [Github Releases](https://github.com/moov-io/base/releases) page for future updates.
 
+## v0.57.0 (Released 2026-10-22)
+
+IMPROVEMENTS
+
+- sql: do a single retry on a connect to sql to stop possible issues with the pgx pool trying to connect to old servers.
+
 ## v0.56.0 (Released 2025-06-11)
 
 IMPROVEMENTS
