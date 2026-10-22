@@ -132,7 +132,7 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 
 	minIdle := min(max(*applied.MinIdle, 0), maxOpen)
 	logger.Logf("setting pgx pool MinIdleConns to %d", minIdle)
-	poolConfig.MinIdleConns = int32(minIdle) //nolint:gosec // bounded by maxOpen, which is clamped to MaxInt32
+	poolConfig.MinIdleConns = int32(minIdle)
 
 	logger.Logf("setting pgx pool MaxConnIdleTime to %v", applied.MaxIdleTime)
 	poolConfig.MaxConnIdleTime = applied.MaxIdleTime
