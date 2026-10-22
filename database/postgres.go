@@ -130,11 +130,9 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent (use MinIdle)", applied.MaxIdle)
 	}
 
-	if applied.MinIdle > 0 {
-		minIdle := min(applied.MinIdle, maxOpen)
-		logger.Logf("setting pgx pool MinIdleConns to %d", minIdle)
-		poolConfig.MinIdleConns = int32(minIdle) //nolint:gosec // bounded by maxOpen, which is clamped to MaxInt32
-	}
+	minIdle := min(max(*applied.MinIdle, 0), maxOpen)
+	logger.Logf("setting pgx pool MinIdleConns to %d", minIdle)
+	poolConfig.MinIdleConns = int32(minIdle) //nolint:gosec // bounded by maxOpen, which is clamped to MaxInt32
 
 	logger.Logf("setting pgx pool MaxConnIdleTime to %v", applied.MaxIdleTime)
 	poolConfig.MaxConnIdleTime = applied.MaxIdleTime
@@ -167,6 +165,9 @@ func ResolvePostgresConnectionsConfig(connections ConnectionsConfig) Connections
 	}
 	if connections.MaxIdleTime <= 0 {
 		connections.MaxIdleTime = defaults.MaxIdleTime
+	}
+	if connections.MinIdle == nil {
+		connections.MinIdle = defaults.MinIdle
 	}
 	return connections
 }

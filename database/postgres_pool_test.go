@@ -25,6 +25,7 @@ func TestResolvePostgresConnectionsConfig_Defaults(t *testing.T) {
 	require.Equal(t, defaults.MaxOpen, got.MaxOpen)
 	require.Equal(t, defaults.MaxLifetime, got.MaxLifetime)
 	require.Equal(t, defaults.MaxIdleTime, got.MaxIdleTime)
+	require.Equal(t, defaults.MinIdle, got.MinIdle)
 	// MaxIdle is not defaulted — no pgxpool equivalent.
 	require.Equal(t, 0, got.MaxIdle)
 }
@@ -33,6 +34,7 @@ func TestResolvePostgresConnectionsConfig_Overrides(t *testing.T) {
 	in := ConnectionsConfig{
 		MaxOpen:     10,
 		MaxIdle:     7,
+		MinIdle:     intPtr(2),
 		MaxLifetime: 15 * time.Minute,
 		MaxIdleTime: 3 * time.Minute,
 	}
@@ -94,9 +96,8 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 		MaxIdleTime: 90 * time.Second,
 		MaxIdle:     99, // ignored for pgxpool
 	}
-	// Capture MinConns / MinIdleConns so we can prove MaxIdle is not mapped.
+	// Capture MinConns so we can prove MaxIdle is not mapped.
 	minConnsBefore := poolConfig.MinConns
-	minIdleBefore := poolConfig.MinIdleConns
 
 	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, in)
 
@@ -104,7 +105,8 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 20*time.Minute, poolConfig.MaxConnLifetime)
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
-	require.Equal(t, minIdleBefore, poolConfig.MinIdleConns)
+	// MinIdleConns gets the MinIdle default, not MaxIdle.
+	require.Equal(t, int32(1), poolConfig.MinIdleConns)
 	// 10% of 20m = 2m > fixed 30s default.
 	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
 }
@@ -112,16 +114,20 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 func TestApplyPostgresPoolConfig_MinIdle(t *testing.T) {
 	cases := []struct {
 		name string
+		dsn  string
 		in   ConnectionsConfig
 		want int32
 	}{
-		{name: "unset", in: ConnectionsConfig{}, want: 0},
-		{name: "set", in: ConnectionsConfig{MinIdle: 4}, want: 4},
-		{name: "capped at MaxOpen", in: ConnectionsConfig{MaxOpen: 3, MinIdle: 4}, want: 3},
+		{name: "unset uses default", in: ConnectionsConfig{}, want: 1},
+		{name: "explicit zero disables", in: ConnectionsConfig{MinIdle: intPtr(0)}, want: 0},
+		{name: "negative treated as zero", in: ConnectionsConfig{MinIdle: intPtr(-1)}, want: 0},
+		{name: "set", in: ConnectionsConfig{MinIdle: intPtr(4)}, want: 4},
+		{name: "capped at MaxOpen", in: ConnectionsConfig{MaxOpen: 3, MinIdle: intPtr(4)}, want: 3},
+		{name: "replaces DSN value", dsn: "&pool_min_idle_conns=5", in: ConnectionsConfig{MinIdle: intPtr(2)}, want: 2},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+			poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable" + tc.dsn)
 			require.NoError(t, err)
 
 			ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, tc.in)
@@ -130,6 +136,8 @@ func TestApplyPostgresPoolConfig_MinIdle(t *testing.T) {
 		})
 	}
 }
+
+func intPtr(v int) *int { return &v }
 
 func TestApplyPostgresPoolConfig_PreservesConfiguredJitter(t *testing.T) {
 	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
