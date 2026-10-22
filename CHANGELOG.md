@@ -2,7 +2,7 @@
 
 Please refer to the [Github Releases](https://github.com/moov-io/base/releases) page for future updates.
 
-## v0.57.0 (Released 2026-10-22)
+## v0.65.0 (Released 2026-10-22)
 
 IMPROVEMENTS
 
