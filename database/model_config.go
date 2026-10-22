@@ -155,7 +155,7 @@ type RetryConfig struct {
 //   - MaxIdle: not defaulted and not applied for Postgres (no pgxpool
 //     equivalent). Prefer MaxOpen to bound total connections, and MinIdle to
 //     keep warm connections open.
-//   - MinIdle (1): pgxpool keeps no idle connections by default, so a drained
+//   - MinIdle (2): pgxpool keeps no idle connections by default, so a drained
 //     pool makes the next request dial (and TLS handshake) on its own path.
 //     MinIdle is a pointer so an explicit 0 turns this off.
 //     It replaces any DSN pool_min_idle_conns.
@@ -164,7 +164,7 @@ type RetryConfig struct {
 // "unlimited" lifetime or idle time under pgxpool — leave a field zero only
 // when the default above is acceptable.
 func DefaultPostgresConnectionsConfig() ConnectionsConfig {
-	minIdle := 1
+	minIdle := 2
 	return ConnectionsConfig{
 		MaxOpen:     25,
 		MaxLifetime: 5 * time.Minute,

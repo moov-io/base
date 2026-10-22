@@ -106,7 +106,7 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
 	// MinIdleConns gets the MinIdle default, not MaxIdle.
-	require.Equal(t, int32(1), poolConfig.MinIdleConns)
+	require.Equal(t, int32(2), poolConfig.MinIdleConns)
 	// 10% of 20m = 2m > fixed 30s default.
 	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
 }
@@ -118,7 +118,7 @@ func TestApplyPostgresPoolConfig_MinIdle(t *testing.T) {
 		in   ConnectionsConfig
 		want int32
 	}{
-		{name: "unset uses default", in: ConnectionsConfig{}, want: 1},
+		{name: "unset uses default", in: ConnectionsConfig{}, want: 2},
 		{name: "explicit zero disables", in: ConnectionsConfig{MinIdle: intPtr(0)}, want: 0},
 		{name: "negative treated as zero", in: ConnectionsConfig{MinIdle: intPtr(-1)}, want: 0},
 		{name: "set", in: ConnectionsConfig{MinIdle: intPtr(4)}, want: 4},
