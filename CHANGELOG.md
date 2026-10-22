@@ -2,6 +2,12 @@
 
 Please refer to the [Github Releases](https://github.com/moov-io/base/releases) page for future updates.
 
+## v0.66.0 (Released 2026-10-22)
+
+IMPROVEMENTS
+
+- sql: set a minimum idle connections for the pgx pool to 2 by default.
+
 ## v0.65.0 (Released 2026-10-22)
 
 IMPROVEMENTS
