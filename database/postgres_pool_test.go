@@ -109,6 +109,28 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
 }
 
+func TestApplyPostgresPoolConfig_MinIdle(t *testing.T) {
+	cases := []struct {
+		name string
+		in   ConnectionsConfig
+		want int32
+	}{
+		{name: "unset", in: ConnectionsConfig{}, want: 0},
+		{name: "set", in: ConnectionsConfig{MinIdle: 4}, want: 4},
+		{name: "capped at MaxOpen", in: ConnectionsConfig{MaxOpen: 3, MinIdle: 4}, want: 3},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
+			require.NoError(t, err)
+
+			ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, tc.in)
+
+			require.Equal(t, tc.want, poolConfig.MinIdleConns)
+		})
+	}
+}
+
 func TestApplyPostgresPoolConfig_PreservesConfiguredJitter(t *testing.T) {
 	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable")
 	require.NoError(t, err)
