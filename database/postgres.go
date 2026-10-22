@@ -39,10 +39,6 @@ const (
 	// connection created around the same time can expire together.
 	defaultPostgresMaxConnLifetimeJitter = 30 * time.Second
 
-	// pgxpool defaults MinIdleConns to 0, so a drained pool makes the next
-	// request open a new connection on its own request path.
-	defaultPostgresMinIdleConns = int32(1)
-
 	// database/sql.DB.Close calls connector.Close without waiting for in-use
 	// driver connections (open Stmts/Rows/Tx). pgxpool.Close blocks until every
 	// acquired conn is returned, which deadlocks in that situation. Bound the
@@ -126,14 +122,6 @@ func ApplyPostgresPoolConfig(logger log.Logger, poolConfig *pgxpool.Config, conn
 
 	if applied.MaxIdle > 0 {
 		logger.Logf("ignoring ConnectionsConfig.MaxIdle=%d: pgxpool has no MaxIdle equivalent", applied.MaxIdle)
-	}
-
-	// Keep at least one idle connection open so a request does not have to
-	// dial (and TLS handshake) a new connection after the pool drains. A DSN
-	// pool_min_idle_conns above 1 still wins.
-	if poolConfig.MinIdleConns < defaultPostgresMinIdleConns {
-		logger.Logf("setting pgx pool MinIdleConns to %d", defaultPostgresMinIdleConns)
-		poolConfig.MinIdleConns = defaultPostgresMinIdleConns
 	}
 
 	logger.Logf("setting pgx pool MaxConnIdleTime to %v", applied.MaxIdleTime)

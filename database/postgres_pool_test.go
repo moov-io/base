@@ -80,17 +80,6 @@ func TestApplyPostgresPoolConfig_Defaults(t *testing.T) {
 	require.Equal(t, defaults.MaxIdleTime, poolConfig.MaxConnIdleTime)
 	// pgxpool does not default jitter; we fill it so lifetime recycle is staggered.
 	require.Equal(t, defaultPostgresMaxConnLifetimeJitter, poolConfig.MaxConnLifetimeJitter)
-	// pgxpool defaults MinIdleConns to 0; we keep at least one idle connection.
-	require.Equal(t, int32(1), poolConfig.MinIdleConns)
-}
-
-func TestApplyPostgresPoolConfig_PreservesHigherMinIdleConns(t *testing.T) {
-	poolConfig, err := pgxpool.ParseConfig("postgres://user:pass@127.0.0.1:1/db?sslmode=disable&pool_min_idle_conns=3")
-	require.NoError(t, err)
-
-	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, ConnectionsConfig{})
-
-	require.Equal(t, int32(3), poolConfig.MinIdleConns)
 }
 
 func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
@@ -103,8 +92,9 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 		MaxIdleTime: 90 * time.Second,
 		MaxIdle:     99, // ignored for pgxpool
 	}
-	// Capture MinConns so we can prove MaxIdle is not mapped.
+	// Capture MinConns / MinIdleConns so we can prove MaxIdle is not mapped.
 	minConnsBefore := poolConfig.MinConns
+	minIdleBefore := poolConfig.MinIdleConns
 
 	ApplyPostgresPoolConfig(log.NewTestLogger(), poolConfig, in)
 
@@ -112,8 +102,7 @@ func TestApplyPostgresPoolConfig_Overrides(t *testing.T) {
 	require.Equal(t, 20*time.Minute, poolConfig.MaxConnLifetime)
 	require.Equal(t, 90*time.Second, poolConfig.MaxConnIdleTime)
 	require.Equal(t, minConnsBefore, poolConfig.MinConns)
-	// MaxIdle is not mapped; MinIdleConns is the library minimum of 1.
-	require.Equal(t, defaultPostgresMinIdleConns, poolConfig.MinIdleConns)
+	require.Equal(t, minIdleBefore, poolConfig.MinIdleConns)
 	// 10% of 20m = 2m > fixed 30s default.
 	require.Equal(t, 2*time.Minute, poolConfig.MaxConnLifetimeJitter)
 }
