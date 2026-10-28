@@ -3,7 +3,7 @@ module github.com/moov-io/base
 go 1.26.0
 
 require (
-	cloud.google.com/go/alloydbconn v1.19.2
+	cloud.google.com/go/alloydbconn v1.19.3
 	cloud.google.com/go/spanner v1.96.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-kit/kit v0.13.0
@@ -13,7 +13,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.27.0
-	github.com/googleapis/go-sql-spanner v1.27.0
+	github.com/googleapis/go-sql-spanner v1.28.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/madflojo/testcerts v1.5.1
@@ -54,7 +54,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -97,9 +97,9 @@ require (
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	google.golang.org/api v0.304.0 // indirect
+	google.golang.org/api v0.306.0 // indirect
 	google.golang.org/genproto v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
