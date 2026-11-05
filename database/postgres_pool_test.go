@@ -308,7 +308,7 @@ func (f *fakeConnector) Connect(context.Context) (driver.Conn, error) {
 
 func (f *fakeConnector) Driver() driver.Driver { return nil }
 
-func TestPoolConnector_RetriesConnectErrorOnce(t *testing.T) {
+func TestPoolConnector_RetriesConnectError(t *testing.T) {
 	// A real *pgconn.ConnectError: nothing listens on port 1.
 	_, connectErr := pgconn.Connect(context.Background(), "postgres://user@127.0.0.1:1/db?sslmode=disable&connect_timeout=1")
 	var ce *pgconn.ConnectError
@@ -328,7 +328,9 @@ func TestPoolConnector_RetriesConnectErrorOnce(t *testing.T) {
 		{name: "success", ctx: context.Background(), wantCalls: 1},
 		{name: "connect error then success", ctx: context.Background(), errs: []error{connectErr}, wantCalls: 2},
 		{name: "wrapped connect error then success", ctx: context.Background(), errs: []error{fmt.Errorf("acquire: %w", connectErr)}, wantCalls: 2},
-		{name: "connect error twice", ctx: context.Background(), errs: []error{connectErr, connectErr}, wantErr: connectErr, wantCalls: 2},
+		{name: "connect error three times then success", ctx: context.Background(), errs: []error{connectErr, connectErr, connectErr}, wantCalls: 4},
+		{name: "connect error every attempt", ctx: context.Background(), errs: []error{connectErr, connectErr, connectErr, connectErr, connectErr}, wantErr: connectErr, wantCalls: postgresConnectAttempts},
+		{name: "other error after connect error stops", ctx: context.Background(), errs: []error{connectErr, otherErr}, wantErr: otherErr, wantCalls: 2},
 		{name: "other error is not retried", ctx: context.Background(), errs: []error{otherErr}, wantErr: otherErr, wantCalls: 1},
 		{name: "canceled context is not retried", ctx: canceled, errs: []error{connectErr}, wantErr: connectErr, wantCalls: 1},
 	}
@@ -419,7 +421,7 @@ func TestOpenDBFromPool_HungHandshakeTimesOutAndRetries(t *testing.T) {
 
 	var connectErr *pgconn.ConnectError
 	require.ErrorAs(t, err, &connectErr)
-	require.Equal(t, int32(2), accepted.Load(), "one attempt and one retry")
-	require.GreaterOrEqual(t, elapsed, 2*defaultPostgresConnectTimeout)
-	require.Less(t, elapsed, 2*defaultPostgresConnectTimeout+500*time.Millisecond)
+	require.Equal(t, int32(postgresConnectAttempts), accepted.Load())
+	require.GreaterOrEqual(t, elapsed, postgresConnectAttempts*defaultPostgresConnectTimeout)
+	require.Less(t, elapsed, postgresConnectAttempts*defaultPostgresConnectTimeout+500*time.Millisecond)
 }
