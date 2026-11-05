@@ -357,6 +357,35 @@ func TestBuildPgxPoolConfig_DefaultConnectTimeout(t *testing.T) {
 	require.Equal(t, defaultPostgresConnectTimeout, poolConfig.ConnConfig.ConnectTimeout)
 }
 
+func TestBuildPgxPoolConfig_ConnectTimeout(t *testing.T) {
+	cases := []struct {
+		name   string
+		env    string
+		config time.Duration
+		want   time.Duration
+	}{
+		{name: "unset uses default", want: defaultPostgresConnectTimeout},
+		{name: "config", config: 1500 * time.Millisecond, want: 1500 * time.Millisecond},
+		{name: "env", env: "2", want: 2 * time.Second},
+		{name: "config wins over env", env: "2", config: time.Second, want: time.Second},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("PGCONNECT_TIMEOUT", tc.env)
+			cfg := PostgresConfig{
+				Address:     "127.0.0.1:1",
+				User:        "user",
+				TLS:         &PostgresTLSConfig{Mode: "disable"},
+				Connections: ConnectionsConfig{ConnectTimeout: tc.config},
+			}
+
+			poolConfig, _, err := buildPgxPoolConfig(context.Background(), cfg, "db")
+			require.NoError(t, err)
+			require.Equal(t, tc.want, poolConfig.ConnConfig.ConnectTimeout)
+		})
+	}
+}
+
 func TestOpenDBFromPool_HungHandshakeTimesOutAndRetries(t *testing.T) {
 	// A server that accepts TCP and never answers the startup message.
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

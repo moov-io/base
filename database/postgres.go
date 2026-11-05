@@ -39,6 +39,7 @@ const (
 	// reset handshake fails fast and poolConnector.Connect can retry once.
 	// In-region dials normally take 20-50ms. pgconn has no default timeout,
 	// so without this a handshake waits on the request context.
+	// Override with ConnectionsConfig.ConnectTimeout or PGCONNECT_TIMEOUT.
 	defaultPostgresConnectTimeout = 300 * time.Millisecond
 
 	// pgxpool defaults MaxConnLifetimeJitter to 0. Without jitter, every
@@ -57,6 +58,7 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 	if err != nil {
 		return nil, logger.LogErrorf("building pgx pool config: %w", err).Err()
 	}
+	logger.Logf("setting pgx ConnectTimeout to %v", poolConfig.ConnConfig.ConnectTimeout)
 
 	// Apply connection limits to pgxpool (not database/sql). OpenDBFromPool
 	// requires sql.DB MaxIdleConns=0; sql.DB setters do not configure the
@@ -344,9 +346,12 @@ func buildPgxPoolConfig(ctx context.Context, config PostgresConfig, databaseName
 	if err != nil {
 		return nil, nil, err
 	}
-	// Not applied to AlloyDB: the dialer can fetch certificates on first dial,
-	// which can take longer than this.
-	if poolConfig.ConnConfig.ConnectTimeout <= 0 {
+	switch {
+	case config.Connections.ConnectTimeout > 0:
+		poolConfig.ConnConfig.ConnectTimeout = config.Connections.ConnectTimeout
+	case poolConfig.ConnConfig.ConnectTimeout <= 0:
+		// The default is not applied to AlloyDB: the dialer can fetch
+		// certificates on first dial, which can take longer than this.
 		poolConfig.ConnConfig.ConnectTimeout = defaultPostgresConnectTimeout
 	}
 	return poolConfig, nil, nil
@@ -427,6 +432,9 @@ func buildAlloyDBPoolConfig(ctx context.Context, config PostgresConfig, database
 
 	poolConfig.ConnConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {
 		return dialer.Dial(ctx, config.Alloy.InstanceURI, connOptions...)
+	}
+	if config.Connections.ConnectTimeout > 0 {
+		poolConfig.ConnConfig.ConnectTimeout = config.Connections.ConnectTimeout
 	}
 
 	return poolConfig, dialer, nil

@@ -109,22 +109,26 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 // For MySQL these map to database/sql setters via ApplyConnectionsConfig.
 // For Postgres/AlloyDB they map to pgxpool via ApplyPostgresPoolConfig:
 //
-//	MaxOpen     -> pgxpool MaxConns (required; pgxpool has no "unlimited")
-//	MaxLifetime  -> pgxpool MaxConnLifetime
-//	MaxIdleTime -> pgxpool MaxConnIdleTime
-//	MinIdle     -> pgxpool MinIdleConns (capped at MaxConns; nil uses the default, 0 disables)
-//	MaxIdle     -> ignored (no pgxpool equivalent; logged when > 0)
+//	MaxOpen        -> pgxpool MaxConns (required; pgxpool has no "unlimited")
+//	MaxLifetime    -> pgxpool MaxConnLifetime
+//	MaxIdleTime    -> pgxpool MaxConnIdleTime
+//	MinIdle        -> pgxpool MinIdleConns (capped at MaxConns; nil uses the default, 0 disables)
+//	MaxIdle        -> ignored (no pgxpool equivalent; logged when > 0)
+//	ConnectTimeout -> pgconn ConnectTimeout for each new connection (dial, TLS, startup)
 //
-// MinIdle is Postgres-only; MySQL ignores it.
+// MinIdle and ConnectTimeout are Postgres-only; MySQL ignores them.
 //
 // Zero means "unset". For Postgres, unset fields are filled from
 // DefaultPostgresConnectionsConfig — unlike database/sql, 0 does not mean unlimited.
+// An unset ConnectTimeout keeps a DSN or PGCONNECT_TIMEOUT value, then falls back
+// to a 300ms default.
 type ConnectionsConfig struct {
-	MaxOpen     int
-	MaxIdle     int
-	MinIdle     *int
-	MaxLifetime time.Duration
-	MaxIdleTime time.Duration
+	MaxOpen        int
+	MaxIdle        int
+	MinIdle        *int
+	MaxLifetime    time.Duration
+	MaxIdleTime    time.Duration
+	ConnectTimeout time.Duration
 }
 
 type RetryConfig struct {
@@ -159,6 +163,9 @@ type RetryConfig struct {
 //     pool makes the next request dial (and TLS handshake) on its own path.
 //     MinIdle is a pointer so an explicit 0 turns this off.
 //     It replaces any DSN pool_min_idle_conns.
+//   - ConnectTimeout: not defaulted here. Under bursts of new connections,
+//     handshakes can exceed the 300ms fallback; raise it for services that
+//     open many connections at once.
 //
 // Override any value via PostgresConfig.Connections. There is no sentinel for
 // "unlimited" lifetime or idle time under pgxpool — leave a field zero only
