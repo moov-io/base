@@ -1,8 +1,10 @@
 package log_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"sync"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	lib "github.com/moov-io/base/log"
 )
@@ -19,6 +22,42 @@ func Test_LogImplementations(t *testing.T) {
 	lib.NewDefaultLogger()
 	lib.NewNopLogger()
 	lib.NewJSONLogger()
+	lib.NewTestLogger()
+	lib.NewTestLogger(t).Log("visible with -v or when this test fails")
+}
+
+type outputTB struct {
+	testing.TB
+	out io.Writer
+}
+
+func (tb outputTB) Output() io.Writer { return tb.out }
+
+func Test_NewTestLogger_WritesToTBOutput(t *testing.T) {
+	var buf bytes.Buffer
+	logger := lib.NewTestLogger(outputTB{TB: t, out: &buf})
+
+	logger.Set("foo", lib.String("bar")).Log("my message")
+
+	got := buf.String()
+	require.Contains(t, got, `msg="my message"`)
+	require.Contains(t, got, "foo=bar")
+	require.Contains(t, got, "level=info")
+}
+
+type panicWriter struct{}
+
+func (panicWriter) Write([]byte) (int, error) {
+	panic("Write called after Test has completed")
+}
+
+// Mirrors tb.Output panicking for a goroutine that logs after its test ended.
+func Test_NewTestLogger_WriteAfterTestCompleted(t *testing.T) {
+	logger := lib.NewTestLogger(outputTB{TB: t, out: panicWriter{}})
+
+	require.NotPanics(t, func() {
+		logger.Log("late message")
+	})
 }
 
 func Test_Log(t *testing.T) {

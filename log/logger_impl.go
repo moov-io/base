@@ -3,6 +3,7 @@ package log
 import (
 	"cmp"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"sort"
@@ -41,11 +42,37 @@ func NewJSONLogger() Logger {
 	return NewLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stderr)))
 }
 
-func NewTestLogger() Logger {
+// NewTestLogger returns a logger for tests.
+//
+// Pass tb to write through tb.Output: go test then groups entries under the
+// test that emitted them and prints them only when it fails or with -v.
+// Without tb, entries go to stderr with -v and are dropped otherwise.
+// Only the first tb is used.
+func NewTestLogger(tb ...testing.TB) Logger {
+	if len(tb) > 0 && tb[0] != nil {
+		w := &testOutputWriter{out: tb[0].Output()}
+		return NewLogger(log.NewLogfmtLogger(log.NewSyncWriter(w)))
+	}
 	if testing.Verbose() {
 		return NewDefaultLogger()
 	}
 	return NewNopLogger()
+}
+
+// testOutputWriter drops writes that tb.Output rejects with a panic once the
+// test and all its parents have completed, so a goroutine that outlives its
+// test (HTTP server, Kafka consumer) can't crash the test binary.
+type testOutputWriter struct {
+	out io.Writer
+}
+
+func (w *testOutputWriter) Write(p []byte) (n int, err error) {
+	defer func() {
+		if recover() != nil {
+			n, err = len(p), nil
+		}
+	}()
+	return w.out.Write(p)
 }
 
 func NewBufferLogger() (*BufferedLogger, Logger) {
