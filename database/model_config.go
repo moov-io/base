@@ -121,7 +121,7 @@ func (m *MySQLConfig) MarshalJSON() ([]byte, error) {
 // Zero means "unset". For Postgres, unset fields are filled from
 // DefaultPostgresConnectionsConfig — unlike database/sql, 0 does not mean unlimited.
 // An unset ConnectTimeout keeps a DSN or PGCONNECT_TIMEOUT value, then falls back
-// to a 300ms default.
+// to a 450ms default.
 type ConnectionsConfig struct {
 	MaxOpen        int
 	MaxIdle        int
@@ -164,7 +164,7 @@ type RetryConfig struct {
 //     MinIdle is a pointer so an explicit 0 turns this off.
 //     It replaces any DSN pool_min_idle_conns.
 //   - ConnectTimeout: not defaulted here. Under bursts of new connections,
-//     handshakes can exceed the 300ms fallback; raise it for services that
+//     handshakes can exceed the 450ms fallback; raise it for services that
 //     open many connections at once.
 //
 // Override any value via PostgresConfig.Connections. There is no sentinel for
