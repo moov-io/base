@@ -409,14 +409,16 @@ func TestOpenDBFromPool_HungHandshakeTimesOutAndRetries(t *testing.T) {
 	cfg := PostgresConfig{Address: ln.Addr().String(), User: "user", TLS: &PostgresTLSConfig{Mode: "disable"}}
 	poolConfig, _, err := buildPgxPoolConfig(context.Background(), cfg, "db")
 	require.NoError(t, err)
+	poolConfig.ConnConfig.Tracer = connectTracer{}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	require.NoError(t, err)
 	db := openDBFromPool(pool, nil)
 	t.Cleanup(func() { db.Close() })
 
+	ctx, end := startSpan(t)
 	start := time.Now()
-	err = db.PingContext(context.Background())
+	err = db.PingContext(ctx)
 	elapsed := time.Since(start)
 
 	var connectErr *pgconn.ConnectError
@@ -424,4 +426,10 @@ func TestOpenDBFromPool_HungHandshakeTimesOutAndRetries(t *testing.T) {
 	require.Equal(t, int32(postgresConnectAttempts), accepted.Load())
 	require.GreaterOrEqual(t, elapsed, postgresConnectAttempts*defaultPostgresConnectTimeout)
 	require.Less(t, elapsed, postgresConnectAttempts*defaultPostgresConnectTimeout+500*time.Millisecond)
+
+	attrs := end()
+	requireAcquireAttrs(t, attrs, true)
+	require.Equal(t, int64(postgresConnectAttempts), attrs["db.acquire.connect_attempts"].AsInt64())
+	require.GreaterOrEqual(t, attrs["db.acquire.connect_ms"].AsInt64(), (postgresConnectAttempts * defaultPostgresConnectTimeout).Milliseconds())
+	require.GreaterOrEqual(t, attrs["db.acquire.duration_ms"].AsInt64(), attrs["db.acquire.connect_ms"].AsInt64())
 }
