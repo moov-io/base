@@ -19,34 +19,21 @@ import (
 // startSpan returns a recording span context and a func that ends the span and returns its attributes.
 func startSpan(t *testing.T) (context.Context, func() map[attribute.Key]attribute.Value) {
 	t.Helper()
-	ctx, end := startSpanWithEvents(t)
-	return ctx, func() map[attribute.Key]attribute.Value {
-		attrs, _ := end()
-		return attrs
-	}
-}
-
-func startSpanWithEvents(t *testing.T) (context.Context, func() (map[attribute.Key]attribute.Value, []sdktrace.Event)) {
-	t.Helper()
 	recorder := tracetest.NewSpanRecorder()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
 	ctx, span := tp.Tracer("test").Start(context.Background(), "sql query")
-	return ctx, func() (map[attribute.Key]attribute.Value, []sdktrace.Event) {
+	return ctx, func() map[attribute.Key]attribute.Value {
 		span.End()
 		ended := recorder.Ended()
 		require.Len(t, ended, 1)
-		return attrMap(ended[0].Attributes()), ended[0].Events()
+		attrs := map[attribute.Key]attribute.Value{}
+		for _, kv := range ended[0].Attributes() {
+			attrs[kv.Key] = kv.Value
+		}
+		return attrs
 	}
-}
-
-func attrMap(kvs []attribute.KeyValue) map[attribute.Key]attribute.Value {
-	attrs := map[attribute.Key]attribute.Value{}
-	for _, kv := range kvs {
-		attrs[kv.Key] = kv.Value
-	}
-	return attrs
 }
 
 // requireAcquireAttrs checks the attributes are present, since a missing bool reads as false.
@@ -153,8 +140,8 @@ func TestRecordAcquire_NewConnection(t *testing.T) {
 	require.Equal(t, int64(2), attrs["db.acquire.connect_attempts"].AsInt64())
 }
 
-func TestRecordAcquire_EventPerAcquire(t *testing.T) {
-	ctx, end := startSpanWithEvents(t)
+func TestRecordAcquire_LastAcquireReplacesEarlier(t *testing.T) {
+	ctx, end := startSpan(t)
 
 	slowCtx, slow := withAcquireStats(ctx)
 	slow.startConnect(time.Now().Add(-time.Second))
@@ -164,12 +151,8 @@ func TestRecordAcquire_EventPerAcquire(t *testing.T) {
 	fastCtx, fast := withAcquireStats(ctx)
 	recordAcquire(fastCtx, time.Now(), fast)
 
-	attrs, events := end()
-	requireAcquireAttrs(t, attrs, false)
-	require.Len(t, events, 2)
-	require.Equal(t, "db.acquire", events[0].Name)
-	require.True(t, attrMap(events[0].Attributes)["db.acquire.new_conn"].AsBool())
-	require.False(t, attrMap(events[1].Attributes)["db.acquire.new_conn"].AsBool())
+	// requireAcquireAttrs checks the earlier connect values were zeroed, not left behind.
+	requireAcquireAttrs(t, end(), false)
 }
 
 func TestRecordAcquire_NoSpan(t *testing.T) {

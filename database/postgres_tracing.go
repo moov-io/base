@@ -58,11 +58,10 @@ func withAcquireStats(ctx context.Context) (context.Context, *acquireStats) {
 }
 
 // recordAcquire adds connection timing to the span that requested the connection.
-// A span can cover several acquires (retries), so each one is also kept as an
-// event; the span attributes hold the last. Acquire time includes pinging an
-// idle connection, so a slow acquire without a new connection is not always a full pool.
+// When a span covers several acquires (retries), the last one wins; span events
+// would keep each, but cost an extra event per query. Acquire time includes pinging
+// an idle connection, so a slow acquire without a new connection is not always a full pool.
 func recordAcquire(ctx context.Context, start time.Time, stats *acquireStats) {
-	span := trace.SpanFromContext(ctx)
 	now := time.Now()
 	attempts, connectDuration := stats.snapshot(now)
 
@@ -74,8 +73,7 @@ func recordAcquire(ctx context.Context, start time.Time, stats *acquireStats) {
 		attribute.Int64("db.acquire.connect_ms", connectDuration.Milliseconds()),
 		attribute.Int("db.acquire.connect_attempts", attempts),
 	}
-	span.AddEvent("db.acquire", trace.WithAttributes(attrs...))
-	span.SetAttributes(attrs...)
+	trace.SpanFromContext(ctx).SetAttributes(attrs...)
 }
 
 // connectTracer times each new connection pgx opens. pgx requires
