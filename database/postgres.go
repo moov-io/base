@@ -83,6 +83,10 @@ func postgresConnection(ctx context.Context, logger log.Logger, config PostgresC
 		poolConfig.PingTimeout = defaultPostgresPingTimeout
 	}
 
+	if poolConfig.ConnConfig.Tracer == nil {
+		poolConfig.ConnConfig.Tracer = connectTracer{}
+	}
+
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		_ = closeAlloyDialer(dialer)
@@ -281,7 +285,13 @@ type poolConnector struct {
 // and pgx does not mark a failed dial or TLS handshake (*pgconn.ConnectError)
 // as safe to retry, so one reset from the server fails the query. No query has
 // been sent at that point, so the retry is safe for reads and writes.
+//
+// Connect also adds db.acquire.* timing to the caller's span.
 func (c *poolConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	ctx, stats := withAcquireStats(ctx)
+	start := time.Now()
+	defer func() { recordAcquire(ctx, start, stats) }()
+
 	var conn driver.Conn
 	var err error
 	for range postgresConnectAttempts {
