@@ -33,6 +33,7 @@ var serviceBinds = map[string]string{
 	"customers": ":8087",
 	"wire":      ":8088",
 	"apitest":   ":8089",
+	"dukpt":     ":8095",
 	"console":   ":8100",
 }
 
