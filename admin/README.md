@@ -2,38 +2,44 @@
 
 Package admin implements an `http.Server` which can be used for operations and monitoring tools. It's designed to be shipped (and ran) inside an existing Go service.
 
-Here's an example of adding `admin.Server` to serve Prometheus metrics:
+Here's an example of adding `admin.Server` to serve Prometheus metrics, health checks and `/version`:
 
-```Go
+```go
+package main
+
 import (
-    "fmt"
-    "os"
+	"fmt"
 
-    "github.com/moov-io/base/admin"
-
-    "github.com/go-kit/log"
+	"github.com/moov-io/base/admin"
+	"github.com/moov-io/base/log"
 )
 
-var logger log.Logger
+func main() {
+	logger := log.NewDefaultLogger()
 
-// in main.go or cmd/server/main.go
-
-adminServer, err := admin.New(admin.Opts{
-	Addr: ":9090",
-})
-if err != nil {
-    // handle error
-}
-go func() {
-	logger.Log("admin", fmt.Sprintf("listening on %s", adminServer.BindAddr()))
-	if err := adminServer.Listen(); err != nil {
-		err = fmt.Errorf("problem starting admin http: %v", err)
-		logger.Log("admin", err)
-		// errs <- err // send err to shutdown channel
+	adminServer, err := admin.New(admin.Opts{
+		Addr: ":9090",
+	})
+	if err != nil {
+		logger.Fatal().LogError(err)
+		return
 	}
-}()
-defer adminServer.Shutdown()
+	defer adminServer.Shutdown()
+
+	adminServer.AddLivenessCheck("db", func() error { return nil })
+	adminServer.AddReadinessCheck("kafka", func() error {
+		return fmt.Errorf("not connected")
+	})
+	adminServer.AddVersionHandler("v1.2.3")
+
+	logger.Info().Logf("admin listening on %s", adminServer.BindAddr())
+	if err := adminServer.Listen(); err != nil {
+		logger.Fatal().LogErrorf("problem starting admin http: %v", err)
+	}
+}
 ```
+
+`Listen` blocks until you call `Shutdown` or the server returns an error. After the example starts, `GET /live` returns `200` with `{"db":"good"}`, `GET /ready` returns `400` with `{"kafka":"not connected"}`, and `GET /version` returns `v1.2.3`. A complete walkthrough is in [example_test.go](example_test.go).
 
 ### Endpoints
 
@@ -66,6 +72,37 @@ Readiness probes can be registered with the following callback:
 ```
 func (s *Server) AddReadinessCheck(name string, f func() error)
 ```
+
+#### Version
+
+`AddVersionHandler` registers `GET /version` and writes the version string you pass in.
+
+```
+func (s *Server) AddVersionHandler(version string)
+
+GET /version
+v1.2.3
+```
+
+### Extension points
+
+`AddHandler` registers an extra `http.HandlerFunc` on the admin server:
+
+```
+func (s *Server) AddHandler(path string, hf http.HandlerFunc)
+```
+
+`Subrouter` returns a gorilla/mux subrouter for a path prefix. Middleware on the subrouter does not wrap the parent `/live` and `/ready` routes:
+
+```
+sub := adminServer.Subrouter("/prefix")
+sub.Use(someMiddleware)
+sub.HandleFunc("/resource", ResourceHandler)
+```
+
+A request for `/prefix/resource` goes through `someMiddleware`. Requests for `/live` and `/ready` do not.
+
+`Opts.Timeout` sets the read, write and idle timeouts when you call `New`. You can change them later with `SetReadTimeout`, `SetWriteTimeout` and `SetIdleTimeout`.
 
 ### Profiling
 
@@ -102,7 +139,7 @@ Per-profile `PPROF_*` environment variables still disable individual handlers wh
 
 ### Metrics
 
-This endpoint returns prometheus metrics registered to the [prometheus/client_golang](https://github.com/prometheus/client_golang) singleton metrics registry. Their `promauto` package can be used to add Counters, Guages, Histograms, etc. The default Go metrics provided by `prometheus/client_golang` are included.
+This endpoint returns prometheus metrics registered to the [prometheus/client_golang](https://github.com/prometheus/client_golang) singleton metrics registry. Their `promauto` package can be used to add Counters, Gauges, Histograms, etc. The default Go metrics provided by `prometheus/client_golang` are included.
 
 ```
 GET /metrics
@@ -113,7 +150,4 @@ GET /metrics
 promhttp_metric_handler_requests_total{code="200"} 0
 promhttp_metric_handler_requests_total{code="500"} 0
 promhttp_metric_handler_requests_total{code="503"} 0
-# HELP stream_file_processing_errors Counter of stream submitted ACH files that failed processing
-# TYPE stream_file_processing_errors counter
-stream_file_processing_errors 0
 ```

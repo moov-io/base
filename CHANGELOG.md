@@ -1,6 +1,15 @@
-## Future Releases
+## Unreleased
 
-Please refer to the [Github Releases](https://github.com/moov-io/base/releases) page for future updates.
+IMPROVEMENTS
+
+- docs: add a package list, a quick start, testing steps and a complete environment variable table
+- docs: fix the admin, log, config and telemetry examples so they compile
+
+## Releases
+
+Release notes for all versions, including v0.57.0 and later, are on [GitHub Releases](https://github.com/moov-io/base/releases).
+
+The sections below keep a historical record. Some versions between v0.56.0 and v0.65.0 are not listed here.
 
 ## v0.66.0 (Released 2026-10-22)
 

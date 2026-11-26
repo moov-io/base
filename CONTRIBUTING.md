@@ -2,53 +2,56 @@
 
 Wow, we really appreciate that you even looked at this section! We are trying to make the worlds best atomic building blocks for financial services that accelerate innovation in banking and we need your help!
 
-You only have a fresh set of eyes once! The easiest way to contribute is to give feedback on the documentation that you are reading right now. This can be as simple as sending a message to our Google Group with your feedback or updating the markdown in this documentation and issuing a pull request.
+You only have a fresh set of eyes once! The easiest way to contribute is to give feedback on the documentation that you are reading right now. This can be as simple as sending a message in [Slack](https://slack.moov.io/) with your feedback or updating the markdown in this documentation and issuing a pull request.
 
-Stability is the hallmark of any good software. If you find an edge case that isn't handled please open an GitHub issue with the example data so that we can make our software more robust for everyone. We also welcome pull requests if you want to get your hands dirty.
+Stability is the hallmark of any good software. If you find an edge case that isn't handled please open a GitHub issue with the example data so that we can make our software more robust for everyone. We also welcome pull requests if you want to get your hands dirty.
 
-Have a use case that we don't handle; or handle well! Start the discussion on our Google Group or open a GitHub Issue. We want to make the project meet the needs of the community and keeps you using our code.
+Have a use case that we don't handle; or handle well! Start the discussion in Slack or open a GitHub Issue. We want to make the project meet the needs of the community and keeps you using our code.
 
 Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure you agree with the values of this project.
 
 We use GitHub to manage reviews of pull requests.
 
 * If you have a trivial fix or improvement, go ahead and create a pull
-  request, addressing (with `@...`) one or more of the maintainers
-  (see [AUTHORS.md](AUTHORS.md)) in the description of the pull request.
+  request.
 
 * If you plan to do something more involved, first propose your ideas
   in a Github issue. This will avoid unnecessary work and surely give
   you and us a good deal of inspiration.
 
 * Relevant coding style guidelines are the [Go Code Review
-  Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments)
+  Comments](https://go.dev/wiki/CodeReviewComments)
   and the _Formatting and style_ section of Peter Bourgon's [Go: Best
   Practices for Production
-  Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style).
+  Environments](https://peter.bourgon.org/go-in-production/#formatting-and-style).
 
 * When in doubt follow the [Go Proverbs](https://go-proverbs.github.io/)
 
 ## Getting the code
 
-We recommend using additional git remote's for pushing/pulling code. Go cares about where the `ach` project lives relative to [GOPATH](http://golang.org/doc/code.html#GOPATH).
-
-To pull our source code run:
+This project uses [Go Modules](https://go.dev/blog/using-go-modules). You can clone the repository outside of GOPATH.
 
 ```
-$ go get github.com/moov-io/ach
+git clone https://github.com/moov-io/base.git
+cd base
 ```
 
-Then, add your (or another user's) fork.
+Then add your (or another user's) fork:
 
 ```
-$ cd $GOPATH/src/github.com/moov-io/ach
-
-$ git remote add $user git@github.com:$user/ach.git
-
-$ git fetch $user
+git remote add $user https://github.com/$user/base.git
+git fetch $user
 ```
 
 Now, feel free to branch and push (`git push $user $branch`) to your remote and send us Pull Requests!
+
+## Tests and checks
+
+- `go test -short ./...` runs unit tests and skips tests that need MySQL, PostgreSQL or Spanner.
+- `make setup` starts the test databases. Then `go test ./...` runs the integration tests. `make teardown` stops the containers.
+- `make check` runs the project linters (on Windows it runs `go test ./... -short`).
+
+CI runs on GitHub Actions. See the [Go Report Card](https://goreportcard.com/report/github.com/moov-io/base) for lint results on `master`.
 
 ## Pull Requests
 
@@ -63,5 +66,3 @@ A good quality PR will have the following characteristics:
 * A PR does not end at submission though. A code change is not made until it is merged and used in production.
 
 A good PR should be able to flow through a peer review system easily and quickly.
-
-Our Build pipeline utilizes [Travis-CI](https://travis-ci.org/moov-io/ach) to enforce many tools that you should add to your editor before issuing a pull request. Learn more about these tools on our [Go Report card](https://goreportcard.com/report/github.com/moov-io/ach)

@@ -7,9 +7,9 @@ The documentation can be found here: https://opentelemetry.io/docs/instrumentati
 ------------------
 ### OpenTelemetry Purpose
 To allow users, especially of distributed systems, to track execution through the stack via a single Trace that is composed of a series of Spans.
-The Trace will persist from ingress in the system until processing is complete. Traces are seperated by spans, tht are typically started and stopped at microservice boundaries but can also be started/stopped anywhere the client chooses. Spans started within other spans have a praent child relationship to the span than they were derived from.
+The Trace will persist from ingress in the system until processing is complete. Traces are separated by spans, that are typically started and stopped at microservice boundaries but can also be started/stopped anywhere the client chooses. Spans started within other spans have a parent child relationship to the span that they were derived from.
 
-OpenTelemetry not only lets you trace execution, allowing you to delineate functional locks of the overarching execution via spans, but also allows you to include meta-data such as attibutes and baggage (both covered below) to ensure the metrics being generated contain adequate information to properly query from.
+OpenTelemetry not only lets you trace execution, allowing you to delineate functional blocks of the overarching execution via spans, but also allows you to include meta-data such as attributes and baggage (both covered below) to ensure the metrics being generated contain adequate information to properly query from.
 
 ------------------
 ### OpenTelemetry Components
@@ -31,8 +31,12 @@ OpenTelemetry not only lets you trace execution, allowing you to delineate funct
 **Sampler**: Determines what percent of spans are recorded. You can always send, never send, or any ratio between. Only used by this code base's boilerplate.
 
 **Span**: The main unit of work in OpenTelemetry, and the API Moov developers need to be most familiar with, spans delineates a functional block of execution. Creating a span from a tracer accepts a ctx, if that context already contains a span the new span becomes the child of that span. Contains an API that allows adding attributes, span status, and error details.
-```
-oneotel.Tracer(packageName).Start(ctx, “SpanName”)
+
+Use `telemetry.StartSpan` to start a span:
+
+```go
+ctx, span := telemetry.StartSpan(ctx, "SpanName")
+defer span.End()
 ```
 
 **SpanProcessor**: Receives span information and is the pipeline that provides it to the exporter. It is configured within the TraceProvider, multiple SpanProcessors can be configured. BatchSpanProcessor which sends telemetry in batches and should be used for production applications (use NewBatchSpanProcessor). SimpleSpanProcessor is a non-production debugging processor (use NewSimpleSpanProcessor)
@@ -44,82 +48,60 @@ otel.SetTracerProvider(tp)
 otel.GetTracerProvider()
 
 ------------------
-### OpenTelemetry "Putting it all Together"
+### Setup
 
-To configure a system to generate and export spans the following steps must be done:
+Call `SetupTelemetry` once when the process starts. It picks an exporter in this order:
 
-1. Define your exporter, where do you want your data to go? In this package, honey.go, stdout.go and collector.go all store methods to create Exporters. The beginning blocks of logic in SetupTelemetry determines which one should be used based on configuration values. Honeycomb exporter shown as example:
+1. An in-process test writer (`telemetry.TestConfig(w)`)
+2. `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP gRPC collector)
+3. `HONEYCOMB_API_KEY` (Honeycomb at `api.honeycomb.io:443`)
+4. `Config.Stdout`
+5. `Config.OpenTelemetryCollector` (`OtelConfig{Host, TLS}`)
+6. `Config.Honeycomb` (`HoneycombConfig{URL, Team}`)
+7. A discard exporter, so traces are dropped
+
+If `Config.ServiceName` or `Config.ServiceNamespace` is empty, `SetupTelemetry` uses `MOOV_SERVICE_NAME` and `MOOV_SERVICE_NAMESPACE`.
+
 ```go
-opts := []otlptracegrpc.Option{
-    otlptracegrpc.WithCompressor("gzip"),
-    otlptracegrpc.WithEndpoint(config.URL),
-    otlptracegrpc.WithHeaders(map[string]string{
-        "x-honeycomb-team": config.Team,
-    }),
-    otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, "")),
-}
+package main
 
-client := otlptracegrpc.NewClient(opts...)
-return otlptrace.New(ctx, client)
-```
-2. Define your TracerProvider, typically this will require you to define the other constructs TracerProvider uses at the same time:
-```go
-resource := resource.NewWithAttributes(
-    semconv.SchemaURL,
-    semconv.ServiceNameKey.String(config.ServiceName),
-    semconv.ServiceVersionKey.String(version),
+import (
+	"context"
+	"fmt"
+
+	"github.com/moov-io/base/telemetry"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-return trace.NewTracerProvider(
-    trace.WithSampler(trace.AlwaysSample()),
-    trace.WithBatcher(exp,
-        trace.WithMaxQueueSize(3*trace.DefaultMaxQueueSize),
-        trace.WithMaxExportBatchSize(3*trace.DefaultMaxExportBatchSize),
-        trace.WithBatchTimeout(5*time.Second),
-    ),
-    trace.WithResource(resource),
-)
-```
-3. Globally set the defined TracerProvider:
-```go
-otel.SetTracerProvider(tp)
-```
-4. Allow Trace information to be propagated across microservice boundaries:
-```go
-otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-    propagation.TraceContext{},
-    propagation.Baggage{},
-))
-```
-5. Acquire a Tracer from the TracerProvider, and start a Span wrapping your desired block of execution*
-[IMPORTANT NOTE]: Our libraries (usually) automatically start spans for you:
-   1. Kakfa Consumers:  [start a span for processing each consumed event](https://github.com/moovfinancial/events/blob/82ed357686f9bc920568274828a36dffc1f37fb4/go/consumer/processor_event.go#L137).
-   2. Kafka Producers:  [start a span for producing each event](https://github.com/moovfinancial/events/blob/ef809bc0d63f3ddec07f39da47edad3e39145dab/go/producer/producer.go#L170)
-   3. HTTPS Endpoints: [start a Span for each request](https://github.com/moovfinancial/go-zero-trust/blob/v2/pkg/middleware/middleware.go#L50) and are protected by the go-zero-trust-middleware.
-6. Add attributes, state code, or error messages at any location during a span, acquiring the span from the context if needed:
-```go
-span := telemetry.SpanFromContext(r.Context())
-attributes := []attribute.KeyValue{
-    attribute.String("account_id", accountID),
-    attribute.String("mode", claims.CallingAccountMode.String()),
+func main() {
+	ctx := context.Background()
+	shutdown, err := telemetry.SetupTelemetry(ctx, telemetry.Config{
+		ServiceName: "example-service",
+	}, "v1.0.0")
+	if err != nil {
+		panic(err)
+	}
+	defer shutdown()
+
+	ctx, span := telemetry.StartSpan(ctx, "example-operation")
+	defer span.End()
+
+	telemetry.SetAttributes(ctx, attribute.String("account_id", "12345"))
+	if err := doWork(ctx); err != nil {
+		_ = telemetry.RecordError(ctx, err)
+	}
 }
-if claims.CallingAccountID != nil {
-    attributes = append(attributes, attribute.String("mode", *claims.CallingAccountID))
+
+func doWork(ctx context.Context) error {
+	_, span := telemetry.StartSpan(ctx, "do-work")
+	defer span.End()
+	fmt.Println("working")
+	return nil
 }
-span.SetAttributes(attributes...)
 ```
-------------------
-#### Example of how HTTPS endpoints gain tracing via Zero-Trust library
-```go
-    if env.ZeroTrustMiddleware == nil {
-        gatewayMiddleware, err := middleware.NewServerFromConfig(env.Logger, env.TimeService, env.Config.Gateway)
-        if err != nil {
-        return nil, env.Logger.Fatal().LogErrorf("failed to startup Gateway middleware: %w", err).Err()
-        }
-        env.ZeroTrustMiddleware = gatewayMiddleware.Handler
-    }
-```
-followed by attaching it to your router of choice:
-```go
-    env.PublicRouter.Use(env.ZeroTrustMiddleware)
-```
+
+`StartSpan` creates a child span when `ctx` already holds a span, or a root span otherwise. End every span. `RecordError` records the error on the current span and returns it. `SpanFromContext` and `AddEvent` are also available.
+
+A compile-checked walkthrough is in [example_test.go](example_test.go).
+
+The lower-level exporter and `TracerProvider` setup that `SetupTelemetry` performs is in [config.go](config.go), [collector.go](collector.go) and [honey.go](honey.go). You do not need to call `otel.SetTracerProvider` yourself after `SetupTelemetry`.
