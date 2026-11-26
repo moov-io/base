@@ -22,13 +22,17 @@ logger.Error().Log("Error occurred")
 logger.Info().Set("request_id", log.String("12345")).Log("Processing request")
 
 // Log formatted messages
-logger.Infof("Processing request %s", "12345")
+logger.Info().Logf("Processing request %s", "12345")
 
 // Log errors
 err := someFunction()
 if err != nil {
     logger.LogError(err)
 }
+
+// LogError keeps the current log level (info on a new logger) and sets errored=true.
+// Call Error first when you want level=error:
+logger.Error().LogError(err)
 ```
 
 ### Using Fields
@@ -109,14 +113,18 @@ The above will produce log entries with the following fields:
 - `id=1`
 - `username=johndoe`
 - `email=john@example.com`
+- `address="{123 Main St New York USA}"`
 - `address.street=123 Main St`
 - `address.city=New York`
 - `address.country=USA`
+
+`address` is the nested struct written with `%v`. The dotted fields are the tagged children of that struct.
 
 With the prefix option, the fields will be:
 - `user.id=1`
 - `user.username=johndoe`
 - `user.email=john@example.com`
+- `user.address="{123 Main St New York USA}"`
 - `user.address.street=123 Main St`
 - `user.address.city=New York`
 - `user.address.country=USA`
@@ -139,7 +147,7 @@ Note that nested structs or pointers to structs must have the specified tag to b
 
 ## Configuration
 
-The default logger format is determined by the `MOOV_LOG_FORMAT` environment variable:
+The default logger format is determined by the `MOOV_LOG_FORMAT` environment variable. If `MOOV_LOG_FORMAT` is empty, `LOG_FORMAT` is used:
 - `json`: JSON format
 - `logfmt`: LogFmt format (default)
 - `nop` or `noop`: No-op logger that discards all logs

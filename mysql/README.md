@@ -3,35 +3,17 @@
 In order to speedup testing with MySQL we created custom docker image for MySQL that stores
 data inside container (not outside in volume).
 
+The image is based on `mysql:26.10-oracle` and is tagged `mysql-volumeless:26.10` (and `moov/mysql-volumeless:26.10`).
+
 # Update Image
 
-In order to update image please follow this steps:
-
-Updated `Dockerfile` if needed and then build the image:
+Updated `Dockerfile` if needed and then build, initialize and commit the image:
 
 ```
 make build
 ```
 
-Run the container from this image to initialize database and create all necessary files inside container
-
-```
-make run
-```
-
-After container is ready (you will see that it's "...ready for connections..."), please, stop the container with
-
-```
-make stop
-```
-
-at this point we have a container with initialized MySQL database
-
-Now it's time to make image based on this container:
-
-```
-make image
-```
+`make build` builds the image, starts a container, waits until MySQL is ready, stops the container and commits the result as `mysql-volumeless:26.10` and `moov/mysql-volumeless:26.10`.
 
 Final step is to push image to docker hub:
 
